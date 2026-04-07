@@ -1,0 +1,9 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import AudioCompressTool from '../../components/audio/AudioCompressTool';
+import { getToolMeta } from '../../data/tools';
+const meta = getToolMeta('/audio/compress');
+---
+<ToolLayout {...meta}>
+  <AudioCompressTool client:load />
+</ToolLayout>

@@ -1,4 +1,6 @@
 import { formatFileSize } from '@/lib/utils/fileUtils';
+import { Button } from '@/components/ui/button';
+import { X } from 'lucide-react';
 
 interface FileItem {
   id: string;
@@ -33,12 +35,12 @@ export default function FileList({ files, onRemove }: Props) {
           </div>
           <Button
             onClick={() => onRemove(file.id)}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+            variant="ghost"
+            size="icon"
+            className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
             aria-label="Remove file"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-4 h-4" />
           </Button>
         </div>
       ))}

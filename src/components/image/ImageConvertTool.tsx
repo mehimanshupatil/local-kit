@@ -76,8 +76,9 @@ export default function ImageConvertTool() {
               {FORMATS.map(f => (
                 <Button
                   key={f.mime}
+                  variant="outline"
                   onClick={() => setTargetMime(f.mime)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${targetMime === f.mime ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'}`}
+                  className={`transition-all ${targetMime === f.mime ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400'}`}
                 >
                   {f.label}
                 </Button>

@@ -46,7 +46,7 @@ export default function VideoCompressTool() {
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" onClick={() => { setFile(null); setOutput([]); }} className="text-xs py-1.5 px-3">Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); }}>Change</Button>
         </div>
       )}
 
@@ -58,8 +58,9 @@ export default function VideoCompressTool() {
               {(['high', 'medium', 'low'] as VideoQuality[]).map(q => (
                 <Button
                   key={q}
+                  variant="outline"
                   onClick={() => setQuality(q)}
-                  className={`py-2 px-3 rounded-lg text-sm font-medium border capitalize transition-all ${quality === q ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'}`}
+                  className={`transition-all ${quality === q ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400'}`}
                 >
                   {q === 'high' ? '🎯 High' : q === 'medium' ? '⚖️ Medium' : '📦 Low'}
                 </Button>

@@ -1,7 +1,10 @@
+import { enableMapSet } from 'immer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useImmer } from 'use-immer';
+
+enableMapSet();
 import { Scissors, X } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -9,8 +12,9 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import PDFPageThumbnail from './PDFPageThumbnail';
 import { PDFDocument } from '@cantoo/pdf-lib';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
-import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
+import { stripExtension } from '@/lib/utils/fileUtils';
 import { cn } from '@/lib/utils/cn';
+import PDFFileBar from './PDFFileBar';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 // Section colors for the visual split view
@@ -105,14 +109,7 @@ export default function PDFSplitTool() {
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false}
           label="Drop a PDF file" sublabel="Click between pages to add cut points" />
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">📄</span>
-          <div className="flex-1">
-            <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-            <p className="text-xs text-gray-500">{total} pages · {formatFileSize(file.size)}</p>
-          </div>
-          <Button variant="secondary" onClick={() => { setFile(null); setPdf(null); setOutput([]); }} className="text-xs py-1.5 px-3">Change</Button>
-        </div>
+        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); setOutput([]); }} />
       )}
 
       {pdf && total > 0 && (
@@ -129,7 +126,7 @@ export default function PDFSplitTool() {
               </p>
             </div>
             {cutPoints.size > 0 && (
-              <Button onClick={() => updateCutPoints(() => new Set())} className="text-xs text-gray-400 hover:text-red-500 transition-colors">
+              <Button variant="ghost" size="sm" onClick={() => updateCutPoints(() => new Set())} className="text-gray-400 hover:text-red-500">
                 Clear all cuts
               </Button>
             )}
@@ -167,11 +164,12 @@ export default function PDFSplitTool() {
 
                     {/* Cut point button (between pages, not after last) */}
                     {i < total - 1 && (
-                      <Button
+                      <button
+                        type="button"
                         onClick={() => toggleCut(i)}
                         title={cutPoints.has(i) ? 'Remove cut' : 'Add cut here'}
                         className={`
-                          relative mx-0.5 flex flex-col items-center justify-center group transition-all
+                          relative mx-0.5 flex flex-col items-center justify-center group transition-all cursor-pointer
                           ${cutPoints.has(i) ? 'w-8' : 'w-5 hover:w-8'}
                         `}
                         style={{ height: 100 }}
@@ -191,7 +189,7 @@ export default function PDFSplitTool() {
                             </div>
                           </>
                         )}
-                      </Button>
+                      </button>
                     )}
                   </div>
                 );

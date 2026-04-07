@@ -1,0 +1,9 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import AudioTrimTool from '../../components/audio/AudioTrimTool';
+import { getToolMeta } from '../../data/tools';
+const meta = getToolMeta('/audio/trim');
+---
+<ToolLayout {...meta}>
+  <AudioTrimTool client:load />
+</ToolLayout>

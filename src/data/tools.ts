@@ -184,6 +184,38 @@ export const categories: Category[] = [
     ],
   },
   {
+    id: 'audio',
+    title: 'Audio Tools',
+    icon: '🎵',
+    href: '/audio',
+    color: 'green',
+    pageTitle: 'Audio Tools — Free Online Audio Editor | LocalKit',
+    pageDesc: 'Free audio tools powered by FFmpeg WASM. Convert, trim, and compress audio files — 100% in your browser.',
+    heading: 'Audio Tools',
+    subheading: 'Powered by FFmpeg WASM — convert, trim and compress audio files entirely in your browser. No uploads, no servers.',
+    note: '⚠️ First load downloads ~30MB FFmpeg WASM core',
+    tools: [
+      {
+        name: 'Convert Audio', href: '/audio/convert', icon: '🔄',
+        desc: 'Convert between MP3, AAC, WAV, OGG, FLAC',
+        pageTitle: 'Convert Audio Format — MP3, AAC, WAV, OGG, FLAC | LocalKit',
+        pageDesc: 'Convert audio files between MP3, AAC, WAV, OGG, and FLAC formats. Powered by FFmpeg WASM in your browser.',
+      },
+      {
+        name: 'Trim Audio', href: '/audio/trim', icon: '✂️',
+        desc: 'Cut start/end of an audio file',
+        pageTitle: 'Trim Audio Online — Cut Start & End | LocalKit',
+        pageDesc: 'Trim an audio file by setting start and end points. Uses FFmpeg WASM for lossless stream copy.',
+      },
+      {
+        name: 'Compress Audio', href: '/audio/compress', icon: '🗜️',
+        desc: 'Reduce audio file size with bitrate control',
+        pageTitle: 'Compress Audio Online — Reduce File Size | LocalKit',
+        pageDesc: 'Compress audio files by adjusting bitrate. Powered by FFmpeg WASM — runs entirely in your browser.',
+      },
+    ],
+  },
+  {
     id: 'dev',
     title: 'Developer Tools',
     icon: '🛠️',

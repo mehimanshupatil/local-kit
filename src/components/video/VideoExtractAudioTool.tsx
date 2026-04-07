@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
@@ -21,8 +21,16 @@ export default function VideoExtractAudioTool() {
   const [progress, setProgress] = useState(0);
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
-  const addFile = ([f]: File[]) => { setFile(f); setStatus('idle'); setOutput([]); };
+  useEffect(() => {
+    return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };
+  }, [audioUrl]);
+
+  const addFile = ([f]: File[]) => {
+    setFile(f); setStatus('idle'); setOutput([]);
+    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
+  };
 
   const extract = async () => {
     if (!file) return;
@@ -30,6 +38,8 @@ export default function VideoExtractAudioTool() {
     try {
       const result = await extractAudio(file, format, setProgress);
       setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      setAudioUrl(URL.createObjectURL(result.blob));
       setStatus('done');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Extraction failed'); setStatus('error');
@@ -47,7 +57,7 @@ export default function VideoExtractAudioTool() {
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" onClick={() => { setFile(null); setOutput([]); }} className="text-xs py-1.5 px-3">Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); }}>Change</Button>
         </div>
       )}
 
@@ -59,8 +69,9 @@ export default function VideoExtractAudioTool() {
               {FORMATS.map(f => (
                 <Button
                   key={f.value}
+                  variant="outline"
                   onClick={() => setFormat(f.value)}
-                  className={`py-2 px-3 rounded-lg text-sm font-medium border transition-all text-center ${format === f.value ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400'}`}
+                  className={`h-auto flex-col transition-all ${format === f.value ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400'}`}
                 >
                   <div className="font-bold">{f.label}</div>
                   <div className="text-xs opacity-70">{f.desc}</div>
@@ -75,6 +86,17 @@ export default function VideoExtractAudioTool() {
           <Button onClick={extract} disabled={status === 'processing'} >
             {status === 'processing' ? 'Extracting...' : `Extract as ${format.toUpperCase()}`}
           </Button>
+        </div>
+      )}
+
+      {audioUrl && (
+        <div className="card p-4 space-y-2">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Preview</p>
+          <audio
+            src={audioUrl}
+            controls
+            className="w-full h-10"
+          />
         </div>
       )}
 

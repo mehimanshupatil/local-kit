@@ -6,7 +6,8 @@ import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { isEncrypted, unlockPDF } from '@/lib/pdf/pdfUnlock';
-import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
+import { stripExtension } from '@/lib/utils/fileUtils';
+import PDFFileBar from './PDFFileBar';
 
 export default function PDFUnlockTool() {
   const [file, setFile]         = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
@@ -64,19 +65,7 @@ export default function PDFUnlockTool() {
           sublabel="Upload a password-protected PDF to unlock it"
         />
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">📄</span>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-          </div>
-          <Button variant="secondary"
-            onClick={() => { setFile(null); setIsLocked(null); setOutput([]); setStatus('idle'); setError(''); }}
-            className="text-xs py-1.5 px-3 shrink-0"
-          >
-            Change
-          </Button>
-        </div>
+        <PDFFileBar file={file} onClear={() => { setFile(null); setIsLocked(null); setOutput([]); setStatus('idle'); setError(''); }} />
       )}
 
       {file && (
@@ -114,8 +103,10 @@ export default function PDFUnlockTool() {
                   />
                   <Button
                     type="button"
+                    variant="ghost"
+                    size="icon"
                     onClick={() => setShowPw(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     tabIndex={-1}
                   >
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

@@ -1,0 +1,9 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import AudioConvertTool from '../../components/audio/AudioConvertTool';
+import { getToolMeta } from '../../data/tools';
+const meta = getToolMeta('/audio/convert');
+---
+<ToolLayout {...meta}>
+  <AudioConvertTool client:load />
+</ToolLayout>

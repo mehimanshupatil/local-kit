@@ -17,8 +17,9 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import PDFPageThumbnail from './PDFPageThumbnail';
 import { reorderPDF } from '@/lib/pdf/pdfReorder';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
-import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
+import { stripExtension } from '@/lib/utils/fileUtils';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import PDFFileBar from './PDFFileBar';
 
 // ── Sortable page card ─────────────────────────────────────────────
 function SortablePage({
@@ -125,21 +126,7 @@ export default function PDFReorderTool() {
           sublabel="Drag page thumbnails to reorder, then save"
         />
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">📄</span>
-          <div className="flex-1">
-            <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-            <p className="text-xs text-gray-500">
-              {file.pageCount} page{file.pageCount !== 1 ? 's' : ''} · {formatFileSize(file.size)}
-            </p>
-          </div>
-          <Button variant="secondary"
-            onClick={() => { setFile(null); setPdf(null); updatePageOrder(() => []); setOutput([]); setStatus('idle'); }}
-            className="text-xs py-1.5 px-3"
-          >
-            Change
-          </Button>
-        </div>
+        <PDFFileBar file={file} total={file.pageCount} onClear={() => { setFile(null); setPdf(null); updatePageOrder(() => []); setOutput([]); setStatus('idle'); }} />
       )}
 
       {pdf && file && pageOrder.length > 0 && (

@@ -1,4 +1,3 @@
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
 import { Slider } from '@/components/ui/slider';
@@ -6,7 +5,7 @@ import { Play, Pause, SkipBack, SkipForward, Scissors } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
-import { trimVideo } from '@/lib/video/videoTrim';
+import { trimAudio } from '@/lib/audio/audioTrim';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 
 function fmt(sec: number): string {
@@ -16,9 +15,9 @@ function fmt(sec: number): string {
   return `${m}:${s.toString().padStart(2, '0')}.${ms}`;
 }
 
-export default function VideoTrimTool() {
+export default function AudioTrimTool() {
   const [file,        setFile]        = useState<File | null>(null);
-  const [videoURL,    setVideoURL]    = useState('');
+  const [audioURL,    setAudioURL]    = useState('');
   const [duration,    setDuration]    = useState(0);
   const [range,       setRange]       = useState<[number, number]>([0, 0]);
   const [currentTime, setCurrentTime] = useState(0);
@@ -27,53 +26,59 @@ export default function VideoTrimTool() {
   const [progress,    setProgress]    = useState(0);
   const [output,      setOutput]      = useState<OutputFile[]>([]);
   const [error,       setError]       = useState('');
+  const [trimmedUrl,  setTrimmedUrl]  = useState<string | null>(null);
 
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const [start, end] = range;
 
   const addFile = ([f]: File[]) => {
-    if (videoURL) URL.revokeObjectURL(videoURL);
+    if (audioURL) URL.revokeObjectURL(audioURL);
+    if (trimmedUrl) { URL.revokeObjectURL(trimmedUrl); setTrimmedUrl(null); }
     const url = URL.createObjectURL(f);
-    setFile(f); setVideoURL(url); setStatus('idle'); setOutput([]);
+    setFile(f); setAudioURL(url); setStatus('idle'); setOutput([]);
     setPlaying(false); setCurrentTime(0); setRange([0, 0]); setDuration(0);
   };
 
   const onMetadata = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    setDuration(v.duration);
-    setRange([0, v.duration]);
+    const a = audioRef.current;
+    if (!a) return;
+    setDuration(a.duration);
+    setRange([0, a.duration]);
   };
 
   useEffect(() => {
-    const v = videoRef.current;
-    if (!v) return;
-    const onUpdate = () => setCurrentTime(v.currentTime);
+    const a = audioRef.current;
+    if (!a) return;
+    const onUpdate = () => setCurrentTime(a.currentTime);
     const onPause  = () => setPlaying(false);
-    const onBound  = () => { if (v.currentTime >= end) { v.pause(); v.currentTime = end; } };
-    v.addEventListener('timeupdate', onUpdate);
-    v.addEventListener('timeupdate', onBound);
-    v.addEventListener('pause', onPause);
+    const onBound  = () => { if (a.currentTime >= end) { a.pause(); a.currentTime = end; } };
+    a.addEventListener('timeupdate', onUpdate);
+    a.addEventListener('timeupdate', onBound);
+    a.addEventListener('pause', onPause);
     return () => {
-      v.removeEventListener('timeupdate', onUpdate);
-      v.removeEventListener('timeupdate', onBound);
-      v.removeEventListener('pause', onPause);
+      a.removeEventListener('timeupdate', onUpdate);
+      a.removeEventListener('timeupdate', onBound);
+      a.removeEventListener('pause', onPause);
     };
-  }, [videoURL, end]);
+  }, [audioURL, end]);
+
+  useEffect(() => {
+    return () => { if (trimmedUrl) URL.revokeObjectURL(trimmedUrl); };
+  }, [trimmedUrl]);
 
   const togglePlay = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (playing) { v.pause(); }
+    const a = audioRef.current;
+    if (!a) return;
+    if (playing) { a.pause(); }
     else {
-      if (v.currentTime >= end || v.currentTime < start) v.currentTime = start;
-      v.play(); setPlaying(true);
+      if (a.currentTime >= end || a.currentTime < start) a.currentTime = start;
+      a.play(); setPlaying(true);
     }
   };
 
   const seekTo = (t: number) => {
-    if (!videoRef.current) return;
-    videoRef.current.currentTime = t;
+    if (!audioRef.current) return;
+    audioRef.current.currentTime = t;
     setCurrentTime(t);
   };
 
@@ -87,8 +92,10 @@ export default function VideoTrimTool() {
     if (!file) return;
     setStatus('processing'); setProgress(0); setError('');
     try {
-      const result = await trimVideo(file, start, end, setProgress);
+      const result = await trimAudio(file, start, end, setProgress);
       setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
+      if (trimmedUrl) URL.revokeObjectURL(trimmedUrl);
+      setTrimmedUrl(URL.createObjectURL(result.blob));
       setStatus('done');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Trim failed'); setStatus('error');
@@ -101,20 +108,25 @@ export default function VideoTrimTool() {
   return (
     <div className="space-y-5">
       {!file ? (
-        <DropZone onFiles={addFile} accept="video/*" multiple={false}
-          label="Drop a video file" sublabel="MP4, WebM, MOV, AVI supported" />
+        <DropZone onFiles={addFile} accept="audio/*,.mp3,.aac,.wav,.ogg,.flac,.m4a" multiple={false}
+          label="Drop an audio file" sublabel="MP3, AAC, WAV, OGG, FLAC supported" />
       ) : (
         <>
-          {/* Video player */}
-          <div className="card overflow-hidden rounded-2xl bg-black">
-            <video ref={videoRef} src={videoURL} onLoadedMetadata={onMetadata}
-              className="w-full max-h-[400px] object-contain" preload="metadata" />
+          {/* Audio player */}
+          <div className="card p-4">
+            <audio
+              ref={audioRef}
+              src={audioURL}
+              onLoadedMetadata={onMetadata}
+              className="w-full"
+              preload="metadata"
+            />
           </div>
 
           {duration > 0 && (
             <div className="card p-5 space-y-5">
 
-              {/* ── Timeline (rc-slider Range + playhead overlay) ── */}
+              {/* Timeline */}
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-mono">
                   <span>{fmt(start)}</span>
@@ -124,7 +136,6 @@ export default function VideoTrimTool() {
                   <span>{fmt(end)}</span>
                 </div>
 
-                {/* Slider track wrapper — adds playhead overlay on top */}
                 <div className="relative px-2">
                   <Slider
                     min={0}
@@ -136,7 +147,7 @@ export default function VideoTrimTool() {
                     className="**:data-[slot=slider-thumb]:h-7 **:data-[slot=slider-thumb]:w-4 **:data-[slot=slider-thumb]:rounded-sm **:data-[slot=slider-track]:h-2"
                   />
 
-                  {/* Playhead — sits on top, pointer-events none */}
+                  {/* Playhead */}
                   <div
                     className="absolute top-0 bottom-0 w-0.5 bg-white/80 pointer-events-none z-20"
                     style={{ left: `calc(${currentPct}% + 8px)` }}
@@ -157,7 +168,7 @@ export default function VideoTrimTool() {
                 </div>
               </div>
 
-              {/* ── Playback controls ── */}
+              {/* Playback controls */}
               <div className="flex items-center gap-3">
                 <Button variant="secondary" size="icon" onClick={() => seekTo(start)} title="Jump to start">
                   <SkipBack className="w-4 h-4" />
@@ -194,7 +205,7 @@ export default function VideoTrimTool() {
                 </div>
               </div>
 
-              {/* Info row */}
+              {/* Duration info row */}
               <div className="flex gap-3 text-sm">
                 <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800">
                   <span className="text-gray-400">Original</span>
@@ -209,18 +220,25 @@ export default function VideoTrimTool() {
                 </div>
               </div>
 
-              {status === 'processing' && <ProgressBar progress={progress} label="Trimming with FFmpeg…" />}
+              {status === 'processing' && <ProgressBar progress={progress} label="Trimming with FFmpeg..." />}
               {status === 'error' && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>}
 
               <div className="flex gap-3">
                 <Button onClick={trim} disabled={status === 'processing'} size="lg" className="flex-1">
                   <Scissors className="w-4 h-4" />
-                  {status === 'processing' ? 'Trimming…' : `Trim: ${fmt(start)} → ${fmt(end)}`}
+                  {status === 'processing' ? 'Trimming...' : `Trim: ${fmt(start)} → ${fmt(end)}`}
                 </Button>
-                <Button variant="secondary" onClick={() => { if (videoURL) URL.revokeObjectURL(videoURL); setFile(null); setVideoURL(''); setOutput([]); }} >
+                <Button variant="secondary" onClick={() => { if (audioURL) URL.revokeObjectURL(audioURL); setFile(null); setAudioURL(''); setOutput([]); }}>
                   Change
                 </Button>
               </div>
+            </div>
+          )}
+
+          {trimmedUrl && (
+            <div className="card p-4 space-y-2">
+              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Preview</p>
+              <audio src={trimmedUrl} controls className="w-full h-10" />
             </div>
           )}
         </>

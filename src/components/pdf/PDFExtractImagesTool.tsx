@@ -9,6 +9,7 @@ import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import { extractImagesFromPDF, type ExtractedImage } from '@/lib/pdf/pdfExtractImages';
 import { formatFileSize } from '@/lib/utils/fileUtils';
+import PDFFileBar from './PDFFileBar';
 
 function downloadBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
@@ -70,19 +71,7 @@ export default function PDFExtractImagesTool() {
           sublabel="Embedded images will be extracted from each page"
         />
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">📄</span>
-          <div className="flex-1 min-w-0">
-            <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-          </div>
-          <Button variant="secondary"
-            onClick={() => { setFile(null); setStatus('idle'); setError(''); updateImages(() => []); }}
-            className="text-xs py-1.5 px-3 shrink-0"
-          >
-            Change
-          </Button>
-        </div>
+        <PDFFileBar file={file} onClear={() => { setFile(null); setStatus('idle'); setError(''); updateImages(() => []); }} />
       )}
 
       {file && (
@@ -144,7 +133,7 @@ export default function PDFExtractImagesTool() {
                 : `${images.length} image${images.length !== 1 ? 's' : ''} extracted`}
             </h3>
             {images.length > 1 && (
-              <Button onClick={downloadAll} className="text-xs py-1.5 px-3 flex items-center gap-1.5">
+              <Button size="sm" onClick={downloadAll}>
                 <Download className="w-3.5 h-3.5" />
                 Download All (.zip)
               </Button>
@@ -179,9 +168,8 @@ export default function PDFExtractImagesTool() {
                           {img.width}×{img.height} · p{img.page} · {formatFileSize(img.blob.size)}
                         </p>
                       </div>
-                      <Button variant="secondary"
+                      <Button variant="secondary" size="sm" className="shrink-0"
                         onClick={() => downloadBlob(img.blob, img.name)}
-                        className="text-[10px] py-1 px-2 shrink-0"
                         title="Download"
                       >
                         <Download className="w-3 h-3" />

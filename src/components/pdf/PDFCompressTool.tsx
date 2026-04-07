@@ -6,6 +6,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { compressPDF } from '@/lib/pdf/pdfCompress';
 import { formatFileSize } from '@/lib/utils/fileUtils';
+import PDFFileBar from './PDFFileBar';
 
 export default function PDFCompressTool() {
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
@@ -40,14 +41,7 @@ export default function PDFCompressTool() {
       {!file ? (
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false} label="Drop a PDF file" />
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">📄</span>
-          <div className="flex-1">
-            <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
-          </div>
-          <Button variant="secondary" onClick={() => { setFile(null); setOutput([]); setStats(null); }} className="text-xs py-1.5 px-3">Change</Button>
-        </div>
+        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); setStats(null); }} />
       )}
 
       {file && (

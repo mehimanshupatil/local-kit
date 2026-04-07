@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { downloadBlob, downloadAllAsZip } from '@/lib/utils/downloadUtils';
 import { formatFileSize } from '@/lib/utils/fileUtils';
-import { Download, Archive } from 'lucide-react';
+import { Download, Archive, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export interface OutputFile {
@@ -13,6 +13,34 @@ export interface OutputFile {
 
 interface Props {
   files: OutputFile[];
+}
+
+function PDFPreview({ blob }: { blob: Blob }) {
+  const [url, setUrl] = useState('');
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const u = URL.createObjectURL(blob);
+    setUrl(u);
+    return () => URL.revokeObjectURL(u);
+  }, [blob]);
+
+  return (
+    <div className="mt-2 space-y-2">
+      <Button variant="secondary" size="sm" onClick={() => setOpen(v => !v)}>
+        {open ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+        {open ? 'Hide preview' : 'Preview PDF'}
+      </Button>
+      {open && url && (
+        <iframe
+          src={url}
+          className="w-full rounded-xl border border-gray-200 dark:border-gray-700"
+          style={{ height: 600 }}
+          title="PDF preview"
+        />
+      )}
+    </div>
+  );
 }
 
 function ImagePreview({ blob }: { blob: Blob }) {
@@ -40,6 +68,7 @@ export default function OutputFiles({ files }: Props) {
   if (files.length === 0) return null;
 
   const isImage = (file: OutputFile) => file.blob.type.startsWith('image/');
+  const isPDF = (file: OutputFile) => file.blob.type === 'application/pdf' || file.name.endsWith('.pdf');
 
   return (
     <Card className="animate-slide-up">
@@ -56,16 +85,19 @@ export default function OutputFiles({ files }: Props) {
       </CardHeader>
       <CardContent className="space-y-2">
         {files.map((file, i) => (
-          <div key={i} className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800">
-            {isImage(file) && <ImagePreview blob={file.blob} />}
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-              <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+          <div key={i} className="px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800">
+            <div className="flex items-center gap-3">
+              {isImage(file) && <ImagePreview blob={file.blob} />}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
+                <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
+              </div>
+              <Button size="sm" onClick={() => downloadBlob(file.blob, file.name)}>
+                <Download className="w-3.5 h-3.5" />
+                Download
+              </Button>
             </div>
-            <Button size="sm" onClick={() => downloadBlob(file.blob, file.name)}>
-              <Download className="w-3.5 h-3.5" />
-              Download
-            </Button>
+            {isPDF(file) && <PDFPreview blob={file.blob} />}
           </div>
         ))}
       </CardContent>

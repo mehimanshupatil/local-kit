@@ -8,8 +8,9 @@ import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { watermarkPDF } from '@/lib/pdf/pdfWatermark';
-import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
+import { stripExtension } from '@/lib/utils/fileUtils';
 import { cn } from '@/lib/utils/cn';
+import PDFFileBar from './PDFFileBar';
 
 type ColorKey = 'gray' | 'red' | 'blue' | 'green';
 type RotationPreset = 'diagonal' | 'horizontal' | 'vertical';
@@ -93,18 +94,7 @@ export default function PDFWatermarkTool() {
           sublabel="Add a watermark text to every page"
         />
       ) : (
-        <Card>
-          <CardContent className="pt-4 flex items-center gap-3">
-            <span className="text-2xl">📄</span>
-            <div className="flex-1">
-              <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-              <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
-            </div>
-            <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); setStatus('idle'); }}>
-              Change
-            </Button>
-          </CardContent>
-        </Card>
+        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); setStatus('idle'); }} />
       )}
 
       {file && (
@@ -166,12 +156,13 @@ export default function PDFWatermarkTool() {
                 {ROTATION_PRESETS.map(preset => (
                   <Button
                     key={preset.key}
+                    variant="outline"
                     onClick={() => setRotation(preset.key)}
                     className={cn(
-                      'flex-1 py-2 px-3 text-sm rounded-xl border-2 font-medium transition-all',
+                      'flex-1 transition-all',
                       rotation === preset.key
                         ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300'
-                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'text-gray-600 dark:text-gray-400'
                     )}
                   >
                     {preset.label}
@@ -188,12 +179,13 @@ export default function PDFWatermarkTool() {
                 {(Object.keys(COLOR_MAP) as ColorKey[]).map(key => (
                   <Button
                     key={key}
+                    variant="outline"
                     onClick={() => setColor(key)}
                     className={cn(
-                      'flex-1 flex items-center justify-center gap-2 py-2 px-3 text-sm rounded-xl border-2 font-medium transition-all',
+                      'flex-1 transition-all',
                       color === key
                         ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300'
-                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'
+                        : 'text-gray-600 dark:text-gray-400'
                     )}
                   >
                     <span className={cn('w-3 h-3 rounded-full shrink-0', COLOR_SWATCHES[key])} />

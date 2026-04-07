@@ -101,7 +101,7 @@ export default function ImageCropRotateFlipTool() {
           <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
           <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
         </div>
-        <Button variant="secondary" onClick={handleChange} className="text-xs py-1.5 px-3 shrink-0">
+        <Button variant="secondary" size="sm" className="shrink-0" onClick={handleChange}>
           Change
         </Button>
       </div>
@@ -145,7 +145,7 @@ export default function ImageCropRotateFlipTool() {
             <div className="flex gap-2">
               <Button variant="secondary"
                 onClick={rotateCCW}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm"
+                className="flex-1"
                 title="Rotate 90° counter-clockwise"
               >
                 <RotateCcw className="w-4 h-4" />
@@ -153,7 +153,7 @@ export default function ImageCropRotateFlipTool() {
               </Button>
               <Button variant="secondary"
                 onClick={rotateCW}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm"
+                className="flex-1"
                 title="Rotate 90° clockwise"
               >
                 <RotateCw className="w-4 h-4" />
@@ -161,14 +161,14 @@ export default function ImageCropRotateFlipTool() {
               </Button>
               <Button variant="secondary"
                 onClick={rotate180}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm"
+                className="flex-1"
                 title="Rotate 180°"
               >
                 <span>180°</span>
               </Button>
               <Button variant="secondary"
                 onClick={resetRotation}
-                className="flex-1 flex items-center justify-center gap-1.5 py-2 text-sm"
+                className="flex-1"
                 title="Reset rotation"
                 disabled={rotation === 0}
               >
@@ -185,25 +185,17 @@ export default function ImageCropRotateFlipTool() {
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Flip</h3>
             <div className="flex gap-2">
               <Button
+                variant="outline"
                 onClick={() => setFlipH(v => !v)}
-                className={[
-                  'flex-1 flex items-center justify-center gap-1.5 py-2 text-sm rounded-xl border font-medium transition-all',
-                  flipH
-                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300'
-                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
-                ].join(' ')}
+                className={`flex-1 transition-all ${flipH ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-700 dark:text-gray-300'}`}
               >
                 <span className="text-base">↔</span>
                 <span>Flip H</span>
               </Button>
               <Button
+                variant="outline"
                 onClick={() => setFlipV(v => !v)}
-                className={[
-                  'flex-1 flex items-center justify-center gap-1.5 py-2 text-sm rounded-xl border font-medium transition-all',
-                  flipV
-                    ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300'
-                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600',
-                ].join(' ')}
+                className={`flex-1 transition-all ${flipV ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-700 dark:text-gray-300'}`}
               >
                 <span className="text-base">↕</span>
                 <span>Flip V</span>
@@ -222,9 +214,8 @@ export default function ImageCropRotateFlipTool() {
                 <p className="text-xs text-brand-600 dark:text-brand-400">
                   {Math.round(completedCrop.width)} × {Math.round(completedCrop.height)}px selected
                 </p>
-                <Button variant="secondary"
+                <Button variant="secondary" size="sm"
                   onClick={() => { setCrop(undefined); setCompletedCrop(undefined); }}
-                  className="text-xs py-1 px-2.5"
                 >
                   Clear Crop
                 </Button>
@@ -246,7 +237,8 @@ export default function ImageCropRotateFlipTool() {
           <Button
             onClick={handleApply}
             disabled={status === 'processing'}
-            className="w-full justify-center py-3 text-base"
+            size="lg"
+            className="w-full"
           >
             {status === 'processing' ? 'Processing…' : 'Apply Transforms'}
           </Button>

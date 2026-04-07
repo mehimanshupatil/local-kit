@@ -1,36 +1,45 @@
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
-import { convertVideo, type VideoFormat } from '@/lib/video/videoConvert';
+import { convertAudio, type AudioFormat } from '@/lib/audio/audioConvert';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 
-const FORMATS: { label: string; value: VideoFormat; desc: string }[] = [
-  { label: 'MP4', value: 'mp4', desc: 'Universal compatibility' },
-  { label: 'WebM', value: 'webm', desc: 'Web optimized' },
-  { label: 'AVI', value: 'avi', desc: 'Windows format' },
-  { label: 'MOV', value: 'mov', desc: 'Apple format' },
-  { label: 'GIF', value: 'gif', desc: 'Animated image' },
+const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
+  { label: 'MP3',  value: 'mp3',  desc: 'Universal' },
+  { label: 'AAC',  value: 'aac',  desc: 'High quality' },
+  { label: 'WAV',  value: 'wav',  desc: 'Lossless' },
+  { label: 'OGG',  value: 'ogg',  desc: 'Open source' },
+  { label: 'FLAC', value: 'flac', desc: 'Lossless compressed' },
 ];
 
-export default function VideoConvertTool() {
-  const [file, setFile] = useState<File | null>(null);
-  const [format, setFormat] = useState<VideoFormat>('mp4');
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
+export default function AudioConvertTool() {
+  const [file,     setFile]     = useState<File | null>(null);
+  const [format,   setFormat]   = useState<AudioFormat>('mp3');
+  const [status,   setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [output,   setOutput]   = useState<OutputFile[]>([]);
+  const [error,    setError]    = useState('');
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
-  const addFile = ([f]: File[]) => { setFile(f); setStatus('idle'); setOutput([]); };
+  useEffect(() => {
+    return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };
+  }, [audioUrl]);
+
+  const addFile = ([f]: File[]) => {
+    setFile(f); setStatus('idle'); setOutput([]);
+    if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
+  };
 
   const convert = async () => {
     if (!file) return;
     setStatus('processing'); setProgress(0); setError('');
     try {
-      const result = await convertVideo(file, format, setProgress);
+      const result = await convertAudio(file, format, setProgress);
       setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
+      if (audioUrl) URL.revokeObjectURL(audioUrl);
+      setAudioUrl(URL.createObjectURL(result.blob));
       setStatus('done');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Conversion failed'); setStatus('error');
@@ -40,15 +49,21 @@ export default function VideoConvertTool() {
   return (
     <div className="space-y-5">
       {!file ? (
-        <DropZone onFiles={addFile} accept="video/*" multiple={false} label="Drop a video file" />
+        <DropZone
+          onFiles={addFile}
+          accept="audio/*,.mp3,.aac,.wav,.ogg,.flac,.m4a"
+          multiple={false}
+          label="Drop an audio file"
+          sublabel="MP3, AAC, WAV, OGG, FLAC, M4A supported"
+        />
       ) : (
         <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">🎬</span>
+          <span className="text-2xl">🎵</span>
           <div className="flex-1">
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); }}>Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); } }}>Change</Button>
         </div>
       )}
 
@@ -71,12 +86,19 @@ export default function VideoConvertTool() {
             </div>
           </div>
 
-          {status === 'processing' && <ProgressBar progress={progress} label="Converting video..." />}
+          {status === 'processing' && <ProgressBar progress={progress} label="Converting audio..." />}
           {status === 'error' && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>}
 
-          <Button onClick={convert} disabled={status === 'processing'} >
+          <Button onClick={convert} disabled={status === 'processing'}>
             {status === 'processing' ? 'Converting...' : `Convert to ${format.toUpperCase()}`}
           </Button>
+        </div>
+      )}
+
+      {audioUrl && (
+        <div className="card p-4 space-y-2">
+          <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Preview</p>
+          <audio src={audioUrl} controls className="w-full h-10" />
         </div>
       )}
 

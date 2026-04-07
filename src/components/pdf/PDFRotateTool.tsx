@@ -1,15 +1,20 @@
+import { enableMapSet } from 'immer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
 import { useImmer } from 'use-immer';
+import { Check, RotateCcw, RotateCw, X } from 'lucide-react';
+
+enableMapSet();
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import PDFPageThumbnail from './PDFPageThumbnail';
 import { PDFDocument, degrees } from '@cantoo/pdf-lib';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
-import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
+import { stripExtension } from '@/lib/utils/fileUtils';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
+import PDFFileBar from './PDFFileBar';
 
 export default function PDFRotateTool() {
   const [file,  setFile]  = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
@@ -97,14 +102,7 @@ export default function PDFRotateTool() {
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false}
           label="Drop a PDF file" sublabel="Click pages to select, then rotate" />
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">📄</span>
-          <div className="flex-1">
-            <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-            <p className="text-xs text-gray-500">{total} pages · {formatFileSize(file.size)}</p>
-          </div>
-          <Button variant="secondary" onClick={() => { setFile(null); setPdf(null); setOutput([]); }} className="text-xs py-1.5 px-3">Change</Button>
-        </div>
+        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); setOutput([]); }} />
       )}
 
       {pdf && total > 0 && (
@@ -131,10 +129,10 @@ export default function PDFRotateTool() {
               ].map(({ deg, label, title }) => (
                 <Button variant="secondary"
                   key={deg}
+                  size="sm"
                   title={title}
                   onClick={() => selected.size > 0 ? rotateSelected(deg) : null}
                   disabled={selected.size === 0}
-                  className="text-xs py-1.5 px-3 disabled:opacity-40"
                 >
                   {label}
                 </Button>
@@ -161,9 +159,7 @@ export default function PDFRotateTool() {
                   {/* Selected checkmark */}
                   {isSel && (
                     <div className="absolute top-1.5 right-1.5 z-10 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-2.5 h-2.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/>
-                      </svg>
+                      <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                     </div>
                   )}
 
@@ -189,32 +185,32 @@ export default function PDFRotateTool() {
                     <span className="text-[10px] font-mono text-gray-400">{i + 1}</span>
                     <div className="flex gap-0.5">
                       <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={e => { e.stopPropagation(); rotatePage(i, -90); }}
-                        className="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                        className="size-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                         title="Rotate 90° CCW"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" d="M4 12a8 8 0 0 1 8-8V2L8 5.5 12 9V7a6 6 0 1 0 5.22 9"/>
-                        </svg>
+                        <RotateCcw className="w-3.5 h-3.5" />
                       </Button>
                       <Button
+                        variant="ghost"
+                        size="icon"
                         onClick={e => { e.stopPropagation(); rotatePage(i, 90); }}
-                        className="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                        className="size-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                         title="Rotate 90° CW"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                          <path strokeLinecap="round" d="M20 12a8 8 0 0 1-8 8v2l4-3.5L12 15v2a6 6 0 1 0-5.22-9"/>
-                        </svg>
+                        <RotateCw className="w-3.5 h-3.5" />
                       </Button>
                       {rot !== 0 && (
                         <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={e => { e.stopPropagation(); rotatePage(i, -rot); }}
-                          className="p-0.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-amber-400 hover:text-red-500 transition-colors"
+                          className="size-6 text-amber-400 hover:text-red-500"
                           title="Reset rotation"
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                          </svg>
+                          <X className="w-3 h-3" />
                         </Button>
                       )}
                     </div>

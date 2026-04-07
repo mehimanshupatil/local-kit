@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { Lock, LockOpen } from 'lucide-react';
 import { Resizable } from 're-resizable';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -120,7 +121,7 @@ export default function ImageResizeTool() {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
                 Preview <span className="text-xs font-normal text-gray-400 ml-1">drag handles to resize</span>
               </h3>
-              <Button onClick={reset} className="text-xs text-gray-400 hover:text-red-500 transition-colors">Clear all</Button>
+              <Button variant="ghost" size="sm" onClick={reset} className="text-gray-400 hover:text-red-500">Clear all</Button>
             </div>
 
             {/* Canvas area */}
@@ -205,10 +206,10 @@ export default function ImageResizeTool() {
             {files.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {files.map((f, i) => (
-                  <Button key={f.id} onClick={() => setActiveIdx(i)}
-                    className={`shrink-0 rounded-lg overflow-hidden border-2 transition-all ${activeIdx === i ? 'border-brand-500' : 'border-transparent opacity-60 hover:opacity-100'}`}>
+                  <button key={f.id} type="button" onClick={() => setActiveIdx(i)}
+                    className={`shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${activeIdx === i ? 'border-brand-500' : 'border-transparent opacity-60 hover:opacity-100'}`}>
                     <img src={f.preview} className="w-14 h-10 object-cover" />
-                  </Button>
+                  </button>
                 ))}
                 <label className="shrink-0 w-14 h-10 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:border-brand-400 transition-colors text-lg cursor-pointer">
                   +
@@ -240,19 +241,13 @@ export default function ImageResizeTool() {
                 </div>
 
                 <Button
+                  variant="outline"
+                  size="icon"
                   onClick={() => setLocked(l => !l)}
                   title={locked ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
-                  className={`mb-0.5 p-2.5 rounded-lg border transition-all ${locked ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400' : 'border-gray-200 dark:border-gray-700 text-gray-400'}`}
+                  className={`mb-0.5 transition-all ${locked ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400' : 'text-gray-400'}`}
                 >
-                  {locked ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>
-                    </svg>
-                  )}
+                  {locked ? <Lock className="w-4 h-4" /> : <LockOpen className="w-4 h-4" />}
                 </Button>
 
                 <div className="flex-1">
@@ -272,8 +267,8 @@ export default function ImageResizeTool() {
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Quick Presets</h3>
               <div className="grid grid-cols-4 gap-1.5">
                 {PRESETS.map(p => (
-                  <Button key={p.label} onClick={() => applyPreset(p.w, p.h)}
-                    className={`py-1.5 px-1 rounded-lg text-xs font-medium border transition-all text-center ${width === p.w && height === p.h ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                  <Button key={p.label} variant="outline" onClick={() => applyPreset(p.w, p.h)}
+                    className={`h-auto flex-col py-1.5 px-1 text-xs transition-all ${width === p.w && height === p.h ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400'}`}>
                     <div className="font-semibold">{p.label}</div>
                     <div className="opacity-60">{p.w}×{p.h}</div>
                   </Button>
@@ -289,8 +284,8 @@ export default function ImageResizeTool() {
                 { m: 'fill'  as ResizeMode, icon: '⊡', label: 'Fill',  desc: 'Crop to fill exact dimensions' },
                 { m: 'exact' as ResizeMode, icon: '⇲', label: 'Exact', desc: 'Stretch to exact size' },
               ]).map(({ m, icon, label, desc }) => (
-                <Button key={m} onClick={() => setMode(m)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border text-left transition-all ${mode === m ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30' : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'}`}>
+                <Button key={m} variant="outline" onClick={() => setMode(m)}
+                  className={`w-full h-auto justify-start gap-3 px-3 py-2.5 text-left transition-all ${mode === m ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30' : ''}`}>
                   <span className="text-xl w-6 text-center">{icon}</span>
                   <div>
                     <p className={`text-sm font-medium ${mode === m ? 'text-brand-700 dark:text-brand-300' : 'text-gray-800 dark:text-gray-200'}`}>{label}</p>
@@ -303,7 +298,7 @@ export default function ImageResizeTool() {
             {status === 'processing' && <ProgressBar progress={progress} label="Resizing images..." />}
             {status === 'error' && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>}
 
-            <Button onClick={resize} disabled={status === 'processing'} className="w-full justify-center py-3 text-base">
+            <Button onClick={resize} disabled={status === 'processing'} size="lg" className="w-full">
               {status === 'processing' ? 'Resizing...' : `Resize ${files.length > 1 ? `${files.length} images` : 'image'} → ${width}×${height}`}
             </Button>
           </div>
