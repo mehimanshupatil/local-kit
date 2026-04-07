@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { FcVideoFile } from 'react-icons/fc';
 import { useState } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -43,7 +44,7 @@ export default function VideoConvertTool() {
         <DropZone onFiles={addFile} accept="video/*" multiple={false} label="Drop a video file" />
       ) : (
         <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">🎬</span>
+          <FcVideoFile size={28} />
           <div className="flex-1">
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>

@@ -1,75 +1,127 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Header from '../components/layout/Header.astro';
-import Footer from '../components/layout/Footer.astro';
-import { categories } from '../data/tools';
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/layout/Header.astro";
+import Footer from "../components/layout/Footer.astro";
+import { categories } from "../data/tools";
+import Icon from "../components/ui/Icon";
+import { FcPrivacy, FcFlashOn, FcGlobe } from "react-icons/fc";
 ---
 
-<BaseLayout title="LocalKit — Free Privacy-First Browser Utilities" description="Free, privacy-first file tools that run 100% in your browser. PDF manipulation, image compression, video conversion and more — no uploads, no servers." canonicalURL="/">
+<BaseLayout
+  title="LocalKit — Free Privacy-First Browser Utilities"
+  description="Free, privacy-first file tools that run 100% in your browser. PDF manipulation, image compression, video conversion and more — no uploads, no servers."
+  canonicalURL="/"
+>
   <Header />
   <main>
     <!-- Hero -->
-    <section class="bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900 pt-20 pb-16 px-4">
+    <section
+      class="bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900 pt-20 pb-16 px-4"
+    >
       <div class="max-w-4xl mx-auto text-center">
-        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 text-sm font-medium mb-6">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 text-sm font-medium mb-6"
+        >
           🔒 100% Private — Files never leave your device
         </div>
-        <h1 class="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight">
-          Powerful browser<br /><span class="text-brand-600 dark:text-brand-400">file tools</span>
+        <h1
+          class="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
+        >
+          Powerful browser<br /><span class="text-brand-600 dark:text-brand-400"
+            >file tools</span
+          >
         </h1>
-        <p class="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10">
-          PDF, image, and video tools powered by WebAssembly. Everything runs locally in your browser — no uploads, no servers, no privacy concerns.
+        <p
+          class="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10"
+        >
+          PDF, image, and video tools powered by WebAssembly. Everything runs
+          locally in your browser — no uploads, no servers, no privacy concerns.
         </p>
         <div class="flex flex-wrap justify-center gap-3">
-          {categories.map(c => (
-            <a href={c.href} class="btn-primary text-base py-3 px-6">
-              {c.icon} {c.title}
-            </a>
-          ))}
+          {
+            categories.map((c) => (
+              <a href={c.href} class="btn-primary text-base py-3 px-6">
+                <Icon icon={c.icon} size={18} /> {c.title}
+              </a>
+            ))
+          }
         </div>
       </div>
     </section>
 
     <!-- Features -->
-    <section class="py-12 px-4 bg-white dark:bg-gray-950 border-y border-gray-200 dark:border-gray-800">
-      <div class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
-        {[
-          { icon: '🔒', title: 'Completely Private', desc: 'All processing happens in your browser. Files never touch any server.' },
-          { icon: '⚡', title: 'WASM Powered', desc: 'FFmpeg, PDF.js, and native canvas APIs for fast, high-quality output.' },
-          { icon: '🌐', title: 'Works Offline', desc: 'Once loaded, tools work without an internet connection.' },
-        ].map(f => (
-          <div class="p-6">
-            <div class="text-4xl mb-3">{f.icon}</div>
-            <h3 class="font-semibold text-gray-900 dark:text-white mb-2">{f.title}</h3>
-            <p class="text-sm text-gray-500 dark:text-gray-400">{f.desc}</p>
-          </div>
-        ))}
+    <section
+      class="py-12 px-4 bg-white dark:bg-gray-950 border-y border-gray-200 dark:border-gray-800"
+    >
+      <div
+        class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center"
+      >
+        {
+          [
+            {
+              icon: FcPrivacy,
+              title: "Completely Private",
+              desc: "All processing happens in your browser. Files never touch any server.",
+            },
+            {
+              icon: FcFlashOn,
+              title: "WASM Powered",
+              desc: "FFmpeg, PDF.js, and native canvas APIs for fast, high-quality output.",
+            },
+            {
+              icon: FcGlobe,
+              title: "Works Offline",
+              desc: "Once loaded, tools work without an internet connection.",
+            },
+          ].map((f) => (
+            <div class="p-6">
+              <div class="mb-3">
+                <Icon icon={f.icon} size={36} className="m-auto" />
+              </div>
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
+                {f.title}
+              </h3>
+              <p class="text-sm text-gray-500 dark:text-gray-400">{f.desc}</p>
+            </div>
+          ))
+        }
       </div>
     </section>
 
     <!-- Tool Categories -->
     <section class="py-16 px-4">
       <div class="max-w-6xl mx-auto space-y-12">
-        {categories.map(cat => (
-          <div>
-            <div class="flex items-center gap-3 mb-6">
-              <span class="text-3xl">{cat.icon}</span>
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{cat.title}</h2>
-              <a href={cat.href} class="ml-auto text-sm text-brand-600 dark:text-brand-400 hover:underline">View all →</a>
-            </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {cat.tools.map(tool => (
+        {
+          categories.map((cat) => (
+            <div>
+              <div class="flex items-center gap-3 mb-6">
+                <Icon icon={cat.icon} size={28} />
+                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                  {cat.title}
+                </h2>
                 <a
-                  href={tool.href}
-                  class="card p-5 flex flex-col gap-3 hover:border-brand-400 dark:hover:border-brand-600 hover:shadow-md transition-all group"
+                  href={cat.href}
+                  class="ml-auto text-sm text-brand-600 dark:text-brand-400 hover:underline"
                 >
-                  <span class="text-3xl">{tool.icon}</span>
-                  <span class="font-medium text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">{tool.name}</span>
+                  View all →
                 </a>
-              ))}
+              </div>
+              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {cat.tools.map((tool) => (
+                  <a
+                    href={tool.href}
+                    class="card p-5 flex flex-col gap-3 hover:border-brand-400 dark:hover:border-brand-600 hover:shadow-md transition-all group"
+                  >
+                    <Icon icon={tool.icon} size={28} />
+                    <span class="font-medium text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
+                      {tool.name}
+                    </span>
+                  </a>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          ))
+        }
       </div>
     </section>
   </main>

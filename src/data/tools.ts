@@ -1,7 +1,14 @@
+import type { IconType } from 'react-icons';
+import {
+  FcDocument, FcLink, FcRules, FcPackage, FcSynchronize, FcTreeStructure,
+  FcLock, FcUnlock, FcGallery, FcCamera, FcPicture, FcRuler, FcFlashOn,
+  FcVideoFile, FcMusic, FcSettings, FcTemplate, FcAudioFile,
+} from 'react-icons/fc';
+
 export interface Tool {
   name: string;
   href: string;
-  icon: string;
+  icon: IconType;
   desc: string;
   /** <title> tag for the tool page */
   pageTitle: string;
@@ -12,7 +19,7 @@ export interface Tool {
 export interface Category {
   id: string;
   title: string;
-  icon: string;
+  icon: IconType;
   href: string;
   color: string;
   /** <title> tag for the category index page */
@@ -32,7 +39,7 @@ export const categories: Category[] = [
   {
     id: 'pdf',
     title: 'PDF Tools',
-    icon: '📄',
+    icon: FcDocument,
     href: '/pdf',
     color: 'red',
     pageTitle: 'PDF Tools — Free Online PDF Editor | LocalKit',
@@ -41,61 +48,61 @@ export const categories: Category[] = [
     subheading: 'All PDF tools run locally in your browser. No uploads, no servers — your files stay private.',
     tools: [
       {
-        name: 'Merge PDFs', href: '/pdf/merge', icon: '🔗',
+        name: 'Merge PDFs', href: '/pdf/merge', icon: FcLink,
         desc: 'Combine multiple PDFs into one',
         pageTitle: 'Merge PDFs Online — Free, No Upload | LocalKit',
         pageDesc: 'Combine multiple PDF files into one. Drag, drop, reorder and merge — 100% in your browser.',
       },
       {
-        name: 'Split PDF', href: '/pdf/split', icon: '✂️',
+        name: 'Split PDF', href: '/pdf/split', icon: FcRules,
         desc: 'Extract pages or split into parts',
         pageTitle: 'Split PDF Online — Free, No Upload | LocalKit',
         pageDesc: 'Split a PDF into individual pages or custom page ranges. Runs entirely in your browser.',
       },
       {
-        name: 'Compress PDF', href: '/pdf/compress', icon: '🗜️',
+        name: 'Compress PDF', href: '/pdf/compress', icon: FcPackage,
         desc: 'Reduce PDF file size',
         pageTitle: 'Compress PDF Online — Reduce PDF Size | LocalKit',
         pageDesc: 'Reduce PDF file size without quality loss. Uses pdf-lib to optimize object streams in your browser.',
       },
       {
-        name: 'Rotate PDF', href: '/pdf/rotate', icon: '🔄',
+        name: 'Rotate PDF', href: '/pdf/rotate', icon: FcSynchronize,
         desc: 'Rotate pages in a PDF',
         pageTitle: 'Rotate PDF Pages Online | LocalKit',
         pageDesc: 'Rotate all or specific pages in a PDF. Choose 90°, 180°, or 270° rotation. 100% browser-based.',
       },
       {
-        name: 'Reorder Pages', href: '/pdf/reorder', icon: '🔀',
+        name: 'Reorder Pages', href: '/pdf/reorder', icon: FcTreeStructure,
         desc: 'Drag pages into any order',
         pageTitle: 'Reorder PDF Pages — Free, No Upload | LocalKit',
         pageDesc: 'Drag and drop pages to rearrange them in any order. Save your reordered PDF instantly — 100% in your browser.',
       },
       {
-        name: 'Add Watermark', href: '/pdf/watermark', icon: '🔏',
+        name: 'Add Watermark', href: '/pdf/watermark', icon: FcLock,
         desc: 'Stamp text on every page',
         pageTitle: 'Add Watermark to PDF — Free, No Upload | LocalKit',
         pageDesc: 'Stamp text watermarks on every page of your PDF. Choose text, opacity, color and angle — 100% in your browser.',
       },
       {
-        name: 'Unlock PDF', href: '/pdf/unlock', icon: '🔓',
+        name: 'Unlock PDF', href: '/pdf/unlock', icon: FcUnlock,
         desc: 'Remove password protection',
         pageTitle: 'Unlock PDF — Remove Password Protection | LocalKit',
         pageDesc: 'Remove the password from a protected PDF. Enter the password once and download the unlocked file — 100% in your browser.',
       },
       {
-        name: 'Extract Images', href: '/pdf/extract-images', icon: '🖼️',
+        name: 'Extract Images', href: '/pdf/extract-images', icon: FcGallery,
         desc: 'Pull embedded images out',
         pageTitle: 'Extract Images from PDF — Free, No Upload | LocalKit',
         pageDesc: 'Pull out all embedded images from any PDF file. Download individually or as a ZIP — 100% in your browser.',
       },
       {
-        name: 'PDF to Images', href: '/pdf/to-images', icon: '📷',
+        name: 'PDF to Images', href: '/pdf/to-images', icon: FcCamera,
         desc: 'Export each page as PNG',
         pageTitle: 'PDF to Images — Export PDF Pages as PNG | LocalKit',
         pageDesc: 'Convert each page of a PDF to a high-quality PNG image. Powered by PDF.js, runs in your browser.',
       },
       {
-        name: 'Images to PDF', href: '/pdf/from-images', icon: '📷',
+        name: 'Images to PDF', href: '/pdf/from-images', icon: FcCamera,
         desc: 'Create PDF from images',
         pageTitle: 'Images to PDF — Create PDF from Photos | LocalKit',
         pageDesc: 'Combine JPG, PNG images into a single PDF document. All processing in your browser.',
@@ -105,7 +112,7 @@ export const categories: Category[] = [
   {
     id: 'image',
     title: 'Image Tools',
-    icon: '🖼️',
+    icon: FcPicture,
     href: '/image',
     color: 'blue',
     pageTitle: 'Image Tools — Free Online Image Editor | LocalKit',
@@ -114,31 +121,31 @@ export const categories: Category[] = [
     subheading: 'Compress, resize, and convert images using the Canvas API — entirely in your browser.',
     tools: [
       {
-        name: 'Compress Image', href: '/image/compress', icon: '🗜️',
+        name: 'Compress Image', href: '/image/compress', icon: FcPackage,
         desc: 'Reduce image file size',
         pageTitle: 'Compress Images Online — Free, No Upload | LocalKit',
         pageDesc: 'Compress JPEG, PNG, and WebP images without quality loss. Runs 100% in your browser.',
       },
       {
-        name: 'Resize Image', href: '/image/resize', icon: '📐',
+        name: 'Resize Image', href: '/image/resize', icon: FcRuler,
         desc: 'Change image dimensions',
         pageTitle: 'Resize Images Online — Free, No Upload | LocalKit',
         pageDesc: 'Resize images to exact dimensions, fit, or fill. Batch resize multiple images in your browser.',
       },
       {
-        name: 'Convert Format', href: '/image/convert', icon: '🔄',
+        name: 'Convert Format', href: '/image/convert', icon: FcSynchronize,
         desc: 'Convert between JPG, PNG, WebP, AVIF',
         pageTitle: 'Convert Image Format — JPG, PNG, WebP, AVIF | LocalKit',
         pageDesc: 'Convert images between JPEG, PNG, WebP, and AVIF formats. Fast, free, and private.',
       },
       {
-        name: 'Crop / Rotate / Flip', href: '/image/crop-rotate-flip', icon: '✂️',
+        name: 'Crop / Rotate / Flip', href: '/image/crop-rotate-flip', icon: FcRules,
         desc: 'Crop, rotate and flip images',
         pageTitle: 'Crop, Rotate & Flip Images — Free, No Upload | LocalKit',
         pageDesc: 'Crop, rotate and flip any image in your browser. No uploads, no servers — instant download.',
       },
       {
-        name: 'Background Remover', href: '/image/background-remover', icon: '🪄',
+        name: 'Background Remover', href: '/image/background-remover', icon: FcFlashOn,
         desc: 'Remove background with AI',
         pageTitle: 'Remove Image Background — Free, No Upload | LocalKit',
         pageDesc: 'Remove the background from any photo using AI — runs entirely in your browser. No uploads, no servers.',
@@ -148,7 +155,7 @@ export const categories: Category[] = [
   {
     id: 'video',
     title: 'Video Tools',
-    icon: '🎬',
+    icon: FcVideoFile,
     href: '/video',
     color: 'purple',
     pageTitle: 'Video Tools — Free Online Video Editor | LocalKit',
@@ -158,25 +165,25 @@ export const categories: Category[] = [
     note: '⚠️ First load downloads ~30MB FFmpeg WASM core',
     tools: [
       {
-        name: 'Compress Video', href: '/video/compress', icon: '🗜️',
+        name: 'Compress Video', href: '/video/compress', icon: FcPackage,
         desc: 'Reduce video file size with H.264',
         pageTitle: 'Compress Video Online — FFmpeg WASM | LocalKit',
         pageDesc: 'Compress MP4 and other video files using FFmpeg H.264 encoding. Runs in your browser — no upload.',
       },
       {
-        name: 'Convert Video', href: '/video/convert', icon: '🔄',
+        name: 'Convert Video', href: '/video/convert', icon: FcSynchronize,
         desc: 'MP4, WebM, AVI, MOV, GIF',
         pageTitle: 'Convert Video Format Online — MP4, WebM, GIF | LocalKit',
         pageDesc: 'Convert videos between MP4, WebM, AVI, MOV, and GIF. Powered by FFmpeg WASM in your browser.',
       },
       {
-        name: 'Trim Video', href: '/video/trim', icon: '✂️',
+        name: 'Trim Video', href: '/video/trim', icon: FcRules,
         desc: 'Cut start/end of a video',
         pageTitle: 'Trim Video Online — Cut Start & End | LocalKit',
         pageDesc: 'Trim a video by setting start and end points. Uses FFmpeg WASM for lossless stream copy.',
       },
       {
-        name: 'Extract Audio', href: '/video/extract-audio', icon: '🎵',
+        name: 'Extract Audio', href: '/video/extract-audio', icon: FcAudioFile,
         desc: 'Save audio as MP3, AAC, WAV',
         pageTitle: 'Extract Audio from Video — MP3, AAC, WAV | LocalKit',
         pageDesc: 'Extract the audio track from any video file as MP3, AAC, WAV or OGG. Powered by FFmpeg WASM.',
@@ -186,7 +193,7 @@ export const categories: Category[] = [
   {
     id: 'audio',
     title: 'Audio Tools',
-    icon: '🎵',
+    icon: FcMusic,
     href: '/audio',
     color: 'green',
     pageTitle: 'Audio Tools — Free Online Audio Editor | LocalKit',
@@ -196,19 +203,19 @@ export const categories: Category[] = [
     note: '⚠️ First load downloads ~30MB FFmpeg WASM core',
     tools: [
       {
-        name: 'Convert Audio', href: '/audio/convert', icon: '🔄',
+        name: 'Convert Audio', href: '/audio/convert', icon: FcSynchronize,
         desc: 'Convert between MP3, AAC, WAV, OGG, FLAC',
         pageTitle: 'Convert Audio Format — MP3, AAC, WAV, OGG, FLAC | LocalKit',
         pageDesc: 'Convert audio files between MP3, AAC, WAV, OGG, and FLAC formats. Powered by FFmpeg WASM in your browser.',
       },
       {
-        name: 'Trim Audio', href: '/audio/trim', icon: '✂️',
+        name: 'Trim Audio', href: '/audio/trim', icon: FcRules,
         desc: 'Cut start/end of an audio file',
         pageTitle: 'Trim Audio Online — Cut Start & End | LocalKit',
         pageDesc: 'Trim an audio file by setting start and end points. Uses FFmpeg WASM for lossless stream copy.',
       },
       {
-        name: 'Compress Audio', href: '/audio/compress', icon: '🗜️',
+        name: 'Compress Audio', href: '/audio/compress', icon: FcPackage,
         desc: 'Reduce audio file size with bitrate control',
         pageTitle: 'Compress Audio Online — Reduce File Size | LocalKit',
         pageDesc: 'Compress audio files by adjusting bitrate. Powered by FFmpeg WASM — runs entirely in your browser.',
@@ -218,7 +225,7 @@ export const categories: Category[] = [
   {
     id: 'dev',
     title: 'Developer Tools',
-    icon: '🛠️',
+    icon: FcSettings,
     href: '/dev',
     color: 'green',
     pageTitle: 'Developer Tools — LocalKit',
@@ -227,7 +234,7 @@ export const categories: Category[] = [
     subheading: 'Handy dev utilities that run entirely in your browser — no installs, no uploads.',
     tools: [
       {
-        name: 'CSS → Tailwind', href: '/dev/css-to-tailwind', icon: '🎨',
+        name: 'CSS → Tailwind', href: '/dev/css-to-tailwind', icon: FcTemplate,
         desc: 'Convert CSS properties to Tailwind utility classes',
         pageTitle: 'CSS to Tailwind Converter — LocalKit',
         pageDesc: 'Paste any CSS and instantly get the equivalent Tailwind utility classes. Supports prefix config.',

@@ -1,7 +1,10 @@
 ---
-import BaseLayout from './BaseLayout.astro';
-import Header from '../components/layout/Header.astro';
-import Footer from '../components/layout/Footer.astro';
+import BaseLayout from "./BaseLayout.astro";
+import Header from "../components/layout/Header.astro";
+import Footer from "../components/layout/Footer.astro";
+import Icon from "../components/ui/Icon";
+import type { IconType } from "react-icons";
+import { Lock } from "lucide-react";
 
 interface Props {
   title: string;
@@ -10,10 +13,18 @@ interface Props {
   category: string;
   categoryHref: string;
   toolName: string;
-  icon: string;
+  icon: IconType;
 }
 
-const { title, description, canonicalURL, category, categoryHref, toolName, icon } = Astro.props;
+const {
+  title,
+  description,
+  canonicalURL,
+  category,
+  categoryHref,
+  toolName,
+  icon,
+} = Astro.props;
 ---
 
 <BaseLayout title={title} description={description} canonicalURL={canonicalURL}>
@@ -21,28 +32,42 @@ const { title, description, canonicalURL, category, categoryHref, toolName, icon
   <main class="min-h-screen bg-gray-50 dark:bg-gray-950 pt-6 pb-16">
     <div class="max-w-5xl mx-auto px-4 sm:px-6">
       <!-- Breadcrumb -->
-      <nav class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6">
-        <a href="/" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Home</a>
+      <nav
+        class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6"
+      >
+        <a
+          href="/"
+          class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+          >Home</a
+        >
         <span>/</span>
-        <a href={categoryHref} class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">{category}</a>
+        <a
+          href={categoryHref}
+          class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+          >{category}</a
+        >
         <span>/</span>
         <span class="text-gray-900 dark:text-gray-100">{toolName}</span>
       </nav>
 
       <!-- Tool Header -->
       <div class="flex items-center gap-4 mb-8">
-        <div class="text-4xl">{icon}</div>
+        <Icon icon={icon} size={36} />
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{toolName}</h1>
-          <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">{description}</p>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            {toolName}
+          </h1>
+          <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+            {description}
+          </p>
         </div>
       </div>
 
       <!-- Privacy Badge -->
-      <div class="flex items-center gap-2 text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900 rounded-lg px-3 py-2 mb-6 w-fit">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
+      <div
+        class="flex items-center gap-2 text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900 rounded-lg px-3 py-2 mb-6 w-fit"
+      >
+        <Lock className="w-4 h-4 shrink-0" />
         Your files never leave this device — 100% processed in your browser
       </div>
 

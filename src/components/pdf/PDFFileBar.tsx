@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Eye, EyeOff } from 'lucide-react';
+import { FcDocument } from 'react-icons/fc';
 import { useEffect, useState } from 'react';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 
@@ -23,7 +24,7 @@ export default function PDFFileBar({ file, total, onClear }: Props) {
   return (
     <div className="card rounded-xl border overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3">
-        <span className="text-2xl">📄</span>
+        <FcDocument size={28} />
         <div className="flex-1 min-w-0">
           <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
           <p className="text-xs text-gray-500">

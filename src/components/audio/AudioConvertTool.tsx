@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { FcMusic } from 'react-icons/fc';
 import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -58,7 +59,7 @@ export default function AudioConvertTool() {
         />
       ) : (
         <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">🎵</span>
+          <FcMusic size={28} />
           <div className="flex-1">
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>

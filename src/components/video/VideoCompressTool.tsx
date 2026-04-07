@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { FcVideoFile } from 'react-icons/fc';
 import { useState } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -41,7 +42,7 @@ export default function VideoCompressTool() {
         <DropZone onFiles={addFile} accept="video/*" multiple={false} label="Drop a video file" sublabel="MP4, WebM, AVI, MOV supported" />
       ) : (
         <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
-          <span className="text-2xl">🎬</span>
+          <FcVideoFile size={28} />
           <div className="flex-1">
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
@@ -62,7 +63,7 @@ export default function VideoCompressTool() {
                   onClick={() => setQuality(q)}
                   className={`transition-all ${quality === q ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400'}`}
                 >
-                  {q === 'high' ? '🎯 High' : q === 'medium' ? '⚖️ Medium' : '📦 Low'}
+                  {q === 'high' ? 'High' : q === 'medium' ? 'Medium' : 'Low'}
                 </Button>
               ))}
             </div>

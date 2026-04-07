@@ -1,9 +1,9 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import Header from '../components/layout/Header.astro';
-import Footer from '../components/layout/Footer.astro';
-
-const lastUpdated = 'April 2026';
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Header from "../components/layout/Header.astro";
+import Footer from "../components/layout/Footer.astro";
+import { Shield } from "lucide-react";
+const lastUpdated = "April 2026";
 ---
 
 <BaseLayout
@@ -14,84 +14,101 @@ const lastUpdated = 'April 2026';
   <Header />
   <main class="min-h-screen bg-gray-50 dark:bg-gray-950 py-16 px-4">
     <div class="max-w-2xl mx-auto">
-
       <div class="text-center mb-10">
         <div class="text-5xl mb-4">🔒</div>
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">Privacy Policy</h1>
-        <p class="text-sm text-gray-400 dark:text-gray-500">Last updated: {lastUpdated}</p>
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+          Privacy Policy
+        </h1>
+        <p class="text-sm text-gray-400 dark:text-gray-500">
+          Last updated: {lastUpdated}
+        </p>
       </div>
 
       <!-- TL;DR banner -->
-      <div class="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-2xl px-6 py-5 mb-10">
-        <p class="font-bold text-green-800 dark:text-green-300 mb-2 flex items-center gap-2">
-          <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          </svg>
+      <div
+        class="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-2xl px-6 py-5 mb-10"
+      >
+        <p
+          class="font-bold text-green-800 dark:text-green-300 mb-2 flex items-center gap-2"
+        >
+          <Shield className="size-5" />
           TL;DR — We collect nothing
         </p>
         <ul class="text-sm text-green-700 dark:text-green-400 space-y-1">
-          <li>✓ Your files are <strong>never uploaded</strong> to any server</li>
-          <li>✓ All processing happens <strong>locally in your browser</strong></li>
+          <li>
+            ✓ Your files are <strong>never uploaded</strong> to any server
+          </li>
+          <li>
+            ✓ All processing happens <strong>locally in your browser</strong>
+          </li>
           <li>✓ We collect <strong>no personal data</strong></li>
           <li>✓ We use <strong>no tracking cookies</strong></li>
-          <li>✓ Works <strong>fully offline</strong> after initial page load</li>
+          <li>
+            ✓ Works <strong>fully offline</strong> after initial page load
+          </li>
         </ul>
       </div>
 
-      <div class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800">
-
-        {[
-          {
-            title: '1. How LocalKit Works',
-            body: `LocalKit is a client-side web application. Every tool — PDF manipulation, image processing, video conversion, and background removal — runs entirely inside your browser using WebAssembly (WASM), the Canvas API, and Web Workers.
+      <div
+        class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 divide-y divide-gray-100 dark:divide-gray-800"
+      >
+        {
+          [
+            {
+              title: "1. How LocalKit Works",
+              body: `LocalKit is a client-side web application. Every tool — PDF manipulation, image processing, video conversion, and background removal — runs entirely inside your browser using WebAssembly (WASM), the Canvas API, and Web Workers.
 
 When you drop a file into any tool, it is read into browser memory and processed locally. The output file is generated in your browser and downloaded directly to your device. No file data is ever transmitted over the network.`,
-          },
-          {
-            title: '2. Files and Data',
-            body: `We do not collect, transmit, store, or have any access to the files you process with LocalKit.
+            },
+            {
+              title: "2. Files and Data",
+              body: `We do not collect, transmit, store, or have any access to the files you process with LocalKit.
 
 Files are loaded into your browser's memory (RAM) for processing and are cleared when you close the tab or navigate away. We have no server infrastructure that handles file data — there is no backend.`,
-          },
-          {
-            title: '3. Analytics and Tracking',
-            body: `LocalKit does not use advertising trackers, fingerprinting scripts, or behavioral analytics.
+            },
+            {
+              title: "3. Analytics and Tracking",
+              body: `LocalKit does not use advertising trackers, fingerprinting scripts, or behavioral analytics.
 
 If analytics are ever added in the future, only privacy-respecting, cookieless analytics (such as page view counts) will be used, and this policy will be updated accordingly.`,
-          },
-          {
-            title: '4. Cookies and Local Storage',
-            body: `LocalKit uses localStorage only to remember your dark/light theme preference. No tracking cookies are set. No third-party cookies are loaded.`,
-          },
-          {
-            title: '5. Third-Party Services',
-            body: `LocalKit loads fonts from Google Fonts and, on first use, the Background Remover tool downloads an AI model (~50 MB) from a CDN. These requests reveal your IP address to those providers (standard for any web request) but no file content is involved.
+            },
+            {
+              title: "4. Cookies and Local Storage",
+              body: `LocalKit uses localStorage only to remember your dark/light theme preference. No tracking cookies are set. No third-party cookies are loaded.`,
+            },
+            {
+              title: "5. Third-Party Services",
+              body: `LocalKit loads fonts from Google Fonts and, on first use, the Background Remover tool downloads an AI model (~50 MB) from a CDN. These requests reveal your IP address to those providers (standard for any web request) but no file content is involved.
 
 No third-party advertising, analytics, or social media scripts are loaded.`,
-          },
-          {
-            title: '6. Offline Use',
-            body: `After the initial page load, all tools work without an internet connection. The Background Remover model is cached in your browser after the first download and works offline on subsequent visits.`,
-          },
-          {
-            title: '7. Open Source',
-            body: `LocalKit is open source. You can audit the full source code on GitHub to verify these claims. There is no obfuscated code, no hidden network requests, and no server-side component.`,
-          },
-          {
-            title: '8. Changes to This Policy',
-            body: `If this policy changes, the updated version will be published at this URL with an updated date. We will not introduce data collection without clearly disclosing it here.`,
-          },
-          {
-            title: '9. Contact',
-            body: `Questions or concerns about privacy? Open an issue on GitHub.`,
-          },
-        ].map(section => (
-          <div class="px-6 py-6">
-            <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">{section.title}</h2>
-            <div class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">{section.body}</div>
-          </div>
-        ))}
-
+            },
+            {
+              title: "6. Offline Use",
+              body: `After the initial page load, all tools work without an internet connection. The Background Remover model is cached in your browser after the first download and works offline on subsequent visits.`,
+            },
+            {
+              title: "7. Open Source",
+              body: `LocalKit is open source. You can audit the full source code on GitHub to verify these claims. There is no obfuscated code, no hidden network requests, and no server-side component.`,
+            },
+            {
+              title: "8. Changes to This Policy",
+              body: `If this policy changes, the updated version will be published at this URL with an updated date. We will not introduce data collection without clearly disclosing it here.`,
+            },
+            {
+              title: "9. Contact",
+              body: `Questions or concerns about privacy? Open an issue on GitHub.`,
+            },
+          ].map((section) => (
+            <div class="px-6 py-6">
+              <h2 class="font-semibold text-gray-900 dark:text-gray-100 mb-3">
+                {section.title}
+              </h2>
+              <div class="text-sm text-gray-600 dark:text-gray-400 leading-relaxed whitespace-pre-line">
+                {section.body}
+              </div>
+            </div>
+          ))
+        }
       </div>
     </div>
   </main>
