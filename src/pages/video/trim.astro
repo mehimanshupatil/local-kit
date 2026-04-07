@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import VideoTrimTool from '../../components/video/VideoTrimTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/video/trim');
+---
+<ToolLayout {...meta}>
+  <VideoTrimTool client:load />
+</ToolLayout>

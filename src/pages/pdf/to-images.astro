@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFToImagesTool from '../../components/pdf/PDFToImagesTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/to-images');
+---
+<ToolLayout {...meta}>
+  <PDFToImagesTool client:load />
+</ToolLayout>

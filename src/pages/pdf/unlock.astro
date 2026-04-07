@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFUnlockTool from '../../components/pdf/PDFUnlockTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/unlock');
+---
+<ToolLayout {...meta}>
+  <PDFUnlockTool client:load />
+</ToolLayout>

@@ -1,0 +1,157 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-200: #bae6fd;
+  --color-brand-300: #7dd3fc;
+  --color-brand-400: #38bdf8;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0284c7;
+  --color-brand-700: #0369a1;
+  --color-brand-800: #075985;
+  --color-brand-900: #0c4a6e;
+  --color-brand-950: #082f49;
+
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  --animate-fade-in: fadeIn 0.2s ease-out;
+  --animate-slide-up: slideUp 0.3s ease-out;
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(8px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+  }
+
+  /* shadcn/ui semantic tokens — mapped from CSS vars below */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border-color);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset: var(--background);
+  --radius: 0.75rem;
+}
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #0f172a;
+    --card: #ffffff;
+    --card-foreground: #0f172a;
+    --popover: #ffffff;
+    --popover-foreground: #0f172a;
+    --primary: #0284c7;
+    --primary-foreground: #ffffff;
+    --secondary: #f1f5f9;
+    --secondary-foreground: #1e293b;
+    --muted: #f1f5f9;
+    --muted-foreground: #64748b;
+    --accent: #f0f9ff;
+    --accent-foreground: #0369a1;
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border-color: #e2e8f0;
+    --input: #e2e8f0;
+    --ring: #0ea5e9;
+
+    /* legacy aliases */
+    --bg-primary: var(--background);
+    --bg-secondary: #f8fafc;
+    --bg-card: var(--card);
+    --text-primary: var(--foreground);
+    --text-secondary: #475569;
+    --border: var(--border-color);
+  }
+
+  .dark {
+    --background: #030712;
+    --foreground: #f8fafc;
+    --card: #111827;
+    --card-foreground: #f8fafc;
+    --popover: #111827;
+    --popover-foreground: #f8fafc;
+    --primary: #0ea5e9;
+    --primary-foreground: #ffffff;
+    --secondary: #1e293b;
+    --secondary-foreground: #cbd5e1;
+    --muted: #1e293b;
+    --muted-foreground: #94a3b8;
+    --accent: #082f49;
+    --accent-foreground: #7dd3fc;
+    --destructive: #f87171;
+    --destructive-foreground: #ffffff;
+    --border-color: #1f2937;
+    --input: #374151;
+    --ring: #38bdf8;
+
+    /* legacy aliases */
+    --bg-primary: var(--background);
+    --bg-secondary: #111827;
+    --bg-card: var(--card);
+    --text-primary: var(--foreground);
+    --text-secondary: #94a3b8;
+    --border: var(--border-color);
+  }
+
+  html {
+    @apply antialiased scroll-smooth;
+  }
+
+  body {
+    @apply bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-50 transition-colors duration-200;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white font-medium text-sm
+           hover:bg-brand-700 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-sm
+           hover:bg-gray-200 dark:hover:bg-gray-700 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-500 text-white font-medium text-sm
+           hover:bg-red-600 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm;
+  }
+
+  .input {
+    @apply w-full px-4 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800
+           text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent
+           placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all;
+  }
+
+  .label {
+    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5;
+  }
+}

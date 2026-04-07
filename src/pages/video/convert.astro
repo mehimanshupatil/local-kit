@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import VideoConvertTool from '../../components/video/VideoConvertTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/video/convert');
+---
+<ToolLayout {...meta}>
+  <VideoConvertTool client:load />
+</ToolLayout>

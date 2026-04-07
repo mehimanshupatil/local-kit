@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFRotateTool from '../../components/pdf/PDFRotateTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/rotate');
+---
+<ToolLayout {...meta}>
+  <PDFRotateTool client:load />
+</ToolLayout>

@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFReorderTool from '../../components/pdf/PDFReorderTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/reorder');
+---
+<ToolLayout {...meta}>
+  <PDFReorderTool client:load />
+</ToolLayout>

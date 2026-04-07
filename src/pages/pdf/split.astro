@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFSplitTool from '../../components/pdf/PDFSplitTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/split');
+---
+<ToolLayout {...meta}>
+  <PDFSplitTool client:load />
+</ToolLayout>

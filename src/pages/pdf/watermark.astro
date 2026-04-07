@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFWatermarkTool from '../../components/pdf/PDFWatermarkTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/watermark');
+---
+<ToolLayout {...meta}>
+  <PDFWatermarkTool client:load />
+</ToolLayout>

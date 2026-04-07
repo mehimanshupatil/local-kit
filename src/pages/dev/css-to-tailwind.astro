@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CSSToTailwindTool from '../../components/dev/CSSToTailwindTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/css-to-tailwind');
+---
+<ToolLayout {...meta}>
+  <CSSToTailwindTool client:load />
+</ToolLayout>

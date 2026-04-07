@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ImageResizeTool from '../../components/image/ImageResizeTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/resize');
+---
+<ToolLayout {...meta}>
+  <ImageResizeTool client:load />
+</ToolLayout>

@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFExtractImagesTool from '../../components/pdf/PDFExtractImagesTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/extract-images');
+---
+<ToolLayout {...meta}>
+  <PDFExtractImagesTool client:load />
+</ToolLayout>

@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ImageBackgroundRemovalTool from '../../components/image/ImageBackgroundRemovalTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/background-remover');
+---
+<ToolLayout {...meta}>
+  <ImageBackgroundRemovalTool client:load />
+</ToolLayout>

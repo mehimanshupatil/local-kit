@@ -1,0 +1,105 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/layout/Header.astro';
+import Footer from '../components/layout/Footer.astro';
+
+const faqs = [
+  {
+    q: 'Are my files uploaded to any server?',
+    a: 'No. Every tool on LocalKit processes files entirely inside your browser using WebAssembly and the Canvas API. Your files are never sent over the network — not even to our servers. You can verify this by opening DevTools → Network and watching for zero outbound file traffic.',
+  },
+  {
+    q: 'Does it work offline?',
+    a: 'Yes — once the page has loaded, all tools work without an internet connection. The only exceptions are tools that download a model on first use (Background Remover downloads ~50 MB on first run, then caches it). After that, everything is available offline.',
+  },
+  {
+    q: 'Is LocalKit free?',
+    a: 'Completely free, with no sign-up, no account, and no usage limits. There are no ads or paywalls.',
+  },
+  {
+    q: 'What browsers are supported?',
+    a: 'Any modern browser works: Chrome 92+, Firefox 79+, Safari 15.2+, and Edge 92+. Some tools (Background Remover, FFmpeg video tools) require SharedArrayBuffer support, which is available in all of the above.',
+  },
+  {
+    q: 'Is there a file size limit?',
+    a: "There's no hard limit imposed by LocalKit — processing happens in your browser's memory, so the practical limit depends on your device's RAM. Large video files (>2 GB) may be slow or fail on low-memory devices. For most documents and images there is no noticeable limit.",
+  },
+  {
+    q: 'What file formats are supported?',
+    a: 'PDF tools support standard PDF files. Image tools support JPEG, PNG, WebP, AVIF, and GIF. Video tools support MP4, WebM, MOV, MKV, AVI, and most other common formats via FFmpeg WASM.',
+  },
+  {
+    q: 'How is this different from tools like Smallpdf, ILovePDF, or Canva?',
+    a: 'Those tools upload your files to their servers to process them. LocalKit never uploads anything — all computation happens locally. This means your sensitive documents (contracts, medical records, photos) stay on your device.',
+  },
+  {
+    q: 'What powers the tools under the hood?',
+    a: 'PDF tools use @cantoo/pdf-lib and PDF.js (Mozilla). Image tools use the browser Canvas API and browser-image-compression. Video tools use FFmpeg compiled to WebAssembly. Background Remover uses the @imgly/background-removal ONNX model. All run natively in your browser.',
+  },
+  {
+    q: 'Can I use LocalKit on mobile?',
+    a: 'Yes. All tools are responsive and work on iOS Safari and Android Chrome. Video processing on mobile can be slow for large files due to hardware constraints.',
+  },
+  {
+    q: 'Is the source code available?',
+    a: 'Yes — LocalKit is open source. You can inspect, fork, and self-host it.',
+  },
+];
+---
+
+<BaseLayout
+  title="FAQ — LocalKit"
+  description="Frequently asked questions about LocalKit — privacy, offline support, file limits, and how it works."
+  canonicalURL="/faq"
+>
+  <Header />
+  <main class="min-h-screen bg-gray-50 dark:bg-gray-950 py-16 px-4">
+    <div class="max-w-3xl mx-auto">
+
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-3">Frequently Asked Questions</h1>
+        <p class="text-gray-500 dark:text-gray-400">Everything you need to know about how LocalKit works.</p>
+      </div>
+
+      <!-- Privacy callout -->
+      <div class="flex items-start gap-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-2xl px-5 py-4 mb-10">
+        <svg class="w-6 h-6 text-green-600 dark:text-green-400 shrink-0 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+        <div>
+          <p class="font-semibold text-green-800 dark:text-green-300 text-sm">Your files never leave your device</p>
+          <p class="text-green-700 dark:text-green-400 text-sm mt-0.5">
+            All processing happens locally using WebAssembly. No uploads. No servers. No accounts required.
+          </p>
+        </div>
+      </div>
+
+      <!-- FAQ list -->
+      <div class="space-y-4">
+        {faqs.map((faq, i) => (
+          <details class="group bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <summary class="flex items-center justify-between gap-4 px-6 py-4 cursor-pointer list-none select-none hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+              <span class="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">{faq.q}</span>
+              <svg class="w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 group-open:rotate-180" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </summary>
+            <div class="px-6 pb-5 pt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed border-t border-gray-100 dark:border-gray-800">
+              {faq.a}
+            </div>
+          </details>
+        ))}
+      </div>
+
+      <!-- Still have questions -->
+      <div class="mt-12 text-center">
+        <p class="text-sm text-gray-500 dark:text-gray-400">
+          Still have questions?
+          <a href="https://github.com/mehimanshupatil/local-kit/issues" class="text-brand-600 dark:text-brand-400 hover:underline ml-1">Open an issue on GitHub →</a>
+        </p>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>

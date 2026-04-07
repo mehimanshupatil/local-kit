@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ImageConvertTool from '../../components/image/ImageConvertTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/convert');
+---
+<ToolLayout {...meta}>
+  <ImageConvertTool client:load />
+</ToolLayout>

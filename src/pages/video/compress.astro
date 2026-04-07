@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import VideoCompressTool from '../../components/video/VideoCompressTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/video/compress');
+---
+<ToolLayout {...meta}>
+  <VideoCompressTool client:load />
+</ToolLayout>

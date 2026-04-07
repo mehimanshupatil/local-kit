@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFMergeTool from '../../components/pdf/PDFMergeTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/merge');
+---
+<ToolLayout {...meta}>
+  <PDFMergeTool client:load />
+</ToolLayout>

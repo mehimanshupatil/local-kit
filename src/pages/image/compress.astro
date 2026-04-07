@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ImageCompressTool from '../../components/image/ImageCompressTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/compress');
+---
+<ToolLayout {...meta}>
+  <ImageCompressTool client:load />
+</ToolLayout>

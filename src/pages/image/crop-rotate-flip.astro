@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ImageCropRotateFlipTool from '../../components/image/ImageCropRotateFlipTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/crop-rotate-flip');
+---
+<ToolLayout {...meta}>
+  <ImageCropRotateFlipTool client:load />
+</ToolLayout>

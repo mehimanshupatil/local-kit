@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFCompressTool from '../../components/pdf/PDFCompressTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/compress');
+---
+<ToolLayout {...meta}>
+  <PDFCompressTool client:load />
+</ToolLayout>
