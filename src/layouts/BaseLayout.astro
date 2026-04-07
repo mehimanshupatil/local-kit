@@ -1,7 +1,8 @@
 ---
-import '../styles/global.css';
-import ToasterProvider from '../components/layout/ToasterProvider';
-import PWAInstallPrompt from '../components/layout/PWAInstallPrompt';
+import "../styles/global.css";
+import ToasterProvider from "../components/layout/ToasterProvider";
+import PWAInstallPrompt from "../components/layout/PWAInstallPrompt";
+import { pwaInfo } from "virtual:pwa-info";
 
 interface Props {
   title: string;
@@ -10,8 +11,8 @@ interface Props {
 }
 
 const { title, description, canonicalURL } = Astro.props;
-const siteURL = 'https://localkit.app';
-const fullTitle = title.includes('LocalKit') ? title : `${title} | LocalKit`;
+const siteURL = "https://localkit.app";
+const fullTitle = title.includes("LocalKit") ? title : `${title} | LocalKit`;
 ---
 
 <!doctype html>
@@ -21,13 +22,21 @@ const fullTitle = title.includes('LocalKit') ? title : `${title} | LocalKit`;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <title>{fullTitle}</title>
-    {canonicalURL && <link rel="canonical" href={`${siteURL}${canonicalURL}`} />}
+    {
+      canonicalURL && (
+        <link rel="canonical" href={`${siteURL}${canonicalURL}`} />
+      )
+    }
 
     <!-- OG -->
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    {canonicalURL && <meta property="og:url" content={`${siteURL}${canonicalURL}`} />}
+    {
+      canonicalURL && (
+        <meta property="og:url" content={`${siteURL}${canonicalURL}`} />
+      )
+    }
 
     <!-- Favicon & PWA -->
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
@@ -35,17 +44,24 @@ const fullTitle = title.includes('LocalKit') ? title : `${title} | LocalKit`;
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <meta name="theme-color" content="#0284c7" />
 
+    {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
 
     <!-- Theme: prevents flash -->
     <script is:inline>
-      const stored = localStorage.getItem('theme');
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      if (stored === 'dark' || (!stored && prefersDark)) {
-        document.documentElement.classList.add('dark');
+      const stored = localStorage.getItem("theme");
+      const prefersDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+      if (stored === "dark" || (!stored && prefersDark)) {
+        document.documentElement.classList.add("dark");
       }
     </script>
   </head>
