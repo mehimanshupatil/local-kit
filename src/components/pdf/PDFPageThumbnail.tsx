@@ -50,7 +50,7 @@ export default function PDFPageThumbnail({ pdf, pageNumber, width = 100, rotatio
       <canvas ref={canvasRef} className="block w-full h-full" style={{ transform: `rotate(${rotation}deg)`, transition: 'transform 0.25s ease' }} />
       {!loaded && (
         <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 animate-pulse flex items-center justify-center">
-          <Loader2 className="w-5 h-5 text-gray-300 animate-spin" />
+          <Loader2 className="size-5 text-gray-300 animate-spin" />
         </div>
       )}
     </div>

@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, EyeOff } from 'lucide-react';
 import { FcDocument } from 'react-icons/fc';
 import { useEffect, useState } from 'react';
+import { useDisclosure } from '@mantine/hooks';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 
 interface Props {
@@ -11,7 +12,7 @@ interface Props {
 }
 
 export default function PDFFileBar({ file, total, onClear }: Props) {
-  const [open, setOpen] = useState(false);
+  const [opened, { toggle }] = useDisclosure(false);
   const [url, setUrl] = useState('');
 
   useEffect(() => {
@@ -31,12 +32,12 @@ export default function PDFFileBar({ file, total, onClear }: Props) {
             {total != null ? `${total} pages · ` : ''}{formatFileSize(file.size)}
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setOpen(v => !v)} title={open ? 'Hide preview' : 'Preview PDF'}>
-          {open ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        <Button variant="ghost" size="icon" onClick={toggle} title={opened ? 'Hide preview' : 'Preview PDF'}>
+          {opened ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
         </Button>
         <Button variant="secondary" size="sm" onClick={onClear}>Change</Button>
       </div>
-      {open && url && (
+      {opened && url && (
         <iframe
           src={url}
           className="w-full border-t border-gray-200 dark:border-gray-700"

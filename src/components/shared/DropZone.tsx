@@ -2,6 +2,7 @@ import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils/cn';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
+import { useWindowEvent } from '@mantine/hooks';
 
 interface Props {
   onFiles: (files: File[]) => void;
@@ -33,6 +34,19 @@ function parseAccept(accept?: string): Record<string, string[]> | undefined {
 }
 
 export default function DropZone({ onFiles, accept, multiple = true, label, sublabel }: Props) {
+  const acceptsImages = !accept || accept.includes('image');
+
+  useWindowEvent('paste', (e) => {
+    if (!acceptsImages) return;
+    const items = Array.from(e.clipboardData?.items ?? []);
+    const files = items
+      .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+      .map(item => item.getAsFile())
+      .filter((f): f is File => f !== null);
+    if (files.length === 0) return;
+    onFiles(multiple ? files : [files[0]]);
+  });
+
   const { getRootProps, getInputProps, isDragActive, isDragReject } = useDropzone({
     onDrop: onFiles,
     accept: parseAccept(accept),
@@ -73,6 +87,7 @@ export default function DropZone({ onFiles, accept, multiple = true, label, subl
         </p>
         <p className="text-sm text-gray-500 dark:text-gray-400">
           {sublabel || (accept ? `Accepted: ${accept}` : 'All file types supported')}
+          {acceptsImages && <span className="ml-1 opacity-60">· or paste (Ctrl+V)</span>}
         </p>
       </div>
 

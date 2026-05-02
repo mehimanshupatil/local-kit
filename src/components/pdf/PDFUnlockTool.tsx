@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState } from 'react';
+import { useDisclosure } from '@mantine/hooks';
 import { Lock, LockOpen, Eye, EyeOff } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -13,7 +14,7 @@ export default function PDFUnlockTool() {
   const [file, setFile]         = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [isLocked, setIsLocked] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');
-  const [showPw, setShowPw]     = useState(false);
+  const [showPw, { toggle: toggleShowPw }] = useDisclosure(false);
   const [status, setStatus]     = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
   const [output, setOutput]     = useState<OutputFile[]>([]);
@@ -73,7 +74,7 @@ export default function PDFUnlockTool() {
           {/* Encryption status */}
           {isLocked === false && (
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800">
-              <LockOpen className="w-5 h-5 text-green-600 dark:text-green-400 shrink-0" />
+              <LockOpen className="size-5 text-green-600 dark:text-green-400 shrink-0" />
               <p className="text-sm text-green-700 dark:text-green-300 font-medium">
                 This PDF is not password protected
               </p>
@@ -83,7 +84,7 @@ export default function PDFUnlockTool() {
           {isLocked === true && (
             <>
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
-                <Lock className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0" />
+                <Lock className="size-5 text-amber-600 dark:text-amber-400 shrink-0" />
                 <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">
                   This PDF is password protected — enter the password to unlock it
                 </p>
@@ -105,11 +106,11 @@ export default function PDFUnlockTool() {
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => setShowPw(v => !v)}
+                    onClick={toggleShowPw}
                     className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     tabIndex={-1}
                   >
-                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                   </Button>
                 </div>
               </div>
@@ -143,7 +144,7 @@ export default function PDFUnlockTool() {
           <div className="border-t border-gray-100 dark:border-gray-800 pt-5 space-y-3">
             <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Protect PDF</p>
             <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-              <Lock className="w-4 h-4 text-blue-500 dark:text-blue-400 mt-0.5 shrink-0" />
+              <Lock className="size-4 text-blue-500 dark:text-blue-400 mt-0.5 shrink-0" />
               <p className="text-sm text-blue-700 dark:text-blue-300">
                 Password protection requires encryption which is not available in-browser. Use a desktop tool like{' '}
                 <span className="font-medium">Adobe Acrobat</span> or{' '}

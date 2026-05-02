@@ -2,8 +2,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { downloadBlob, downloadAllAsZip } from '@/lib/utils/downloadUtils';
 import { formatFileSize } from '@/lib/utils/fileUtils';
-import { Download, Archive, Eye, EyeOff } from 'lucide-react';
+import { Download, Archive, Eye, EyeOff, Copy, Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useDisclosure, useTimeout } from '@mantine/hooks';
 
 export interface OutputFile {
   name: string;
@@ -17,7 +18,7 @@ interface Props {
 
 function PDFPreview({ blob }: { blob: Blob }) {
   const [url, setUrl] = useState('');
-  const [open, setOpen] = useState(false);
+  const [opened, { toggle }] = useDisclosure(false);
 
   useEffect(() => {
     const u = URL.createObjectURL(blob);
@@ -27,11 +28,11 @@ function PDFPreview({ blob }: { blob: Blob }) {
 
   return (
     <div className="mt-2 space-y-2">
-      <Button variant="secondary" size="sm" onClick={() => setOpen(v => !v)}>
-        {open ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-        {open ? 'Hide preview' : 'Preview PDF'}
+      <Button variant="secondary" size="sm" onClick={toggle}>
+        {opened ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+        {opened ? 'Hide preview' : 'Preview PDF'}
       </Button>
-      {open && url && (
+      {opened && url && (
         <iframe
           src={url}
           className="w-full rounded-xl border border-gray-200 dark:border-gray-700"
@@ -64,6 +65,57 @@ function ImagePreview({ blob }: { blob: Blob }) {
   );
 }
 
+function CopyImageButton({ blob }: { blob: Blob }) {
+  const [copied, setCopied] = useState(false);
+  const [copiedSize, setCopiedSize] = useState<number | null>(null);
+  const { start: startResetTimer } = useTimeout(() => { setCopied(false); setCopiedSize(null); }, 2000);
+
+  const mimeType = blob.type || 'image/png';
+  const willConvert = !(ClipboardItem.supports?.(mimeType) ?? false) && mimeType !== 'image/png';
+
+  const copy = async () => {
+    try {
+      const supported = !willConvert;
+
+      const clipBlob = supported ? blob : await new Promise<Blob>((resolve, reject) => {
+        const img = new Image();
+        const url = URL.createObjectURL(blob);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          canvas.getContext('2d')!.drawImage(img, 0, 0);
+          URL.revokeObjectURL(url);
+          canvas.toBlob(b => b ? resolve(b) : reject(new Error('Canvas toBlob failed')), 'image/png');
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
+        img.src = url;
+      });
+
+      await navigator.clipboard.write([new ClipboardItem({ [supported ? mimeType : 'image/png']: clipBlob })]);
+      setCopied(true);
+      setCopiedSize(clipBlob.size);
+      startResetTimer();
+    } catch {
+      // Clipboard API unsupported or denied — silently ignore
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <Button size="sm" variant="secondary" onClick={copy} title="Copy image to clipboard">
+        {copied ? <Check className="size-3.5 text-green-500" /> : <Copy className="size-3.5" />}
+        {copied ? `Copied! (${formatFileSize(copiedSize!)})` : 'Copy'}
+      </Button>
+      {willConvert && (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          ⚠ Will copy as PNG — browser doesn't support {mimeType.split('/')[1].toUpperCase()} in clipboard, this can affect size
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function OutputFiles({ files }: Props) {
   if (files.length === 0) return null;
 
@@ -78,7 +130,7 @@ export default function OutputFiles({ files }: Props) {
         </h3>
         {files.length > 1 && (
           <Button size="sm" onClick={() => downloadAllAsZip(files)}>
-            <Archive className="w-3.5 h-3.5" />
+            <Archive className="size-3.5" />
             Download All (.zip)
           </Button>
         )}
@@ -92,8 +144,9 @@ export default function OutputFiles({ files }: Props) {
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
                 <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
               </div>
+              {isImage(file) && <CopyImageButton blob={file.blob} />}
               <Button size="sm" onClick={() => downloadBlob(file.blob, file.name)}>
-                <Download className="w-3.5 h-3.5" />
+                <Download className="size-3.5" />
                 Download
               </Button>
             </div>

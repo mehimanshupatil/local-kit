@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import OCRTool from '../../components/ocr/OCRTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/ocr/extract');
+---
+<ToolLayout {...meta}>
+  <OCRTool client:load />
+</ToolLayout>

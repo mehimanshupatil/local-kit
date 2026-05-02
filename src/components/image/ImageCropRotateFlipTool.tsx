@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useRef } from 'react';
+import { useDisclosure } from '@mantine/hooks';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { RotateCcw, RotateCw } from 'lucide-react';
@@ -15,8 +16,8 @@ export default function ImageCropRotateFlipTool() {
   const [crop, setCrop] = useState<Crop | undefined>(undefined);
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | undefined>(undefined);
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
-  const [flipH, setFlipH] = useState(false);
-  const [flipV, setFlipV] = useState(false);
+  const [flipH, { toggle: toggleFlipH, close: resetFlipH }] = useDisclosure(false);
+  const [flipV, { toggle: toggleFlipV, close: resetFlipV }] = useDisclosure(false);
   const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
@@ -31,8 +32,8 @@ export default function ImageCropRotateFlipTool() {
     setCrop(undefined);
     setCompletedCrop(undefined);
     setRotation(0);
-    setFlipH(false);
-    setFlipV(false);
+    resetFlipH();
+    resetFlipV();
     setStatus('idle');
     setOutput([]);
     setError('');
@@ -45,8 +46,8 @@ export default function ImageCropRotateFlipTool() {
     setCrop(undefined);
     setCompletedCrop(undefined);
     setRotation(0);
-    setFlipH(false);
-    setFlipV(false);
+    resetFlipH();
+    resetFlipV();
     setStatus('idle');
     setOutput([]);
     setError('');
@@ -148,7 +149,7 @@ export default function ImageCropRotateFlipTool() {
                 className="flex-1"
                 title="Rotate 90° counter-clockwise"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="size-4" />
                 <span>90° CCW</span>
               </Button>
               <Button variant="secondary"
@@ -156,7 +157,7 @@ export default function ImageCropRotateFlipTool() {
                 className="flex-1"
                 title="Rotate 90° clockwise"
               >
-                <RotateCw className="w-4 h-4" />
+                <RotateCw className="size-4" />
                 <span>90° CW</span>
               </Button>
               <Button variant="secondary"
@@ -186,7 +187,7 @@ export default function ImageCropRotateFlipTool() {
             <div className="flex gap-2">
               <Button
                 variant="outline"
-                onClick={() => setFlipH(v => !v)}
+                onClick={toggleFlipH}
                 className={`flex-1 transition-all ${flipH ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-700 dark:text-gray-300'}`}
               >
                 <span className="text-base">↔</span>
@@ -194,7 +195,7 @@ export default function ImageCropRotateFlipTool() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setFlipV(v => !v)}
+                onClick={toggleFlipV}
                 className={`flex-1 transition-all ${flipV ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-700 dark:text-gray-300'}`}
               >
                 <span className="text-base">↕</span>

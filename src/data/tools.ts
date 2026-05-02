@@ -2,7 +2,8 @@ import type { IconType } from 'react-icons';
 import {
   FcDocument, FcLink, FcRules, FcPackage, FcSynchronize, FcTreeStructure,
   FcLock, FcUnlock, FcGallery, FcCamera, FcPicture, FcRuler, FcFlashOn,
-  FcVideoFile, FcMusic, FcSettings, FcTemplate, FcAudioFile,
+  FcVideoFile, FcMusic, FcSettings, FcTemplate, FcAudioFile, FcDeleteDatabase,
+  FcReading,
 } from 'react-icons/fc';
 
 export interface Tool {
@@ -76,6 +77,12 @@ export const categories: Category[] = [
         desc: 'Drag pages into any order',
         pageTitle: 'Reorder PDF Pages — Free, No Upload | LocalKit',
         pageDesc: 'Drag and drop pages to rearrange them in any order. Save your reordered PDF instantly — 100% in your browser.',
+      },
+      {
+        name: 'Delete Pages', href: '/pdf/delete-pages', icon: FcDeleteDatabase,
+        desc: 'Remove specific pages from a PDF',
+        pageTitle: 'Delete PDF Pages — Free, No Upload | LocalKit',
+        pageDesc: 'Select and remove specific pages from a PDF. Preview thumbnails, click to mark, save instantly — 100% in your browser.',
       },
       {
         name: 'Add Watermark', href: '/pdf/watermark', icon: FcLock,
@@ -219,6 +226,26 @@ export const categories: Category[] = [
         desc: 'Reduce audio file size with bitrate control',
         pageTitle: 'Compress Audio Online — Reduce File Size | LocalKit',
         pageDesc: 'Compress audio files by adjusting bitrate. Powered by FFmpeg WASM — runs entirely in your browser.',
+      },
+    ],
+  },
+  {
+    id: 'ocr',
+    title: 'OCR Tools',
+    icon: FcReading,
+    href: '/ocr',
+    color: 'yellow',
+    pageTitle: 'OCR Tools — Extract Text from Images & PDFs | LocalKit',
+    pageDesc: 'Extract text from images and PDFs using Tesseract OCR — 12+ languages, 100% in your browser.',
+    heading: 'OCR Tools',
+    subheading: 'Extract text from images and PDFs using Tesseract OCR — runs entirely in your browser, no uploads.',
+    note: '⚠️ First use downloads the language model (~10 MB). Cached after that.',
+    tools: [
+      {
+        name: 'Extract Text', href: '/ocr/extract', icon: FcReading,
+        desc: 'Extract text from images or PDFs',
+        pageTitle: 'OCR — Extract Text from Images & PDFs | LocalKit',
+        pageDesc: 'Extract text from any image or PDF using Tesseract OCR. Supports 12+ languages — runs 100% in your browser.',
       },
     ],
   },

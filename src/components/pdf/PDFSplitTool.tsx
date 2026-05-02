@@ -178,14 +178,14 @@ export default function PDFSplitTool() {
                           <>
                             <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-red-400 dark:bg-red-500" />
                             <div className="relative z-10 bg-red-100 dark:bg-red-950 border-2 border-red-400 dark:border-red-500 rounded-full p-1">
-                              <Scissors className="w-3.5 h-3.5 text-red-500" />
+                              <Scissors className="size-3.5 text-red-500" />
                             </div>
                           </>
                         ) : (
                           <>
                             <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px border-l-2 border-dashed border-gray-300 dark:border-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full p-1">
-                              <Scissors className="w-3 h-3 text-gray-400" />
+                              <Scissors className="size-3 text-gray-400" />
                             </div>
                           </>
                         )}
@@ -203,7 +203,7 @@ export default function PDFSplitTool() {
               {sections.map((sec, s) => (
                 <div key={s} className={`p-3 rounded-xl border-2 ${SECTION_COLORS[s % SECTION_COLORS.length]}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-2 h-2 rounded-full ${SECTION_DOTS[s % SECTION_DOTS.length]}`} />
+                    <div className={`size-2 rounded-full ${SECTION_DOTS[s % SECTION_DOTS.length]}`} />
                     <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Part {s + 1}.pdf</span>
                   </div>
                   <div className="flex gap-1 flex-wrap">

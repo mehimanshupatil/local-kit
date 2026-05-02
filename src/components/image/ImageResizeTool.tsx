@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDisclosure } from '@mantine/hooks';
 import { Lock, LockOpen } from 'lucide-react';
 import { Resizable } from 're-resizable';
 import DropZone from '@/components/shared/DropZone';
@@ -37,7 +38,7 @@ export default function ImageResizeTool() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [width,  setWidth]    = useState(1920);
   const [height, setHeight]   = useState(1080);
-  const [locked, setLocked]   = useState(true);
+  const [locked, { toggle: toggleLocked }] = useDisclosure(true);
   const [mode,   setMode]     = useState<ResizeMode>('fit');
   const [status, setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
@@ -107,6 +108,10 @@ export default function ImageResizeTool() {
   };
 
   const reset = () => { files.forEach(f => URL.revokeObjectURL(f.preview)); setFiles([]); setOutput([]); setStatus('idle'); };
+
+  useEffect(() => {
+    if (files.length > 0 && status === 'idle') resize();
+  }, [files.length]);
 
   return (
     <div className="space-y-5">
@@ -243,11 +248,11 @@ export default function ImageResizeTool() {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setLocked(l => !l)}
+                  onClick={toggleLocked}
                   title={locked ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
                   className={`mb-0.5 transition-all ${locked ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400' : 'text-gray-400'}`}
                 >
-                  {locked ? <Lock className="w-4 h-4" /> : <LockOpen className="w-4 h-4" />}
+                  {locked ? <Lock className="size-4" /> : <LockOpen className="size-4" />}
                 </Button>
 
                 <div className="flex-1">

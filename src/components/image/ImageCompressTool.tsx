@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -28,6 +28,10 @@ export default function ImageCompressTool() {
     updateFiles(draft => { draft.push(...entries); });
     setStatus('idle'); setOutput([]);
   };
+
+  useEffect(() => {
+    if (files.length > 0 && status === 'idle') compress();
+  }, [files.length]);
 
   const remove = (id: string) => {
     const f = files.find(f => f.id === id);
@@ -63,7 +67,7 @@ export default function ImageCompressTool() {
               <div key={f.id} className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                 <img src={f.preview} alt={f.file.name} className="w-full h-24 object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <Button onClick={() => remove(f.id)} className="bg-red-500 text-white rounded-full w-7 h-7 flex items-center justify-center text-lg leading-none">×</Button>
+                  <Button onClick={() => remove(f.id)} className="bg-red-500 text-white rounded-full size-7 flex items-center justify-center text-lg leading-none">×</Button>
                 </div>
                 <div className="px-2 py-1 bg-white dark:bg-gray-900">
                   <p className="text-xs text-gray-500 truncate">{formatFileSize(f.file.size)}</p>

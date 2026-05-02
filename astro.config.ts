@@ -112,8 +112,14 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss(), copyPDFWorkerPlugin()],
+    worker: {
+      format: 'es',
+    },
     optimizeDeps: {
-      exclude: ['pdfjs-dist', '@ffmpeg/ffmpeg', '@ffmpeg/util'],
+      exclude: ['pdfjs-dist', '@ffmpeg/ffmpeg', '@ffmpeg/util', 'scribe.js-ocr'],
+    },
+    build: {
+      rollupOptions: {},
     },
   },
 });

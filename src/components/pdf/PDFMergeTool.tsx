@@ -54,7 +54,7 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
         size="icon"
         className="touch-none cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400"
       >
-        <GripVertical className="w-4 h-4" />
+        <GripVertical className="size-4" />
       </Button>
 
       <span className="text-xs text-gray-400 font-mono w-5 text-center shrink-0">{index + 1}</span>
@@ -90,7 +90,7 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
         onClick={() => onRemove(file.id)}
         className="shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
       >
-        <X className="w-4 h-4" />
+        <X className="size-4" />
       </Button>
     </div>
   );
@@ -181,7 +181,7 @@ export default function PDFMergeTool() {
                     <p className="text-[10px] text-gray-400 mt-0.5 w-9 truncate text-center">{f.pageCount}p</p>
                   </div>
                   {i < files.length - 1 && (
-                    <ChevronRight className="w-4 h-4 text-brand-400 shrink-0" />
+                    <ChevronRight className="size-4 text-brand-400 shrink-0" />
                   )}
                 </div>
               ))}

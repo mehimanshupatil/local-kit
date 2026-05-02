@@ -188,7 +188,7 @@ export default function PDFWatermarkTool() {
                         : 'text-gray-600 dark:text-gray-400'
                     )}
                   >
-                    <span className={cn('w-3 h-3 rounded-full shrink-0', COLOR_SWATCHES[key])} />
+                    <span className={cn('size-3 rounded-full shrink-0', COLOR_SWATCHES[key])} />
                     {COLOR_LABELS[key]}
                   </Button>
                 ))}

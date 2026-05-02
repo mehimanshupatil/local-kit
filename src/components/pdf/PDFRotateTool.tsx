@@ -158,7 +158,7 @@ export default function PDFRotateTool() {
                 >
                   {/* Selected checkmark */}
                   {isSel && (
-                    <div className="absolute top-1.5 right-1.5 z-10 w-4 h-4 bg-brand-500 rounded-full flex items-center justify-center">
+                    <div className="absolute top-1.5 right-1.5 z-10 size-4 bg-brand-500 rounded-full flex items-center justify-center">
                       <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                     </div>
                   )}
@@ -191,7 +191,7 @@ export default function PDFRotateTool() {
                         className="size-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                         title="Rotate 90° CCW"
                       >
-                        <RotateCcw className="w-3.5 h-3.5" />
+                        <RotateCcw className="size-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -200,7 +200,7 @@ export default function PDFRotateTool() {
                         className="size-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                         title="Rotate 90° CW"
                       >
-                        <RotateCw className="w-3.5 h-3.5" />
+                        <RotateCw className="size-3.5" />
                       </Button>
                       {rot !== 0 && (
                         <Button
@@ -210,7 +210,7 @@ export default function PDFRotateTool() {
                           className="size-6 text-amber-400 hover:text-red-500"
                           title="Reset rotation"
                         >
-                          <X className="w-3 h-3" />
+                          <X className="size-3" />
                         </Button>
                       )}
                     </div>

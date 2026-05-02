@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
+import { useDisclosure } from '@mantine/hooks';
 import { Slider } from '@/components/ui/slider';
 import { Play, Pause, SkipBack, SkipForward, Scissors } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
@@ -21,7 +22,7 @@ export default function AudioTrimTool() {
   const [duration,    setDuration]    = useState(0);
   const [range,       setRange]       = useState<[number, number]>([0, 0]);
   const [currentTime, setCurrentTime] = useState(0);
-  const [playing,     setPlaying]     = useState(false);
+  const [playing, { open: startPlaying, close: stopPlaying }] = useDisclosure(false);
   const [status,      setStatus]      = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [progress,    setProgress]    = useState(0);
   const [output,      setOutput]      = useState<OutputFile[]>([]);
@@ -36,7 +37,7 @@ export default function AudioTrimTool() {
     if (trimmedUrl) { URL.revokeObjectURL(trimmedUrl); setTrimmedUrl(null); }
     const url = URL.createObjectURL(f);
     setFile(f); setAudioURL(url); setStatus('idle'); setOutput([]);
-    setPlaying(false); setCurrentTime(0); setRange([0, 0]); setDuration(0);
+    stopPlaying(); setCurrentTime(0); setRange([0, 0]); setDuration(0);
   };
 
   const onMetadata = () => {
@@ -50,7 +51,7 @@ export default function AudioTrimTool() {
     const a = audioRef.current;
     if (!a) return;
     const onUpdate = () => setCurrentTime(a.currentTime);
-    const onPause  = () => setPlaying(false);
+    const onPause  = () => stopPlaying();
     const onBound  = () => { if (a.currentTime >= end) { a.pause(); a.currentTime = end; } };
     a.addEventListener('timeupdate', onUpdate);
     a.addEventListener('timeupdate', onBound);
@@ -72,7 +73,7 @@ export default function AudioTrimTool() {
     if (playing) { a.pause(); }
     else {
       if (a.currentTime >= end || a.currentTime < start) a.currentTime = start;
-      a.play(); setPlaying(true);
+      a.play(); startPlaying();
     }
   };
 
@@ -152,7 +153,7 @@ export default function AudioTrimTool() {
                     className="absolute top-0 bottom-0 w-0.5 bg-white/80 pointer-events-none z-20"
                     style={{ left: `calc(${currentPct}% + 8px)` }}
                   >
-                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-white rounded-full shadow" />
+                    <div className="absolute -top-1 left-1/2 -translate-x-1/2 size-2 bg-white rounded-full shadow" />
                   </div>
                 </div>
 
@@ -171,15 +172,15 @@ export default function AudioTrimTool() {
               {/* Playback controls */}
               <div className="flex items-center gap-3">
                 <Button variant="secondary" size="icon" onClick={() => seekTo(start)} title="Jump to start">
-                  <SkipBack className="w-4 h-4" />
+                  <SkipBack className="size-4" />
                 </Button>
 
                 <Button onClick={togglePlay}>
-                  {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                  {playing ? <Pause className="size-5" /> : <Play className="size-5" />}
                 </Button>
 
                 <Button variant="secondary" size="icon" onClick={() => seekTo(end)} title="Jump to end">
-                  <SkipForward className="w-4 h-4" />
+                  <SkipForward className="size-4" />
                 </Button>
 
                 <span className="flex-1 text-center font-mono text-sm text-gray-600 dark:text-gray-400">
@@ -225,7 +226,7 @@ export default function AudioTrimTool() {
 
               <div className="flex gap-3">
                 <Button onClick={trim} disabled={status === 'processing'} size="lg" className="flex-1">
-                  <Scissors className="w-4 h-4" />
+                  <Scissors className="size-4" />
                   {status === 'processing' ? 'Trimming...' : `Trim: ${fmt(start)} → ${fmt(end)}`}
                 </Button>
                 <Button variant="secondary" onClick={() => { if (audioURL) URL.revokeObjectURL(audioURL); setFile(null); setAudioURL(''); setOutput([]); }}>

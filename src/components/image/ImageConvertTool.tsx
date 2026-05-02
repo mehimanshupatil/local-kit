@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -35,6 +35,10 @@ export default function ImageConvertTool() {
     updateFiles(draft => { draft.push(...entries); });
     setStatus('idle'); setOutput([]);
   };
+
+  useEffect(() => {
+    if (files.length > 0 && status === 'idle') convert();
+  }, [files.length]);
 
   const convert = async () => {
     if (files.length === 0) return;

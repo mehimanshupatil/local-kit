@@ -40,7 +40,7 @@ export default function FileList({ files, onRemove }: Props) {
             className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
             aria-label="Remove file"
           >
-            <X className="w-4 h-4" />
+            <X className="size-4" />
           </Button>
         </div>
       ))}

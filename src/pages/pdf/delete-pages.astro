@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFDeletePagesTool from '../../components/pdf/PDFDeletePagesTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/delete-pages');
+---
+<ToolLayout {...meta}>
+  <PDFDeletePagesTool client:load />
+</ToolLayout>

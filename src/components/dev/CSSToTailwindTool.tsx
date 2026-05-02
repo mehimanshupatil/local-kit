@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useImmer } from 'use-immer';
+import { useTimeout } from '@mantine/hooks';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -1210,6 +1212,7 @@ export default function CSSToTailwindTool() {
     copied: false,
     converted: false,
   });
+  const { start: startCopyReset } = useTimeout(() => update(d => { d.copied = false; }), 2000);
 
   function handleConvert() {
     const results = convertCSS(state.input, state.prefix.trim());
@@ -1255,7 +1258,7 @@ export default function CSSToTailwindTool() {
   async function handleCopy() {
     await navigator.clipboard.writeText(formatOutput());
     update(d => { d.copied = true; });
-    setTimeout(() => update(d => { d.copied = false; }), 2000);
+    startCopyReset();
   }
 
   const outputText = formatOutput();
@@ -1278,10 +1281,10 @@ export default function CSSToTailwindTool() {
             </div>
             <div className="flex gap-2 pb-0.5">
               <Button onClick={handleConvert} className="gap-2">
-                <Wand2 className="w-4 h-4" /> Convert
+                <Wand2 className="size-4" /> Convert
               </Button>
               <Button variant="secondary" onClick={handleReset} className="gap-2">
-                <RotateCcw className="w-4 h-4" /> Reset
+                <RotateCcw className="size-4" /> Reset
               </Button>
             </div>
           </div>
@@ -1308,7 +1311,7 @@ export default function CSSToTailwindTool() {
             <Label className="text-xs uppercase tracking-wide text-gray-500">Tailwind Classes</Label>
             {state.converted && outputText && (
               <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 h-7 px-2 text-xs">
-                {state.copied ? <><Check className="w-3 h-3 text-green-500" /> Copied</> : <><Copy className="w-3 h-3" /> Copy</>}
+                {state.copied ? <><Check className="size-3 text-green-500" /> Copied</> : <><Copy className="size-3" /> Copy</>}
               </Button>
             )}
           </div>
@@ -1365,20 +1368,20 @@ export default function CSSToTailwindTool() {
       {state.converted && state.results.length > 0 && (
         <div className="flex flex-wrap gap-3 text-sm text-gray-500 dark:text-gray-400">
           <span className="flex items-center gap-1.5">
-            <span className="inline-block w-2 h-2 rounded-full bg-brand-400"></span>
+            <span className="inline-block size-2 rounded-full bg-brand-400"></span>
             {state.results.reduce((s, r) => s + r.entries.filter(e => e.kind === 'tailwind').length, 0)} Tailwind classes
           </span>
           {hasTokens && (
             <>
               {state.results.reduce((s, r) => s + r.entries.filter(e => e.kind === 'var-token').length, 0) > 0 && (
                 <span className="flex items-center gap-1.5">
-                  <span className="inline-block w-2 h-2 rounded-full bg-purple-400"></span>
+                  <span className="inline-block size-2 rounded-full bg-purple-400"></span>
                   {state.results.reduce((s, r) => s + r.entries.filter(e => e.kind === 'var-token').length, 0)} color tokens
                 </span>
               )}
               {state.results.reduce((s, r) => s + r.entries.filter(e => e.kind === 'typography-token').length, 0) > 0 && (
                 <span className="flex items-center gap-1.5">
-                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span className="inline-block size-2 rounded-full bg-emerald-400"></span>
                   {state.results.reduce((s, r) => s + r.entries.filter(e => e.kind === 'typography-token').length, 0)} typography tokens
                 </span>
               )}
@@ -1386,13 +1389,13 @@ export default function CSSToTailwindTool() {
           )}
           {hasUnrecognized && (
             <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-amber-400"></span>
+              <span className="inline-block size-2 rounded-full bg-amber-400"></span>
               {state.results.reduce((s, r) => s + r.unrecognized.length, 0)} need manual conversion
             </span>
           )}
           {multipleSelectors && (
             <span className="flex items-center gap-1.5">
-              <span className="inline-block w-2 h-2 rounded-full bg-gray-400"></span>
+              <span className="inline-block size-2 rounded-full bg-gray-400"></span>
               {state.results.length} selectors
             </span>
           )}

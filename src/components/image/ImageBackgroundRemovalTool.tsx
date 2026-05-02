@@ -1,7 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
+import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { removeImageBackground } from '@/lib/image/imageBackgroundRemoval';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
 
@@ -30,6 +31,7 @@ export default function ImageBackgroundRemovalTool() {
   const [previewURL, setPreviewURL] = useState('');
   const [resultURL, setResultURL] = useState('');
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
+  const [output, setOutput] = useState<OutputFile[]>([]);
   const [status, setStatus] = useState<Status>('idle');
   const [stage, setStage] = useState('');
   const [progress, setProgress] = useState(0);
@@ -44,6 +46,7 @@ export default function ImageBackgroundRemovalTool() {
     setPreviewURL(URL.createObjectURL(f));
     setResultURL('');
     setResultBlob(null);
+    setOutput([]);
     setStatus('idle');
     setError('');
     setProgress(0);
@@ -63,6 +66,10 @@ export default function ImageBackgroundRemovalTool() {
     setStage('');
   };
 
+  useEffect(() => {
+    if (file && status === 'idle') handleRemove();
+  }, [file]);
+
   const handleRemove = async () => {
     if (!file) return;
     setStatus('processing');
@@ -78,6 +85,7 @@ export default function ImageBackgroundRemovalTool() {
       const url = URL.createObjectURL(blob);
       setResultBlob(blob);
       setResultURL(url);
+      setOutput([{ name: `${stripExtension(file.name)}_no_bg.png`, blob, size: blob.size }]);
       setStatus('done');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Background removal failed');
@@ -85,13 +93,6 @@ export default function ImageBackgroundRemovalTool() {
     }
   };
 
-  const handleDownload = () => {
-    if (!resultURL || !file) return;
-    const a = document.createElement('a');
-    a.href = resultURL;
-    a.download = `${stripExtension(file.name)}_no_bg.png`;
-    a.click();
-  };
 
   if (!file) {
     return (
@@ -182,23 +183,17 @@ export default function ImageBackgroundRemovalTool() {
 
           {/* Action buttons */}
           <div className="flex gap-3">
-            {status === 'done' ? (
-              <>
-                <Button onClick={handleDownload} >
-                  Download PNG
-                </Button>
-                <Button onClick={handleChange} variant="secondary">
-                  Try another
-                </Button>
-              </>
-            ) : (
-              <Button onClick={handleRemove} >
-                Remove Background
-              </Button>
+            {status !== 'done' && (
+              <Button onClick={handleRemove}>Remove Background</Button>
+            )}
+            {status === 'done' && (
+              <Button onClick={handleChange} variant="secondary">Try another</Button>
             )}
           </div>
         </div>
       )}
+
+      {output.length > 0 && <OutputFiles files={output} />}
 
       {/* Processing state */}
       {status === 'processing' && (

@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+import { useDisclosure, useLocalStorage, useWindowEvent } from '@mantine/hooks';
 import { Button } from '@/components/ui/button';
 import { X, RefreshCw, Download } from 'lucide-react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
@@ -12,7 +13,8 @@ interface BeforeInstallPromptEvent extends Event {
 
 export default function PWAInstallPrompt() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [showInstall, setShowInstall] = useState(false);
+  const [showInstall, { open: openInstall, close: closeInstall }] = useDisclosure(false);
+  const [pwaDismissed, setPwaDismissed] = useLocalStorage({ key: 'pwa-dismissed', defaultValue: '' });
 
   const {
     offlineReady: [offlineReady, setOfflineReady],
@@ -27,28 +29,24 @@ export default function PWAInstallPrompt() {
     },
   });
 
-  useEffect(() => {
-    if (localStorage.getItem('pwa-dismissed')) return;
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setInstallPrompt(e as BeforeInstallPromptEvent);
-      setShowInstall(true);
-    };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
-  }, []);
+  useWindowEvent('beforeinstallprompt', (e) => {
+    if (pwaDismissed) return;
+    e.preventDefault();
+    setInstallPrompt(e as unknown as BeforeInstallPromptEvent);
+    openInstall();
+  });
 
   const install = async () => {
     if (!installPrompt) return;
     await installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
-    if (outcome === 'accepted') setShowInstall(false);
+    if (outcome === 'accepted') closeInstall();
     setInstallPrompt(null);
   };
 
   const dismissInstall = () => {
-    setShowInstall(false);
-    localStorage.setItem('pwa-dismissed', '1');
+    closeInstall();
+    setPwaDismissed('1');
   };
 
   const dismissStatus = () => {
@@ -71,7 +69,7 @@ export default function PWAInstallPrompt() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Reload to get the latest version.</p>
                 <div className="flex gap-2 mt-3">
                   <Button onClick={() => updateServiceWorker(true)} className="btn-primary text-xs py-1.5 px-3 gap-1.5">
-                    <RefreshCw className="w-3 h-3" /> Reload
+                    <RefreshCw className="size-3" /> Reload
                   </Button>
                   <Button onClick={dismissStatus} className="btn-secondary text-xs py-1.5 px-3">
                     Later
@@ -86,7 +84,7 @@ export default function PWAInstallPrompt() {
             )}
           </div>
           <Button onClick={dismissStatus} variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0 size-7">
-            <X className="w-4 h-4" />
+            <X className="size-4" />
           </Button>
         </div>
       )}
@@ -99,7 +97,7 @@ export default function PWAInstallPrompt() {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Works offline · No uploads · Free</p>
             <div className="flex gap-2 mt-3">
               <Button onClick={install} className="btn-primary text-xs py-1.5 px-3 gap-1.5">
-                <Download className="w-3 h-3" /> Install
+                <Download className="size-3" /> Install
               </Button>
               <Button onClick={dismissInstall} className="btn-secondary text-xs py-1.5 px-3">
                 Not now
@@ -107,7 +105,7 @@ export default function PWAInstallPrompt() {
             </div>
           </div>
           <Button onClick={dismissInstall} variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 shrink-0 size-7">
-            <X className="w-4 h-4" />
+            <X className="size-4" />
           </Button>
         </div>
       )}

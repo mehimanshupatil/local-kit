@@ -78,7 +78,7 @@ export default function PDFExtractImagesTool() {
         <div className="card p-5 space-y-5">
           {/* Info */}
           <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-            <Images className="w-4 h-4 text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
+            <Images className="size-4 text-gray-500 dark:text-gray-400 mt-0.5 shrink-0" />
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Extracts embedded images found within the PDF pages. Results vary based on how the PDF was created.
             </p>
@@ -134,7 +134,7 @@ export default function PDFExtractImagesTool() {
             </h3>
             {images.length > 1 && (
               <Button size="sm" onClick={downloadAll}>
-                <Download className="w-3.5 h-3.5" />
+                <Download className="size-3.5" />
                 Download All (.zip)
               </Button>
             )}
@@ -172,7 +172,7 @@ export default function PDFExtractImagesTool() {
                         onClick={() => downloadBlob(img.blob, img.name)}
                         title="Download"
                       >
-                        <Download className="w-3 h-3" />
+                        <Download className="size-3" />
                       </Button>
                     </div>
                   </div>
