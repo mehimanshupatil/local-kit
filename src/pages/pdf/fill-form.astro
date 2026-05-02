@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import { getToolMeta } from '../../data/tools';
+import PDFFormFillTool from '../../components/pdf/PDFFormFillTool';
+
+const meta = getToolMeta('/pdf/fill-form');
+---
+<ToolLayout {...meta}>
+  <PDFFormFillTool client:load />
+</ToolLayout>

@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ImageEditMetadataTool from '../../components/image/ImageEditMetadataTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/edit-metadata');
+---
+<ToolLayout {...meta}>
+  <ImageEditMetadataTool client:load />
+</ToolLayout>

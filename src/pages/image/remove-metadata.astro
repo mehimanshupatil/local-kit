@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ImageRemoveMetadataTool from '../../components/image/ImageRemoveMetadataTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/remove-metadata');
+---
+<ToolLayout {...meta}>
+  <ImageRemoveMetadataTool client:load />
+</ToolLayout>

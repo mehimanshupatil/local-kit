@@ -3,7 +3,7 @@ import {
   FcDocument, FcLink, FcRules, FcPackage, FcSynchronize, FcTreeStructure,
   FcLock, FcUnlock, FcGallery, FcCamera, FcPicture, FcRuler, FcFlashOn,
   FcVideoFile, FcMusic, FcSettings, FcTemplate, FcAudioFile, FcDeleteDatabase,
-  FcReading,
+  FcReading, FcEditImage, FcPrivacy, FcGlobe, FcPortraitMode, FcInspection,
 } from 'react-icons/fc';
 
 export interface Tool {
@@ -114,6 +114,12 @@ export const categories: Category[] = [
         pageTitle: 'Images to PDF — Create PDF from Photos | LocalKit',
         pageDesc: 'Combine JPG, PNG images into a single PDF document. All processing in your browser.',
       },
+      {
+        name: 'Fill Form', href: '/pdf/fill-form', icon: FcEditImage,
+        desc: 'Fill PDF form fields and download',
+        pageTitle: 'Fill PDF Form Online — Free, No Upload | LocalKit',
+        pageDesc: 'Fill interactive PDF form fields (text, checkboxes, dropdowns) and download the completed PDF — 100% in your browser.',
+      },
     ],
   },
   {
@@ -156,6 +162,24 @@ export const categories: Category[] = [
         desc: 'Remove background with AI',
         pageTitle: 'Remove Image Background — Free, No Upload | LocalKit',
         pageDesc: 'Remove the background from any photo using AI — runs entirely in your browser. No uploads, no servers.',
+      },
+      {
+        name: 'Remove Metadata', href: '/image/remove-metadata', icon: FcPrivacy,
+        desc: 'Strip EXIF, GPS and all hidden metadata',
+        pageTitle: 'Remove Image Metadata — Strip EXIF & GPS | LocalKit',
+        pageDesc: 'Strip all EXIF data, GPS coordinates and hidden metadata from images. Runs 100% in your browser — nothing uploaded.',
+      },
+      {
+        name: 'Edit Metadata', href: '/image/edit-metadata', icon: FcGlobe,
+        desc: 'Add GPS, author, copyright to JPEG',
+        pageTitle: 'Edit Image Metadata — Add GPS & EXIF | LocalKit',
+        pageDesc: 'Embed GPS coordinates, author, copyright and date into JPEG images. All processing in your browser.',
+      },
+      {
+        name: 'Dither Image', href: '/image/dither', icon: FcInspection,
+        desc: 'Convert images with dithering algorithms',
+        pageTitle: 'Image Dithering — Floyd-Steinberg, Atkinson, Bayer | LocalKit',
+        pageDesc: 'Apply dithering algorithms to images: Floyd-Steinberg, Atkinson, Bayer ordered, and more. Runs 100% in your browser.',
       },
     ],
   },
@@ -265,6 +289,12 @@ export const categories: Category[] = [
         desc: 'Convert CSS properties to Tailwind utility classes',
         pageTitle: 'CSS to Tailwind Converter — LocalKit',
         pageDesc: 'Paste any CSS and instantly get the equivalent Tailwind utility classes. Supports prefix config.',
+      },
+      {
+        name: 'QR Code Generator', href: '/dev/qr-code', icon: FcPortraitMode,
+        desc: 'Generate QR codes for text or URLs',
+        pageTitle: 'QR Code Generator — Free, No Upload | LocalKit',
+        pageDesc: 'Generate QR codes for any text or URL. Choose size, colors and error correction — 100% in your browser.',
       },
     ],
   },

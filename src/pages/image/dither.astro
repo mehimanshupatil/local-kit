@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ImageDitherTool from '../../components/image/ImageDitherTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/dither');
+---
+<ToolLayout {...meta}>
+  <ImageDitherTool client:load />
+</ToolLayout>

@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import QRCodeTool from '../../components/dev/QRCodeTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/qr-code');
+---
+<ToolLayout {...meta}>
+  <QRCodeTool client:load />
+</ToolLayout>
