@@ -24,7 +24,7 @@ export default defineConfig({
   integrations: [
     react(),
     AstroPWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       devOptions: { enabled: true },
       manifest: {
         name: 'LocalKit',
