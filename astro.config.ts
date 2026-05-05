@@ -44,6 +44,22 @@ export default defineConfig({
           { src: 'maskable-icon-512x512.png',  sizes: '512x512', type: 'image/png', purpose: 'maskable' },
           { src: 'apple-touch-icon-180x180.png', sizes: '180x180', type: 'image/png' },
         ],
+        screenshots: [
+          {
+            src: 'screenshot-wide.png',
+            sizes: '2560x1264',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'LocalKit — Privacy-first file tools',
+          },
+          {
+            src: 'screenshot-mobile.png',
+            sizes: '780x1688',
+            type: 'image/png',
+            form_factor: 'narrow',
+            label: 'LocalKit — Privacy-first file tools',
+          },
+        ],
       },
       workbox: {
         // Precache all built assets
