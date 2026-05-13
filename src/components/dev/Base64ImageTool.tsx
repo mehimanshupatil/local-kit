@@ -1,5 +1,4 @@
-import { useMemo } from 'react';
-import { useClipboard } from '@mantine/hooks';
+ import { useClipboard } from '@mantine/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';

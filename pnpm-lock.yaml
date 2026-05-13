@@ -111,8 +111,8 @@ importers:
         specifier: ^19.2.4
         version: 19.2.4(@types/react@19.2.14)(konva@10.3.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       scribe.js-ocr:
-        specifier: ^0.11.6
-        version: 0.11.6
+        specifier: ^0.10.1
+        version: 0.10.1
       sonner:
         specifier: ^2.0.7
         version: 2.0.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -2104,81 +2104,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@scribe.js/canvas-android-arm64@0.1.97-scribe.4':
-    resolution: {integrity: sha512-m+oRJ/CtbLrwc+kSwtTjjaUFm0Ry9Xq06fkdx2yP9ZH9qt56bYU0SEpSuo/It4ePU7rCeeirEZ9e74lODvq8cw==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [android]
-
-  '@scribe.js/canvas-darwin-arm64@0.1.97-scribe.4':
-    resolution: {integrity: sha512-VBx+ZrCMe3Ya4f7YmcML180Vf+oZ+SQx7gGL0S/4aDtxwzudo78Mlsx1nSMuYIgIwlQSaRDxeJaqya69SisEpg==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@scribe.js/canvas-darwin-x64@0.1.97-scribe.4':
-    resolution: {integrity: sha512-qG2qsQXMVKLgApIfog9KpOY1/moM+AMiWECPs02ttyFCTdYuojVOmxHsKecAdqd/G0C5wlEaofoXwyWHAzVbEg==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [darwin]
-
-  '@scribe.js/canvas-linux-arm-gnueabihf@0.1.97-scribe.4':
-    resolution: {integrity: sha512-GPM50Y4XxzzGXdCU1GQ8QPuJ9HFDLwRHFsfky9KJv20KKvKUnTxg/a2Sbye5wIcoSO5F3Fs/e6jLYNiAXsVn1A==}
-    engines: {node: '>= 10'}
-    cpu: [arm]
-    os: [linux]
-
-  '@scribe.js/canvas-linux-arm64-gnu@0.1.97-scribe.4':
-    resolution: {integrity: sha512-59bhVoxjF59zno7Fo+4ZDtgLYRO4WMuQkid3TU8whj5WnTQFufb/uQkhsn4QFYS9OBPX8gwAmqG7wk6UELgF7g==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@scribe.js/canvas-linux-arm64-musl@0.1.97-scribe.4':
-    resolution: {integrity: sha512-uiemhW2eMyfCMdOyI1vA/E9Mw4eSMmzB7ha2uo8sws8u7LXg80urQeBjnZ9eMsJKeQtyR2Tawvq7QVLIyPxMdQ==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
-  '@scribe.js/canvas-linux-riscv64-gnu@0.1.97-scribe.4':
-    resolution: {integrity: sha512-dauzdi3ABFqLTPdxM812yA/MsKhrBH0/YUmN7QyFDgXtKP1z0KrU7pjp5FOx7+OWHfX9/tQpoA9gBUMDysZnow==}
-    engines: {node: '>= 10'}
-    cpu: [riscv64]
-    os: [linux]
-    libc: [glibc]
-
-  '@scribe.js/canvas-linux-x64-gnu@0.1.97-scribe.4':
-    resolution: {integrity: sha512-RZQzyvGcclnXtMcByAEewZonFZkeKJT2WLh7AVljjT0rwGdRF3SISpTvGoCTSzndA7xf+yZI8tmhsnATt9A43w==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@scribe.js/canvas-linux-x64-musl@0.1.97-scribe.4':
-    resolution: {integrity: sha512-icahpPNE821mtEXt8uZC+wPco9z/wnwi3bsCi9jFyMuereEoe4NblO33oLiWYemInr2YYtSbJD6SdkVggCAY0w==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
-  '@scribe.js/canvas-win32-arm64-msvc@0.1.97-scribe.4':
-    resolution: {integrity: sha512-0lMMj640DbmJv2VO2WIQ9230lpDufZSn5y2/Z6KyuDl5WhJOV+nXPkTu5NNQI7y0TC3Wbum2JOZEN3os7Gm9Mg==}
-    engines: {node: '>= 10'}
-    cpu: [arm64]
-    os: [win32]
-
-  '@scribe.js/canvas-win32-x64-msvc@0.1.97-scribe.4':
-    resolution: {integrity: sha512-OublKtZhO7EA703kJC9V+TzBOpYFbBzBsflLBEXt+ryCP6GFOdgeweGF8KNjRG4hl5tXyfVViYtbCpY+wlj8qw==}
-    engines: {node: '>= 10'}
-    cpu: [x64]
-    os: [win32]
-
-  '@scribe.js/canvas@0.1.97-scribe.4':
-    resolution: {integrity: sha512-ZNQyAOn3/b/VjAUErc5ZvoT1ZI9T95XkvLjfq+yenXiAdi1HGBgn1tjYgJXkRro4FgZxsM28SZfyh/U2srUwsA==}
-    engines: {node: '>= 10'}
-
   '@shikijs/core@4.0.2':
     resolution: {integrity: sha512-hxT0YF4ExEqB8G/qFdtJvpmHXBYJ2lWW7qTHDarVkIudPFE6iCIrqdgWxGn5s+ppkGXI0aEGlibI0PAyzP3zlw==}
     engines: {node: '>=20'}
@@ -2403,6 +2328,9 @@ packages:
     peerDependencies:
       vite: ^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
 
+  '@webgpu/types@0.1.21':
+    resolution: {integrity: sha512-pUrWq3V5PiSGFLeLxoGqReTZmiiXwY3jRkIG5sLLKjyqNxrwm/04b4nw7LSmGWJcKk59XOM/YRTUwOzo4MMlow==}
+
   acorn@8.16.0:
     resolution: {integrity: sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw==}
     engines: {node: '>=0.4.0'}
@@ -2542,6 +2470,9 @@ packages:
 
   caniuse-lite@1.0.30001792:
     resolution: {integrity: sha512-hVLMUZFgR4JJ6ACt1uEESvQN1/dBVqPAKY0hgrV70eN3391K6juAfTjKZLKvOMsx8PxA7gsY1/tLMMTcfFLLpw==}
+
+  canvaskit-wasm@0.39.1:
+    resolution: {integrity: sha512-Gy3lCmhUdKq+8bvDrs9t8+qf7RvcjuQn+we7vTVVyqgOVO1UVfHpsnBxkTZw+R4ApEJ3D5fKySl9TU11hmjl/A==}
 
   ccount@2.0.1:
     resolution: {integrity: sha512-eyrF0jiFpY+3drT6383f1qhkbGsLSifNAjA61IUjZjmLCWjItY6LB9ft9YhoDgwfmclB2zhu51Lc7+95b8NRAg==}
@@ -3977,8 +3908,8 @@ packages:
   scheduler@0.27.0:
     resolution: {integrity: sha512-eNv+WrVbKu1f3vbYJT/xtiF5syA5HPIMtf9IgY/nKg0sWqzAUEvqY/xm7OcZc/qafLx/iO9FgOmeSAp4v5ti/Q==}
 
-  scribe.js-ocr@0.11.6:
-    resolution: {integrity: sha512-EIdYfpeT1y8n297GHJ7xSFes/ebKZ57FGmDKfofPNGuNzvqoMpMl5V6lIDmHrIkiuz3vG7fOG8i/rwS2NL6OsQ==}
+  scribe.js-ocr@0.10.1:
+    resolution: {integrity: sha512-BHlWXeejJVMJQ8nIn/J/Bm+Uepz8CaJu0K5+qJ+AgFArVkTtl/WxY8OVZ6ayaRFoZb44RgYnevz/o2XPlzBBzw==}
     hasBin: true
 
   semver@6.3.1:
@@ -6612,53 +6543,6 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.60.3':
     optional: true
 
-  '@scribe.js/canvas-android-arm64@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-darwin-arm64@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-darwin-x64@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-linux-arm-gnueabihf@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-linux-arm64-gnu@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-linux-arm64-musl@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-linux-riscv64-gnu@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-linux-x64-gnu@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-linux-x64-musl@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-win32-arm64-msvc@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas-win32-x64-msvc@0.1.97-scribe.4':
-    optional: true
-
-  '@scribe.js/canvas@0.1.97-scribe.4':
-    optionalDependencies:
-      '@scribe.js/canvas-android-arm64': 0.1.97-scribe.4
-      '@scribe.js/canvas-darwin-arm64': 0.1.97-scribe.4
-      '@scribe.js/canvas-darwin-x64': 0.1.97-scribe.4
-      '@scribe.js/canvas-linux-arm-gnueabihf': 0.1.97-scribe.4
-      '@scribe.js/canvas-linux-arm64-gnu': 0.1.97-scribe.4
-      '@scribe.js/canvas-linux-arm64-musl': 0.1.97-scribe.4
-      '@scribe.js/canvas-linux-riscv64-gnu': 0.1.97-scribe.4
-      '@scribe.js/canvas-linux-x64-gnu': 0.1.97-scribe.4
-      '@scribe.js/canvas-linux-x64-musl': 0.1.97-scribe.4
-      '@scribe.js/canvas-win32-arm64-msvc': 0.1.97-scribe.4
-      '@scribe.js/canvas-win32-x64-msvc': 0.1.97-scribe.4
-
   '@shikijs/core@4.0.2':
     dependencies:
       '@shikijs/primitive': 4.0.2
@@ -6876,6 +6760,8 @@ snapshots:
       vite: 7.3.3(@types/node@25.7.0)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.47.1)
     transitivePeerDependencies:
       - supports-color
+
+  '@webgpu/types@0.1.21': {}
 
   acorn@8.16.0: {}
 
@@ -7105,6 +6991,10 @@ snapshots:
   camelcase@5.3.1: {}
 
   caniuse-lite@1.0.30001792: {}
+
+  canvaskit-wasm@0.39.1:
+    dependencies:
+      '@webgpu/types': 0.1.21
 
   ccount@2.0.1: {}
 
@@ -8913,9 +8803,9 @@ snapshots:
 
   scheduler@0.27.0: {}
 
-  scribe.js-ocr@0.11.6:
+  scribe.js-ocr@0.10.1:
     dependencies:
-      '@scribe.js/canvas': 0.1.97-scribe.4
+      canvaskit-wasm: 0.39.1
       commander: 11.1.0
 
   semver@6.3.1: {}
