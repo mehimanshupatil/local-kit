@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
 
 env:
   CI: false
@@ -25,7 +25,7 @@ jobs:
       deployments: "write"
     strategy:
       matrix:
-        node-version: [ 24 ]
+        node-version: [24]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
 
     steps:
@@ -33,7 +33,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v6
         with:
-          version: 10
+          version: 11
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
         with:

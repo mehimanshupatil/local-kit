@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import Base64ImageTool from '../../components/dev/Base64ImageTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/base64-image');
+---
+<ToolLayout {...meta}>
+  <Base64ImageTool client:load />
+</ToolLayout>

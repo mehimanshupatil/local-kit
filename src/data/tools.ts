@@ -296,6 +296,12 @@ export const categories: Category[] = [
         pageTitle: 'QR Code Generator — Free, No Upload | LocalKit',
         pageDesc: 'Generate QR codes for any text or URL. Choose size, colors and error correction — 100% in your browser.',
       },
+      {
+        name: 'Base64 → Image', href: '/dev/base64-image', icon: FcPicture,
+        desc: 'Decode a base64 string or data URL and preview the image',
+        pageTitle: 'Base64 to Image Decoder — LocalKit',
+        pageDesc: 'Paste a base64 string or data URL and instantly preview the decoded image. Download or copy — 100% in your browser.',
+      },
     ],
   },
 ];
