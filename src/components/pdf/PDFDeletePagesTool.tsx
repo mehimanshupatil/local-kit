@@ -1,9 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import PDFPageThumbnail from './PDFPageThumbnail';
 import PDFFileBar from './PDFFileBar';
 import { deletePages } from '@/lib/pdf/pdfDeletePages';
@@ -13,13 +16,13 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 export default function PDFDeletePagesTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/delete-pages'); }, []);
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer; pageCount: number } | null>(null);
   const [pdf,      setPdf]      = useState<PDFDocumentProxy | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
-  const [status,   setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output,   setOutput]   = useState<OutputFile[]>([]);
-  const [error,    setError]    = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   useEffect(() => {
     if (sessionFiles.length > 0 && !file) {
@@ -34,7 +37,7 @@ export default function PDFDeletePagesTool() {
     setSessionFiles([f]);
     setPdf(pdfDoc);
     setSelected(new Set());
-    setStatus('idle'); setOutput([]);
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const togglePage = (i: number) => {
@@ -55,19 +58,16 @@ export default function PDFDeletePagesTool() {
   const save = async () => {
     if (!file || selected.size === 0) return;
     if (selected.size === file.pageCount) {
-      setError('Cannot delete all pages — at least one page must remain.');
-      setStatus('error');
+      updateOp(d => { d.error = 'Cannot delete all pages — at least one page must remain.'; d.status = 'error'; });
       return;
     }
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const blob = await deletePages(file.buffer, selected, setProgress);
+      const blob = await deletePages(file.buffer, selected, pct => updateOp(d => { d.progress = pct; }));
       const base = stripExtension(file.name);
-      setOutput([{ name: `${base}_deleted.pdf`, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.output = [{ name: `${base}_deleted.pdf`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to delete pages');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to delete pages'; d.status = 'error'; });
     }
   };
 
@@ -87,7 +87,7 @@ export default function PDFDeletePagesTool() {
         <PDFFileBar
           file={file}
           total={file.pageCount}
-          onClear={() => { setFile(null); setPdf(null); setSelected(new Set()); setOutput([]); setStatus('idle'); clearSession(); }}
+          onClear={() => { setFile(null); setPdf(null); setSelected(new Set()); updateOp(() => ({ ...IDLE_OP })); clearSession(); }}
         />
       )}
 

@@ -1,26 +1,29 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 import { Lock, LockOpen, Eye, EyeOff } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { isEncrypted, unlockPDF } from '@/lib/pdf/pdfUnlock';
 import { stripExtension } from '@/lib/utils/fileUtils';
 import PDFFileBar from './PDFFileBar';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function PDFUnlockTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/unlock'); }, []);
   const [file, setFile]         = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [isLocked, setIsLocked] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');
   const [showPw, { toggle: toggleShowPw }] = useDisclosure(false);
-  const [status, setStatus]     = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput]     = useState<OutputFile[]>([]);
-  const [error, setError]       = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   useEffect(() => {
     if (sessionFiles.length > 0 && !file) {
@@ -33,9 +36,7 @@ export default function PDFUnlockTool() {
     setFile({ name: f.name, size: f.size, buffer });
     setSessionFiles([f]);
     setPassword('');
-    setStatus('idle');
-    setOutput([]);
-    setError('');
+    updateOp(() => ({ ...IDLE_OP }));
     setIsLocked(null);
 
     try {
@@ -48,19 +49,13 @@ export default function PDFUnlockTool() {
 
   const unlock = async () => {
     if (!file) return;
-    setStatus('processing');
-    setProgress(30);
-    setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 30; d.error = ''; });
     try {
       const blob = await unlockPDF(file.buffer.slice(0), password);
-      setProgress(100);
       const base = stripExtension(file.name);
-      setOutput([{ name: `${base}_unlocked.pdf`, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.progress = 100; d.output = [{ name: `${base}_unlocked.pdf`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to unlock. Check your password.');
-      setStatus('error');
-      setProgress(0);
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to unlock. Check your password.'; d.status = 'error'; d.progress = 0; });
     }
   };
 
@@ -75,7 +70,7 @@ export default function PDFUnlockTool() {
           sublabel="Upload a password-protected PDF to unlock it"
         />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setIsLocked(null); setOutput([]); setStatus('idle'); setError(''); clearSession(); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); setIsLocked(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} />
       )}
 
       {file && (

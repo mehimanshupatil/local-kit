@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -15,7 +16,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import PDFPageThumbnail from './PDFPageThumbnail';
 import { mergePDFs } from '@/lib/pdf/pdfMerge';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
@@ -101,11 +103,11 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
 // ── Main tool ─────────────────────────────────────────────────────
 export default function PDFMergeTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/merge'); }, []);
   const [files, updateFiles]    = useImmer<FileEntry[]>([]);
-  const [status, setStatus]     = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput]     = useState<OutputFile[]>([]);
-  const [error, setError]       = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -128,7 +130,7 @@ export default function PDFMergeTool() {
       entries.push({ id: generateId(), name: f.name, size: f.size, buffer, pageCount: pdf.numPages, pdf, rawFile: f });
     }
     updateFiles(draft => { draft.push(...entries); });
-    setStatus('idle'); setOutput([]);
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const remove = (id: string) => updateFiles(draft => { const i = draft.findIndex(f => f.id === id); if (i !== -1) draft.splice(i, 1); });
@@ -145,13 +147,12 @@ export default function PDFMergeTool() {
 
   const merge = async () => {
     if (files.length < 2) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const blob = await mergePDFs(files.map(f => f.buffer), setProgress);
-      setOutput([{ name: 'merged.pdf', blob, size: blob.size }]);
-      setStatus('done');
+      const blob = await mergePDFs(files.map(f => f.buffer), pct => updateOp(d => { d.progress = pct; }));
+      updateOp(d => { d.output = [{ name: 'merged.pdf', blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to merge'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to merge'; d.status = 'error'; });
     }
   };
 
@@ -216,7 +217,7 @@ export default function PDFMergeTool() {
             <Button onClick={merge} disabled={files.length < 2 || status === 'processing'}>
               {status === 'processing' ? 'Merging…' : `Merge ${files.length} PDFs → ${totalPages} pages`}
             </Button>
-            <Button variant="secondary" onClick={() => { updateFiles(() => []); setOutput([]); setStatus('idle'); clearSession(); }}>
+            <Button variant="secondary" onClick={() => { updateFiles(() => []); updateOp(() => ({ ...IDLE_OP })); clearSession(); }}>
               Reset
             </Button>
           </div>

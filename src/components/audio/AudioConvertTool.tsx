@@ -1,12 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { FcMusic } from 'react-icons/fc';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { convertAudio, type AudioFormat } from '@/lib/audio/audioConvert';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools, useToolPrefs } from '@/stores/prefsStore';
 
 const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
   { label: 'MP3',  value: 'mp3',  desc: 'Universal' },
@@ -17,12 +20,16 @@ const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
 ];
 
 export default function AudioConvertTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/audio/convert'); }, []);
+
+  const [prefs, updatePrefs] = useToolPrefs('/audio/convert', { format: 'mp3' as AudioFormat });
+  const { format } = prefs;
+  const setFormat = (v: AudioFormat) => updatePrefs({ format: v });
+
   const [file,     setFile]     = useState<File | null>(null);
-  const [format,   setFormat]   = useState<AudioFormat>('mp3');
-  const [status,   setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output,   setOutput]   = useState<OutputFile[]>([]);
-  const [error,    setError]    = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('audio');
 
@@ -33,22 +40,21 @@ export default function AudioConvertTool() {
   useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
 
   const addFile = ([f]: File[]) => {
-    setFile(f); setStatus('idle'); setOutput([]);
+    setFile(f); updateOp(() => ({ ...IDLE_OP }));
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
     setSessionFiles([f]);
   };
 
   const convert = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const result = await convertAudio(file, format, setProgress);
-      setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
+      const result = await convertAudio(file, format, pct => updateOp(d => { d.progress = pct; }));
+      updateOp(d => { d.output = [{ name: result.name, blob: result.blob, size: result.blob.size }]; d.status = 'done'; });
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       setAudioUrl(URL.createObjectURL(result.blob));
-      setStatus('done');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Conversion failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Conversion failed'; d.status = 'error'; });
     }
   };
 
@@ -69,7 +75,7 @@ export default function AudioConvertTool() {
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); } clearSession(); }}>Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); } clearSession(); }}>Change</Button>
         </div>
       )}
 

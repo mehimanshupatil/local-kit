@@ -1,12 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { embedMetadata } from '@/lib/image/imageEditMetadata';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 interface FormState {
   description: string;
@@ -29,12 +32,12 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function ImageEditMetadataTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/image/edit-metadata'); }, []);
   const [file, setFile] = useState<File | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (incoming: File[]) => {
@@ -42,9 +45,7 @@ export default function ImageEditMetadataTool() {
     if (!f) return;
     setFile(f);
     setSessionFiles([f]);
-    setOutput([]);
-    setStatus('idle');
-    setError('');
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   // Seed from session on mount
@@ -57,9 +58,7 @@ export default function ImageEditMetadataTool() {
 
   const handleEmbed = async () => {
     if (!file) return;
-    setStatus('processing');
-    setProgress(0);
-    setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
       // Convert datetime-local value ("YYYY-MM-DDTHH:MM") to EXIF format ("YYYY:MM:DD HH:MM:SS")
       let dateTime: string | undefined;
@@ -82,25 +81,20 @@ export default function ImageEditMetadataTool() {
           dateTime,
           gps: lat !== undefined && lng !== undefined ? { lat, lng } : undefined,
         },
-        setProgress,
+        (pct) => updateOp(d => { d.progress = pct; }),
       );
 
       const name = `${stripExtension(file.name)}_meta.jpg`;
-      setOutput([{ name, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.output = [{ name, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to embed metadata');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to embed metadata'; d.status = 'error'; });
     }
   };
 
   const reset = () => {
     setFile(null);
     setForm(EMPTY_FORM);
-    setOutput([]);
-    setStatus('idle');
-    setError('');
-    setProgress(0);
+    updateOp(() => ({ ...IDLE_OP }));
     clearSession();
   };
 

@@ -2,12 +2,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FcVideoFile } from 'react-icons/fc';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { convertVideo, type VideoFormat } from '@/lib/video/videoConvert';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools, useToolPrefs } from '@/stores/prefsStore';
 
 const FORMATS: { label: string; value: VideoFormat; desc: string }[] = [
   { label: 'MP4', value: 'mp4', desc: 'Universal compatibility' },
@@ -18,27 +21,30 @@ const FORMATS: { label: string; value: VideoFormat; desc: string }[] = [
 ];
 
 export default function VideoConvertTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/video/convert'); }, []);
+
+  const [prefs, updatePrefs] = useToolPrefs('/video/convert', { format: 'mp4' as VideoFormat });
+  const { format } = prefs;
+  const setFormat = (v: VideoFormat) => updatePrefs({ format: v });
+
   const [file, setFile] = useState<File | null>(null);
-  const [format, setFormat] = useState<VideoFormat>('mp4');
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('video');
 
   useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
 
-  const addFile = ([f]: File[]) => { setFile(f); setStatus('idle'); setOutput([]); setSessionFiles([f]); };
+  const addFile = ([f]: File[]) => { setFile(f); updateOp(() => ({ ...IDLE_OP })); setSessionFiles([f]); };
 
   const convert = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const result = await convertVideo(file, format, setProgress);
-      setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
-      setStatus('done');
+      const result = await convertVideo(file, format, pct => updateOp(d => { d.progress = pct; }));
+      updateOp(d => { d.output = [{ name: result.name, blob: result.blob, size: result.blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Conversion failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Conversion failed'; d.status = 'error'; });
     }
   };
 
@@ -53,7 +59,7 @@ export default function VideoConvertTool() {
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); clearSession(); }}>Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }}>Change</Button>
         </div>
       )}
 

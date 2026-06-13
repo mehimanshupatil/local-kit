@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Images, Download } from 'lucide-react';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 // @ts-ignore
 import JSZip from 'jszip';
 import DropZone from '@/components/shared/DropZone';
@@ -11,6 +12,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import { extractImagesFromPDF, type ExtractedImage } from '@/lib/pdf/pdfExtractImages';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import PDFFileBar from './PDFFileBar';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 function downloadBlob(blob: Blob, name: string) {
   const url = URL.createObjectURL(blob);
@@ -23,10 +25,11 @@ function downloadBlob(blob: Blob, name: string) {
 
 export default function PDFExtractImagesTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/extract-images'); }, []);
   const [file, setFile]       = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
-  const [status, setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [error, setError]     = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, error } = op;
   const [images, updateImages] = useImmer<ExtractedImage[]>([]);
 
   useEffect(() => {
@@ -38,24 +41,20 @@ export default function PDFExtractImagesTool() {
   const addFile = async ([f]: File[]) => {
     setFile({ name: f.name, size: f.size, buffer: await f.arrayBuffer() });
     setSessionFiles([f]);
-    setStatus('idle');
-    setError('');
+    updateOp(() => ({ ...IDLE_OP }));
     updateImages(() => []);
   };
 
   const extract = async () => {
     if (!file) return;
-    setStatus('processing');
-    setProgress(0);
-    setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     updateImages(() => []);
     try {
-      const results = await extractImagesFromPDF(file.buffer.slice(0), pct => setProgress(pct));
+      const results = await extractImagesFromPDF(file.buffer.slice(0), pct => updateOp(d => { d.progress = pct; }));
       updateImages(() => results);
-      setStatus('done');
+      updateOp(d => { d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Extraction failed');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Extraction failed'; d.status = 'error'; });
     }
   };
 
@@ -80,7 +79,7 @@ export default function PDFExtractImagesTool() {
           sublabel="Embedded images will be extracted from each page"
         />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setStatus('idle'); setError(''); updateImages(() => []); clearSession(); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); updateImages(() => []); clearSession(); }} />
       )}
 
       {file && (

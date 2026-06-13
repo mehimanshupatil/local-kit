@@ -1,27 +1,28 @@
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 import { Loader2, FileText } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { loadFormFields, fillAndFlattenForm, type FormField } from '@/lib/pdf/pdfFormFill';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
 import { cn } from '@/lib/utils/cn';
 import PDFFileBar from './PDFFileBar';
-
-type Status = 'idle' | 'loading' | 'processing' | 'done' | 'error';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function PDFFormFillTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/fill-form'); }, []);
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [fields, setFields] = useState<FormField[]>([]);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
-  const [status, setStatus] = useState<Status>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const [flatten, setFlatten] = useState(true);
 
   useEffect(() => {
@@ -36,9 +37,7 @@ export default function PDFFormFillTool() {
     setSessionFiles([f]);
     setFields([]);
     setValues({});
-    setOutput([]);
-    setError('');
-    setStatus('idle');
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   // Auto-load fields when file changes
@@ -47,8 +46,7 @@ export default function PDFFormFillTool() {
     let cancelled = false;
 
     const load = async () => {
-      setStatus('loading');
-      setError('');
+      updateOp(d => { d.status = 'loading'; d.error = ''; });
       try {
         const loadedFields = await loadFormFields(file.buffer);
         if (cancelled) return;
@@ -60,11 +58,10 @@ export default function PDFFormFillTool() {
           initial[field.name] = field.value;
         }
         setValues(initial);
-        setStatus('idle');
+        updateOp(d => { d.status = 'idle'; });
       } catch (e) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : 'Failed to read form fields');
-        setStatus('error');
+        updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to read form fields'; d.status = 'error'; });
       }
     };
 
@@ -78,17 +75,13 @@ export default function PDFFormFillTool() {
 
   const download = async () => {
     if (!file) return;
-    setStatus('processing');
-    setProgress(0);
-    setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const blob = await fillAndFlattenForm(file.buffer, values, flatten, setProgress);
+      const blob = await fillAndFlattenForm(file.buffer, values, flatten, pct => updateOp(d => { d.progress = pct; }));
       const suffix = flatten ? '_filled_flat' : '_filled';
-      setOutput([{ name: `${stripExtension(file.name)}${suffix}.pdf`, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.output = [{ name: `${stripExtension(file.name)}${suffix}.pdf`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to fill form');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to fill form'; d.status = 'error'; });
     }
   };
 
@@ -106,7 +99,7 @@ export default function PDFFormFillTool() {
           sublabel="Fill interactive AcroForm fields and download"
         />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setFields([]); setValues({}); setOutput([]); setStatus('idle'); clearSession(); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); setFields([]); setValues({}); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} />
       )}
 
       {/* Loading spinner while reading fields */}

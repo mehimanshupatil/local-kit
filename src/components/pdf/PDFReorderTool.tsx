@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -14,7 +15,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import PDFPageThumbnail from './PDFPageThumbnail';
 import { reorderPDF } from '@/lib/pdf/pdfReorder';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
@@ -68,13 +70,13 @@ function SortablePage({
 // ── Main tool ──────────────────────────────────────────────────────
 export default function PDFReorderTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/reorder'); }, []);
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer; pageCount: number } | null>(null);
   const [pdf,      setPdf]      = useState<PDFDocumentProxy | null>(null);
   const [pageOrder, updatePageOrder] = useImmer<number[]>([]);
-  const [status,   setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output,   setOutput]   = useState<OutputFile[]>([]);
-  const [error,    setError]    = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
@@ -91,7 +93,7 @@ export default function PDFReorderTool() {
     setSessionFiles([f]);
     setPdf(pdfDoc);
     updatePageOrder(() => Array.from({ length: pdfDoc.numPages }, (_, i) => i));
-    setStatus('idle'); setOutput([]);
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const onDragEnd = ({ active, over }: DragEndEvent) => {
@@ -111,14 +113,12 @@ export default function PDFReorderTool() {
 
   const save = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const blob = await reorderPDF(file.buffer, pageOrder, setProgress);
-      setOutput([{ name: `${stripExtension(file.name)}_reordered.pdf`, blob, size: blob.size }]);
-      setStatus('done');
+      const blob = await reorderPDF(file.buffer, pageOrder, pct => updateOp(d => { d.progress = pct; }));
+      updateOp(d => { d.output = [{ name: `${stripExtension(file.name)}_reordered.pdf`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to reorder PDF');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to reorder PDF'; d.status = 'error'; });
     }
   };
 
@@ -135,7 +135,7 @@ export default function PDFReorderTool() {
           sublabel="Drag page thumbnails to reorder, then save"
         />
       ) : (
-        <PDFFileBar file={file} total={file.pageCount} onClear={() => { setFile(null); setPdf(null); updatePageOrder(() => []); setOutput([]); setStatus('idle'); clearSession(); }} />
+        <PDFFileBar file={file} total={file.pageCount} onClear={() => { setFile(null); setPdf(null); updatePageOrder(() => []); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} />
       )}
 
       {pdf && file && pageOrder.length > 0 && (

@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 
 enableMapSet();
 import { Scissors, X } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import PDFPageThumbnail from './PDFPageThumbnail';
 import { PDFDocument } from '@cantoo/pdf-lib';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
@@ -31,15 +33,15 @@ const SECTION_DOTS = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-amber-
 
 export default function PDFSplitTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/split'); }, []);
   const [file, setFile]    = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [pdf,  setPdf]     = useState<PDFDocumentProxy | null>(null);
   const [total, setTotal]  = useState(0);
   // cutPoints: set of page indices AFTER which we cut (0-indexed, so 2 = cut after page 3)
   const [cutPoints, updateCutPoints] = useImmer<Set<number>>(new Set());
-  const [status, setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output,   setOutput] = useState<OutputFile[]>([]);
-  const [error,    setError]  = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   useEffect(() => {
     if (sessionFiles.length > 0 && !file) {
@@ -55,7 +57,7 @@ export default function PDFSplitTool() {
     setPdf(pdfDoc);
     setTotal(pdfDoc.numPages);
     updateCutPoints(() => new Set());
-    setStatus('idle'); setOutput([]);
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const toggleCut = (afterPage: number) => {
@@ -88,10 +90,10 @@ export default function PDFSplitTool() {
 
   const split = async () => {
     if (!file || !pdf) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     const base = stripExtension(file.name);
     const sections = getSections();
-    const results: OutputFile[] = [];
+    const results: { name: string; blob: Blob; size: number }[] = [];
     try {
       const src = await PDFDocument.load(file.buffer);
       for (let s = 0; s < sections.length; s++) {
@@ -101,11 +103,11 @@ export default function PDFSplitTool() {
         const bytes = await doc.save();
         const blob = new Blob([bytes], { type: 'application/pdf' });
         results.push({ name: `${base}_part${s + 1}.pdf`, blob, size: blob.size });
-        setProgress(Math.round(((s + 1) / sections.length) * 100));
+        updateOp(d => { d.progress = Math.round(((s + 1) / sections.length) * 100); });
       }
-      setOutput(results); setStatus('done');
+      updateOp(d => { d.output = results; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Split failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Split failed'; d.status = 'error'; });
     }
   };
 
@@ -118,7 +120,7 @@ export default function PDFSplitTool() {
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false}
           label="Drop a PDF file" sublabel="Click between pages to add cut points" />
       ) : (
-        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); setOutput([]); clearSession(); }} />
+        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} />
       )}
 
       {pdf && total > 0 && (

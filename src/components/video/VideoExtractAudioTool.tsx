@@ -2,12 +2,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FcVideoFile } from 'react-icons/fc';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { extractAudio, type AudioFormat } from '@/lib/video/videoExtractAudio';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 
 const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
   { label: 'MP3', value: 'mp3', desc: 'Universal' },
@@ -17,12 +20,13 @@ const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
 ];
 
 export default function VideoExtractAudioTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/video/extract-audio'); }, []);
+
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<AudioFormat>('mp3');
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('video');
 
@@ -33,22 +37,21 @@ export default function VideoExtractAudioTool() {
   useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
 
   const addFile = ([f]: File[]) => {
-    setFile(f); setStatus('idle'); setOutput([]);
+    setFile(f); updateOp(() => ({ ...IDLE_OP }));
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
     setSessionFiles([f]);
   };
 
   const extract = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const result = await extractAudio(file, format, setProgress);
-      setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
+      const result = await extractAudio(file, format, pct => updateOp(d => { d.progress = pct; }));
+      updateOp(d => { d.output = [{ name: result.name, blob: result.blob, size: result.blob.size }]; d.status = 'done'; });
       if (audioUrl) URL.revokeObjectURL(audioUrl);
       setAudioUrl(URL.createObjectURL(result.blob));
-      setStatus('done');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Extraction failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Extraction failed'; d.status = 'error'; });
     }
   };
 
@@ -63,7 +66,7 @@ export default function VideoExtractAudioTool() {
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); clearSession(); }}>Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }}>Change</Button>
         </div>
       )}
 

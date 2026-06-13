@@ -10,6 +10,8 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { convertImage } from '@/lib/image/imageConvert';
 import { formatFileSize, generateId } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useToolPrefs, useRecentTools } from '@/stores/prefsStore';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 interface FileEntry { id: string; file: File; preview: string }
 
@@ -21,13 +23,15 @@ const FORMATS = [
 ];
 
 export default function ImageConvertTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/image/convert'); }, []);
   const [files, updateFiles] = useImmer<FileEntry[]>([]);
-  const [targetMime, setTargetMime] = useState('image/webp');
-  const [quality, setQuality] = useState(90);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [prefs, updatePrefs] = useToolPrefs('/image/convert', { targetMime: 'image/webp', quality: 90 });
+  const { targetMime, quality } = prefs;
+  const setTargetMime = (v: string) => updatePrefs({ targetMime: v });
+  const setQuality = (v: number) => updatePrefs({ quality: v });
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const addFiles = (incoming: File[]) => {
@@ -35,7 +39,7 @@ export default function ImageConvertTool() {
       id: generateId(), file: f, preview: URL.createObjectURL(f),
     }));
     updateFiles(draft => { draft.push(...entries); });
-    setStatus('idle'); setOutput([]);
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   // Seed from session on mount
@@ -43,9 +47,9 @@ export default function ImageConvertTool() {
     if (sessionFiles.length > 0 && files.length === 0) { addFiles(sessionFiles); }
   }, []);
 
-  // Sync session whenever files change
+  // Sync session whenever files change (guard skips initial empty render)
   useEffect(() => {
-    setSessionFiles(files.map(f => f.file));
+    if (files.length > 0) setSessionFiles(files.map(f => f.file));
   }, [files]);
 
   useEffect(() => {
@@ -54,17 +58,17 @@ export default function ImageConvertTool() {
 
   const convert = async () => {
     if (files.length === 0) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     const results: OutputFile[] = [];
     try {
       for (let i = 0; i < files.length; i++) {
         const result = await convertImage(files[i].file, targetMime, quality / 100);
         results.push({ name: result.name, blob: result.blob, size: result.blob.size });
-        setProgress(Math.round(((i + 1) / files.length) * 100));
+        updateOp(d => { d.progress = Math.round(((i + 1) / files.length) * 100); });
       }
-      setOutput(results); setStatus('done');
+      updateOp(d => { d.output = results; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Conversion failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Conversion failed'; d.status = 'error'; });
     }
   };
 
@@ -116,7 +120,7 @@ export default function ImageConvertTool() {
             <Button onClick={convert} disabled={status === 'processing'} >
               {status === 'processing' ? 'Converting...' : `Convert ${files.length} image${files.length > 1 ? 's' : ''}`}
             </Button>
-            <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); setOutput([]); clearSession(); }} >Reset</Button>
+            <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} >Reset</Button>
           </div>
         </div>
       )}

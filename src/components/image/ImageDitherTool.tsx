@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useImmer } from 'use-immer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -10,6 +11,8 @@ import { ditherImage } from '@/lib/image/imageDither';
 import type { DitherAlgorithm, DitherOptions, PaletteMode } from '@/lib/image/imageDither';
 import { formatFileSize, stripExtension, generateId } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 const ALGORITHM_OPTIONS: { value: DitherAlgorithm; label: string }[] = [
   { value: 'floyd-steinberg', label: 'Floyd-Steinberg' },
@@ -40,14 +43,14 @@ function showThreshold(algo: DitherAlgorithm): boolean {
 }
 
 export default function ImageDitherTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/image/dither'); }, []);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [dimensions, setDimensions] = useState<{ w: number; h: number } | null>(null);
   const [opts, setOpts] = useState<DitherOptions>(DEFAULT_OPTS);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevFileRef = useRef<File | null>(null);
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
@@ -61,9 +64,7 @@ export default function ImageDitherTool() {
     setFile(f);
     setSessionFiles([f]);
     setPreviewUrl(url);
-    setOutput([]);
-    setStatus('idle');
-    setError('');
+    updateOp(() => ({ ...IDLE_OP }));
 
     const img = new Image();
     img.onload = () => setDimensions({ w: img.naturalWidth, h: img.naturalHeight });
@@ -103,17 +104,13 @@ export default function ImageDitherTool() {
   }, [file]);
 
   async function process(f: File, options: DitherOptions) {
-    setStatus('processing');
-    setProgress(0);
-    setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const blob = await ditherImage(f, options, (pct) => setProgress(pct));
+      const blob = await ditherImage(f, options, (pct) => updateOp(d => { d.progress = pct; }));
       const outName = `${stripExtension(f.name)}_dither.png`;
-      setOutput([{ name: outName, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.output = [{ name: outName, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Dithering failed');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Dithering failed'; d.status = 'error'; });
     }
   }
 
@@ -268,9 +265,7 @@ export default function ImageDitherTool() {
                 setFile(null);
                 setPreviewUrl('');
                 setDimensions(null);
-                setOutput([]);
-                setStatus('idle');
-                setError('');
+                updateOp(() => ({ ...IDLE_OP }));
                 prevFileRef.current = null;
                 clearSession();
               }}

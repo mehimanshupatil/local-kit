@@ -2,37 +2,44 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FcVideoFile } from 'react-icons/fc';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { compressVideo, type VideoQuality } from '@/lib/video/videoCompress';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools, useToolPrefs } from '@/stores/prefsStore';
 
 export default function VideoCompressTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/video/compress'); }, []);
+
+  const [prefs, updatePrefs] = useToolPrefs('/video/compress', { quality: 'medium' as VideoQuality });
+  const { quality } = prefs;
+  const setQuality = (v: VideoQuality) => updatePrefs({ quality: v });
+
   const [file, setFile] = useState<File | null>(null);
-  const [quality, setQuality] = useState<VideoQuality>('medium');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const [log, setLog] = useState('');
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('video');
 
   useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
 
-  const addFile = ([f]: File[]) => { setFile(f); setStatus('idle'); setOutput([]); setSessionFiles([f]); };
+  const addFile = ([f]: File[]) => { setFile(f); updateOp(() => ({ ...IDLE_OP })); setSessionFiles([f]); };
 
   const compress = async () => {
     if (!file) return;
-    setStatus('loading'); setProgress(0); setError(''); setLog('Loading FFmpeg WASM...');
+    updateOp(d => { d.status = 'loading'; d.progress = 0; d.error = ''; });
+    setLog('Loading FFmpeg WASM...');
     try {
-      setStatus('processing');
-      const result = await compressVideo(file, quality, (pct) => { setProgress(pct); setLog(`Compressing... ${pct}%`); });
-      setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.status = 'processing'; });
+      const result = await compressVideo(file, quality, (pct) => { updateOp(d => { d.progress = pct; }); setLog(`Compressing... ${pct}%`); });
+      updateOp(d => { d.output = [{ name: result.name, blob: result.blob, size: result.blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Compression failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Compression failed'; d.status = 'error'; });
     }
   };
 
@@ -51,7 +58,7 @@ export default function VideoCompressTool() {
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); clearSession(); }}>Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }}>Change</Button>
         </div>
       )}
 

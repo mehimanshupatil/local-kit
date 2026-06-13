@@ -37,7 +37,7 @@ export async function editPDFMetadata(
   buffer: ArrayBuffer,
   meta: PDFMetadata,
 ): Promise<Blob> {
-  const doc = await PDFDocument.load(buffer);
+  const doc = await PDFDocument.load(buffer, { ignoreEncryption: true });
 
   // Read originals so we know which fields actually existed.
   // Only call a setter when the new value is non-empty OR the field already

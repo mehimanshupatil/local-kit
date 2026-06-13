@@ -5,11 +5,13 @@ import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Check, RotateCcw, RotateCw, X } from 'lucide-react';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 
 enableMapSet();
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import PDFPageThumbnail from './PDFPageThumbnail';
 import { PDFDocument, degrees } from '@cantoo/pdf-lib';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
@@ -19,16 +21,16 @@ import PDFFileBar from './PDFFileBar';
 
 export default function PDFRotateTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/rotate'); }, []);
   const [file,  setFile]  = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [pdf,   setPdf]   = useState<PDFDocumentProxy | null>(null);
   const [total, setTotal] = useState(0);
   // Per-page rotation delta (added on top of existing rotation)
   const [rotations, updateRotations] = useImmer<number[]>([]);
   const [selected,  updateSelected]  = useImmer<Set<number>>(new Set());
-  const [status, setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output,   setOutput] = useState<OutputFile[]>([]);
-  const [error,    setError]  = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   useEffect(() => {
     if (sessionFiles.length > 0 && !file) {
@@ -45,7 +47,7 @@ export default function PDFRotateTool() {
     setTotal(pdfDoc.numPages);
     updateRotations(() => Array(pdfDoc.numPages).fill(0));
     updateSelected(() => new Set());
-    setStatus('idle'); setOutput([]);
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const toggleSelect = (i: number, e: React.MouseEvent) => {
@@ -78,7 +80,7 @@ export default function PDFRotateTool() {
 
   const apply = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
       const doc = await PDFDocument.load(file.buffer);
       const pages = doc.getPages();
@@ -88,19 +90,15 @@ export default function PDFRotateTool() {
           page.setRotation(degrees((current + rotations[i]) % 360));
         }
       });
-      onProgress?.(80);
+      updateOp(d => { d.progress = 80; });
       const bytes = await doc.save();
-      setProgress(100);
+      updateOp(d => { d.progress = 100; });
       const blob = new Blob([bytes], { type: 'application/pdf' });
-      setOutput([{ name: `${stripExtension(file.name)}_rotated.pdf`, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.output = [{ name: `${stripExtension(file.name)}_rotated.pdf`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Rotation failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Rotation failed'; d.status = 'error'; });
     }
   };
-
-  // fix: onProgress not defined above
-  const onProgress = (n: number) => setProgress(n);
 
   const hasRotations = rotations.some(r => r !== 0);
   const rotatedCount = rotations.filter(r => r !== 0).length;
@@ -111,7 +109,7 @@ export default function PDFRotateTool() {
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false}
           label="Drop a PDF file" sublabel="Click pages to select, then rotate" />
       ) : (
-        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); setOutput([]); clearSession(); }} />
+        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} />
       )}
 
       {pdf && total > 0 && (

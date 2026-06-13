@@ -1,13 +1,14 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { removeImageBackground } from '@/lib/image/imageBackgroundRemoval';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
-
-type Status = 'idle' | 'processing' | 'done' | 'error';
+import { useRecentTools } from '@/stores/prefsStore';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 const checkerboardStyle: React.CSSProperties = {
   backgroundImage: `
@@ -28,15 +29,15 @@ function formatStage(key: string): string {
 }
 
 export default function ImageBackgroundRemovalTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/image/background-remover'); }, []);
   const [file, setFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState('');
   const [resultURL, setResultURL] = useState('');
   const [resultBlob, setResultBlob] = useState<Blob | null>(null);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [status, setStatus] = useState<Status>('idle');
   const [stage, setStage] = useState('');
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (files: File[]) => {
@@ -49,11 +50,8 @@ export default function ImageBackgroundRemovalTool() {
     setPreviewURL(URL.createObjectURL(f));
     setResultURL('');
     setResultBlob(null);
-    setOutput([]);
-    setStatus('idle');
-    setError('');
-    setProgress(0);
     setStage('');
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const handleChange = () => {
@@ -63,10 +61,8 @@ export default function ImageBackgroundRemovalTool() {
     setPreviewURL('');
     setResultURL('');
     setResultBlob(null);
-    setStatus('idle');
-    setError('');
-    setProgress(0);
     setStage('');
+    updateOp(() => ({ ...IDLE_OP }));
     clearSession();
   };
 
@@ -81,24 +77,20 @@ export default function ImageBackgroundRemovalTool() {
 
   const handleRemove = async () => {
     if (!file) return;
-    setStatus('processing');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     setStage('Initializing…');
-    setProgress(0);
-    setError('');
 
     try {
       const blob = await removeImageBackground(file, (key, pct) => {
         setStage(formatStage(key));
-        setProgress(pct);
+        updateOp(d => { d.progress = pct; });
       });
       const url = URL.createObjectURL(blob);
       setResultBlob(blob);
       setResultURL(url);
-      setOutput([{ name: `${stripExtension(file.name)}_no_bg.png`, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.output = [{ name: `${stripExtension(file.name)}_no_bg.png`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Background removal failed');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Background removal failed'; d.status = 'error'; });
     }
   };
 

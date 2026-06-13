@@ -5,6 +5,7 @@ import Footer from "../components/layout/Footer.astro";
 import { categories } from "../data/tools";
 import Icon from "../components/ui/Icon";
 import { FcPrivacy, FcFlashOn, FcGlobe } from "react-icons/fc";
+import RecentTools from "../components/shared/RecentTools";
 ---
 
 <BaseLayout
@@ -48,6 +49,8 @@ import { FcPrivacy, FcFlashOn, FcGlobe } from "react-icons/fc";
         </div>
       </div>
     </section>
+
+    <RecentTools client:load />
 
     <!-- Features -->
     <section

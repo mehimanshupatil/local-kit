@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFileSession } from '@/stores/fileStore';
+import { useToolPrefs, useRecentTools } from '@/stores/prefsStore';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { watermarkPDF } from '@/lib/pdf/pdfWatermark';
 import { stripExtension } from '@/lib/utils/fileUtils';
 import { cn } from '@/lib/utils/cn';
 import PDFFileBar from './PDFFileBar';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 type ColorKey = 'gray' | 'red' | 'blue' | 'green';
 type RotationPreset = 'diagonal' | 'horizontal' | 'vertical';
@@ -45,16 +48,24 @@ const ROTATION_PRESETS: { key: RotationPreset; label: string; degrees: number }[
 
 export default function PDFWatermarkTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/watermark'); }, []);
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
-  const [text,     setText]     = useState('CONFIDENTIAL');
-  const [fontSize, setFontSize] = useState(60);
-  const [opacity,  setOpacity]  = useState(25);
-  const [rotation, setRotation] = useState<RotationPreset>('diagonal');
-  const [color,    setColor]    = useState<ColorKey>('gray');
-  const [status,   setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output,   setOutput]   = useState<OutputFile[]>([]);
-  const [error,    setError]    = useState('');
+  const [prefs, updatePrefs] = useToolPrefs('/pdf/watermark', {
+    text: 'CONFIDENTIAL' as string,
+    fontSize: 60,
+    opacity: 25,
+    rotation: 'diagonal' as RotationPreset,
+    color: 'gray' as ColorKey,
+  });
+  const { text, fontSize, opacity, rotation, color } = prefs;
+  const setText = (v: string) => updatePrefs({ text: v });
+  const setFontSize = (v: number) => updatePrefs({ fontSize: v });
+  const setOpacity = (v: number) => updatePrefs({ opacity: v });
+  const setRotation = (v: RotationPreset) => updatePrefs({ rotation: v });
+  const setColor = (v: ColorKey) => updatePrefs({ color: v });
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   useEffect(() => {
     if (sessionFiles.length > 0 && !file) {
@@ -66,12 +77,12 @@ export default function PDFWatermarkTool() {
     const buf = await f.arrayBuffer();
     setFile({ name: f.name, size: f.size, buffer: buf });
     setSessionFiles([f]);
-    setStatus('idle'); setOutput([]);
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const apply = async () => {
     if (!file || !text.trim()) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
       const blob = await watermarkPDF(
         file.buffer,
@@ -82,13 +93,11 @@ export default function PDFWatermarkTool() {
           color: COLOR_MAP[color],
           rotation: ROTATION_PRESETS.find(r => r.key === rotation)!.degrees,
         },
-        setProgress,
+        pct => updateOp(d => { d.progress = pct; }),
       );
-      setOutput([{ name: `${stripExtension(file.name)}_watermarked.pdf`, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.output = [{ name: `${stripExtension(file.name)}_watermarked.pdf`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to apply watermark');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to apply watermark'; d.status = 'error'; });
     }
   };
 
@@ -103,7 +112,7 @@ export default function PDFWatermarkTool() {
           sublabel="Add a watermark text to every page"
         />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); setStatus('idle'); clearSession(); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} />
       )}
 
       {file && (

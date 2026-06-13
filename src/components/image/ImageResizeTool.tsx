@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
 import { Lock, LockOpen } from 'lucide-react';
 import { Resizable } from 're-resizable';
@@ -10,6 +11,8 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { resizeImage, type ResizeMode } from '@/lib/image/imageResize';
 import { formatFileSize, generateId } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useToolPrefs, useRecentTools } from '@/stores/prefsStore';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 interface FileEntry { id: string; file: File; preview: string; w: number; h: number }
 
@@ -35,16 +38,18 @@ const PREVIEW_W = 400;
 const PREVIEW_H = 280;
 
 export default function ImageResizeTool() {
-  const [files, setFiles]     = useState<FileEntry[]>([]);
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/image/resize'); }, []);
+  const [files, updateFiles]  = useImmer<FileEntry[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [width,  setWidth]    = useState(1920);
-  const [height, setHeight]   = useState(1080);
+  const [prefs, updatePrefs] = useToolPrefs('/image/resize', { width: 1920, height: 1080, mode: 'fit' as ResizeMode });
+  const { width, height, mode } = prefs;
+  const setWidth = (v: number) => updatePrefs({ width: v });
+  const setHeight = (v: number) => updatePrefs({ height: v });
+  const setMode = (v: ResizeMode) => updatePrefs({ mode: v });
   const [locked, { toggle: toggleLocked }] = useDisclosure(true);
-  const [mode,   setMode]     = useState<ResizeMode>('fit');
-  const [status, setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output,   setOutput] = useState<OutputFile[]>([]);
-  const [error,    setError]  = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const active = files[activeIdx] ?? null;
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
@@ -66,9 +71,9 @@ export default function ImageResizeTool() {
     if (sessionFiles.length > 0 && files.length === 0) { addFiles(sessionFiles); }
   }, []);
 
-  // Sync session whenever files change
+  // Sync session whenever files change (guard skips initial empty render)
   useEffect(() => {
-    setSessionFiles(files.map(f => f.file));
+    if (files.length > 0) setSessionFiles(files.map(f => f.file));
   }, [files]);
 
   // ── File handling ──────────────────────────────────────────────
@@ -80,14 +85,13 @@ export default function ImageResizeTool() {
       img.onload = () => res({ id: generateId(), file: f, preview: url, w: img.naturalWidth, h: img.naturalHeight });
       img.src = url;
     }))).then(entries => {
-      setFiles(prev => {
-        if (prev.length === 0 && entries.length > 0) {
-          setWidth(entries[0].w);
-          setHeight(entries[0].h);
+      updateFiles(draft => {
+        if (draft.length === 0 && entries.length > 0) {
+          updatePrefs({ width: entries[0].w, height: entries[0].h });
         }
-        return [...prev, ...entries];
+        draft.push(...entries);
       });
-      setStatus('idle'); setOutput([]);
+      updateOp(() => ({ ...IDLE_OP }));
     });
   };
 
@@ -105,21 +109,21 @@ export default function ImageResizeTool() {
   // ── Process ────────────────────────────────────────────────────
   const resize = async () => {
     if (!files.length) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     const results: OutputFile[] = [];
     try {
       for (let i = 0; i < files.length; i++) {
         const r = await resizeImage(files[i].file, { width, height, mode });
         results.push({ name: r.name, blob: r.blob, size: r.blob.size });
-        setProgress(Math.round(((i + 1) / files.length) * 100));
+        updateOp(d => { d.progress = Math.round(((i + 1) / files.length) * 100); });
       }
-      setOutput(results); setStatus('done');
+      updateOp(d => { d.output = results; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Resize failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Resize failed'; d.status = 'error'; });
     }
   };
 
-  const reset = () => { files.forEach(f => URL.revokeObjectURL(f.preview)); setFiles([]); setOutput([]); setStatus('idle'); clearSession(); };
+  const reset = () => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); updateOp(() => ({ ...IDLE_OP })); clearSession(); };
 
   useEffect(() => {
     if (files.length > 0 && status === 'idle') resize();

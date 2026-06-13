@@ -1,22 +1,25 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { compressPDF } from '@/lib/pdf/pdfCompress';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import PDFFileBar from './PDFFileBar';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function PDFCompressTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/compress'); }, []);
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const [stats, setStats] = useState<{ original: number; compressed: number } | null>(null);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (sessionFiles.length > 0 && !file) {
@@ -27,19 +30,18 @@ export default function PDFCompressTool() {
   const addFile = async ([f]: File[]) => {
     setFile({ name: f.name, size: f.size, buffer: await f.arrayBuffer() });
     setSessionFiles([f]);
-    setStatus('idle'); setOutput([]); setStats(null);
+    updateOp(() => ({ ...IDLE_OP })); setStats(null);
   };
 
   const compress = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const result = await compressPDF(file.buffer, file.name, setProgress);
-      setOutput([{ name: result.name, blob: result.blob, size: result.newSize }]);
+      const result = await compressPDF(file.buffer, file.name, pct => updateOp(d => { d.progress = pct; }));
       setStats({ original: result.originalSize, compressed: result.newSize });
-      setStatus('done');
+      updateOp(d => { d.output = [{ name: result.name, blob: result.blob, size: result.newSize }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to compress'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to compress'; d.status = 'error'; });
     }
   };
 
@@ -50,7 +52,7 @@ export default function PDFCompressTool() {
       {!file ? (
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false} label="Drop a PDF file" />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); setStats(null); clearSession(); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); setStats(null); clearSession(); }} />
       )}
 
       {file && (

@@ -1,21 +1,24 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { pdfToImages } from '@/lib/pdf/pdfToImages';
 import PDFFileBar from './PDFFileBar';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function PDFToImagesTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/to-images'); }, []);
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [scale, setScale] = useState(1.5);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   useEffect(() => {
     if (sessionFiles.length > 0 && !file) {
@@ -26,18 +29,17 @@ export default function PDFToImagesTool() {
   const addFile = async ([f]: File[]) => {
     setFile({ name: f.name, size: f.size, buffer: await f.arrayBuffer() });
     setSessionFiles([f]);
-    setStatus('idle'); setOutput([]);
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const convert = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const results = await pdfToImages(file.buffer, file.name, scale, setProgress);
-      setOutput(results.map(r => ({ name: r.name, blob: r.blob, size: r.blob.size })));
-      setStatus('done');
+      const results = await pdfToImages(file.buffer, file.name, scale, pct => updateOp(d => { d.progress = pct; }));
+      updateOp(d => { d.output = results.map(r => ({ name: r.name, blob: r.blob, size: r.blob.size })); d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Conversion failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Conversion failed'; d.status = 'error'; });
     }
   };
 
@@ -53,7 +55,7 @@ export default function PDFToImagesTool() {
       {!file ? (
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false} label="Drop a PDF file" />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); clearSession(); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} />
       )}
 
       {file && (

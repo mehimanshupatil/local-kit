@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
 import { Slider } from '@/components/ui/slider';
 import { Play, Pause, SkipBack, SkipForward, Scissors } from 'lucide-react';
@@ -7,8 +8,10 @@ import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { trimAudio } from '@/lib/audio/audioTrim';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -18,16 +21,17 @@ function fmt(sec: number): string {
 }
 
 export default function AudioTrimTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/audio/trim'); }, []);
+
   const [file,        setFile]        = useState<File | null>(null);
   const [audioURL,    setAudioURL]    = useState('');
   const [duration,    setDuration]    = useState(0);
   const [range,       setRange]       = useState<[number, number]>([0, 0]);
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, { open: startPlaying, close: stopPlaying }] = useDisclosure(false);
-  const [status,      setStatus]      = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress,    setProgress]    = useState(0);
-  const [output,      setOutput]      = useState<OutputFile[]>([]);
-  const [error,       setError]       = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const [trimmedUrl,  setTrimmedUrl]  = useState<string | null>(null);
 
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -40,7 +44,7 @@ export default function AudioTrimTool() {
     if (audioURL) URL.revokeObjectURL(audioURL);
     if (trimmedUrl) { URL.revokeObjectURL(trimmedUrl); setTrimmedUrl(null); }
     const url = URL.createObjectURL(f);
-    setFile(f); setAudioURL(url); setStatus('idle'); setOutput([]);
+    setFile(f); setAudioURL(url); updateOp(() => ({ ...IDLE_OP }));
     stopPlaying(); setCurrentTime(0); setRange([0, 0]); setDuration(0);
     setSessionFiles([f]);
   };
@@ -96,15 +100,14 @@ export default function AudioTrimTool() {
 
   const trim = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const result = await trimAudio(file, start, end, setProgress);
-      setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
+      const result = await trimAudio(file, start, end, pct => updateOp(d => { d.progress = pct; }));
+      updateOp(d => { d.output = [{ name: result.name, blob: result.blob, size: result.blob.size }]; d.status = 'done'; });
       if (trimmedUrl) URL.revokeObjectURL(trimmedUrl);
       setTrimmedUrl(URL.createObjectURL(result.blob));
-      setStatus('done');
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Trim failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Trim failed'; d.status = 'error'; });
     }
   };
 
@@ -234,7 +237,7 @@ export default function AudioTrimTool() {
                   <Scissors className="size-4" />
                   {status === 'processing' ? 'Trimming...' : `Trim: ${fmt(start)} → ${fmt(end)}`}
                 </Button>
-                <Button variant="secondary" onClick={() => { if (audioURL) URL.revokeObjectURL(audioURL); setFile(null); setAudioURL(''); setOutput([]); clearSession(); }}>
+                <Button variant="secondary" onClick={() => { if (audioURL) URL.revokeObjectURL(audioURL); setFile(null); setAudioURL(''); updateOp(() => ({ ...IDLE_OP })); clearSession(); }}>
                   Change
                 </Button>
               </div>

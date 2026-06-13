@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { readPDFMetadata, editPDFMetadata, type PDFMetadata } from '@/lib/pdf/pdfEditMetadata';
 import { stripExtension } from '@/lib/utils/fileUtils';
 import PDFFileBar from './PDFFileBar';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 const BLANK: PDFMetadata = {
   title: '', author: '', subject: '', keywords: '',
@@ -29,12 +32,12 @@ const FIELDS: { key: keyof PDFMetadata; label: string; placeholder: string; type
 
 export default function PDFEditMetadataTool() {
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/pdf/edit-metadata'); }, []);
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [meta,     setMeta]     = useState<PDFMetadata>(BLANK);
-  const [status,   setStatus]   = useState<'idle' | 'loading' | 'processing' | 'done' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [output,   setOutput]   = useState<OutputFile[]>([]);
-  const [error,    setError]    = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   useEffect(() => {
     if (sessionFiles.length > 0 && !file) {
@@ -43,36 +46,32 @@ export default function PDFEditMetadataTool() {
   }, []);
 
   const addFile = async ([f]: File[]) => {
-    setStatus('loading'); setError(''); setOutput([]);
+    updateOp(d => { d.status = 'loading'; d.error = ''; d.output = []; });
     try {
       const buf = await f.arrayBuffer();
       const existing = await readPDFMetadata(buf);
       setFile({ name: f.name, size: f.size, buffer: buf });
       setSessionFiles([f]);
       setMeta(existing);
-      setStatus('idle');
+      updateOp(d => { d.status = 'idle'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to read PDF metadata');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to read PDF metadata'; d.status = 'error'; });
     }
   };
 
   const save = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      setProgress(30);
+      updateOp(d => { d.progress = 30; });
       const blob = await editPDFMetadata(file.buffer, meta);
-      setProgress(100);
-      setOutput([{ name: `${stripExtension(file.name)}_meta.pdf`, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.progress = 100; d.output = [{ name: `${stripExtension(file.name)}_meta.pdf`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save PDF');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Failed to save PDF'; d.status = 'error'; });
     }
   };
 
-  const clear = () => { setFile(null); setMeta(BLANK); setOutput([]); setStatus('idle'); clearSession(); };
+  const clear = () => { setFile(null); setMeta(BLANK); updateOp(() => ({ ...IDLE_OP })); clearSession(); };
 
   const set = (key: keyof PDFMetadata) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setMeta(m => ({ ...m, [key]: e.target.value }));

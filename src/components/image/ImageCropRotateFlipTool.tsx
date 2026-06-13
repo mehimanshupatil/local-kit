@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -10,8 +11,12 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { applyTransform } from '@/lib/image/imageCropRotateFlip';
 import { formatFileSize, stripExtension, getExtension } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function ImageCropRotateFlipTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/image/crop-rotate-flip'); }, []);
   const [file, setFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string>('');
   const [crop, setCrop] = useState<Crop | undefined>(undefined);
@@ -19,9 +24,8 @@ export default function ImageCropRotateFlipTool() {
   const [rotation, setRotation] = useState<0 | 90 | 180 | 270>(0);
   const [flipH, { toggle: toggleFlipH, close: resetFlipH }] = useDisclosure(false);
   const [flipV, { toggle: toggleFlipV, close: resetFlipV }] = useDisclosure(false);
-  const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [output, setOutput] = useState<OutputFile[]>([]);
-  const [error, setError] = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
   const imgRef = useRef<HTMLImageElement>(null);
   const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
@@ -37,9 +41,7 @@ export default function ImageCropRotateFlipTool() {
     setRotation(0);
     resetFlipH();
     resetFlipV();
-    setStatus('idle');
-    setOutput([]);
-    setError('');
+    updateOp(() => ({ ...IDLE_OP }));
   };
 
   const handleChange = () => {
@@ -51,9 +53,7 @@ export default function ImageCropRotateFlipTool() {
     setRotation(0);
     resetFlipH();
     resetFlipV();
-    setStatus('idle');
-    setOutput([]);
-    setError('');
+    updateOp(() => ({ ...IDLE_OP }));
     clearSession();
   };
 
@@ -69,8 +69,7 @@ export default function ImageCropRotateFlipTool() {
 
   const handleApply = async () => {
     if (!file) return;
-    setStatus('processing');
-    setError('');
+    updateOp(d => { d.status = 'processing'; d.error = ''; });
     try {
       const cropArg = completedCrop
         ? { x: completedCrop.x, y: completedCrop.y, width: completedCrop.width, height: completedCrop.height }
@@ -80,11 +79,9 @@ export default function ImageCropRotateFlipTool() {
 
       const ext = getExtension(file.name) || 'png';
       const name = `${stripExtension(file.name)}_edited.${ext}`;
-      setOutput([{ name, blob, size: blob.size }]);
-      setStatus('done');
+      updateOp(d => { d.output = [{ name, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Processing failed');
-      setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Processing failed'; d.status = 'error'; });
     }
   };
 

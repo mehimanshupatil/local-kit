@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
+import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
 import { Slider } from '@/components/ui/slider';
 import { Play, Pause, SkipBack, SkipForward, Scissors } from 'lucide-react';
@@ -8,8 +9,10 @@ import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { trimVideo } from '@/lib/video/videoTrim';
+import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import { useFileSession } from '@/stores/fileStore';
+import { useRecentTools } from '@/stores/prefsStore';
 
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -19,16 +22,17 @@ function fmt(sec: number): string {
 }
 
 export default function VideoTrimTool() {
+  const { recordVisit } = useRecentTools();
+  useEffect(() => { recordVisit('/video/trim'); }, []);
+
   const [file,        setFile]        = useState<File | null>(null);
   const [videoURL,    setVideoURL]    = useState('');
   const [duration,    setDuration]    = useState(0);
   const [range,       setRange]       = useState<[number, number]>([0, 0]);
   const [currentTime, setCurrentTime] = useState(0);
   const [playing, { open: startPlaying, close: stopPlaying }] = useDisclosure(false);
-  const [status,      setStatus]      = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
-  const [progress,    setProgress]    = useState(0);
-  const [output,      setOutput]      = useState<OutputFile[]>([]);
-  const [error,       setError]       = useState('');
+  const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
+  const { status, progress, output, error } = op;
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [start, end] = range;
@@ -39,7 +43,7 @@ export default function VideoTrimTool() {
   const addFile = ([f]: File[]) => {
     if (videoURL) URL.revokeObjectURL(videoURL);
     const url = URL.createObjectURL(f);
-    setFile(f); setVideoURL(url); setStatus('idle'); setOutput([]);
+    setFile(f); setVideoURL(url); updateOp(() => ({ ...IDLE_OP }));
     stopPlaying(); setCurrentTime(0); setRange([0, 0]); setDuration(0);
     setSessionFiles([f]);
   };
@@ -91,13 +95,12 @@ export default function VideoTrimTool() {
 
   const trim = async () => {
     if (!file) return;
-    setStatus('processing'); setProgress(0); setError('');
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; });
     try {
-      const result = await trimVideo(file, start, end, setProgress);
-      setOutput([{ name: result.name, blob: result.blob, size: result.blob.size }]);
-      setStatus('done');
+      const result = await trimVideo(file, start, end, pct => updateOp(d => { d.progress = pct; }));
+      updateOp(d => { d.output = [{ name: result.name, blob: result.blob, size: result.blob.size }]; d.status = 'done'; });
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Trim failed'); setStatus('error');
+      updateOp(d => { d.error = e instanceof Error ? e.message : 'Trim failed'; d.status = 'error'; });
     }
   };
 
@@ -223,7 +226,7 @@ export default function VideoTrimTool() {
                   <Scissors className="size-4" />
                   {status === 'processing' ? 'Trimming…' : `Trim: ${fmt(start)} → ${fmt(end)}`}
                 </Button>
-                <Button variant="secondary" onClick={() => { if (videoURL) URL.revokeObjectURL(videoURL); setFile(null); setVideoURL(''); setOutput([]); clearSession(); }} >
+                <Button variant="secondary" onClick={() => { if (videoURL) URL.revokeObjectURL(videoURL); setFile(null); setVideoURL(''); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} >
                   Change
                 </Button>
               </div>
