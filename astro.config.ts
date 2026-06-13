@@ -3,8 +3,21 @@ import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
 import AstroPWA from '@vite-pwa/astro';
 import { copyFileSync, mkdirSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import type { Plugin } from 'vite';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+function ignoreNodeBinariesPlugin(): Plugin {
+  return {
+    name: 'ignore-node-binaries',
+    enforce: 'pre',
+    resolveId(id) {
+      if (id.endsWith('.node')) return { id, external: true };
+    },
+  };
+}
 
 function copyPDFWorkerPlugin(): Plugin {
   return {
@@ -127,7 +140,12 @@ export default defineConfig({
     }),
   ],
   vite: {
-    plugins: [tailwindcss(), copyPDFWorkerPlugin()],
+    resolve: {
+      alias: {
+        '@scribe.js/canvas': resolve(__dirname, 'src/lib/stubs/scribe-canvas-stub.js'),
+      },
+    },
+    plugins: [tailwindcss(), copyPDFWorkerPlugin(), ignoreNodeBinariesPlugin()],
     worker: {
       format: 'es',
     },
