@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
+import { useFileSession } from '@/stores/fileStore';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -29,6 +30,7 @@ interface FileEntry {
   buffer: ArrayBuffer;
   pageCount: number;
   pdf: PDFDocumentProxy;
+  rawFile: File;
 }
 
 // ── Sortable file row ─────────────────────────────────────────────
@@ -98,6 +100,7 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
 
 // ── Main tool ─────────────────────────────────────────────────────
 export default function PDFMergeTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [files, updateFiles]    = useImmer<FileEntry[]>([]);
   const [status, setStatus]     = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
@@ -106,13 +109,23 @@ export default function PDFMergeTool() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && files.length === 0) {
+      try { addFiles(sessionFiles); } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    setSessionFiles(files.map(f => f.rawFile));
+  }, [files]);
+
   const addFiles = async (incoming: File[]) => {
     const pdfs = incoming.filter(f => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
     const entries: FileEntry[] = [];
     for (const f of pdfs) {
       const buffer = await f.arrayBuffer();
       const pdf = await loadPDFDocument(buffer.slice(0));
-      entries.push({ id: generateId(), name: f.name, size: f.size, buffer, pageCount: pdf.numPages, pdf });
+      entries.push({ id: generateId(), name: f.name, size: f.size, buffer, pageCount: pdf.numPages, pdf, rawFile: f });
     }
     updateFiles(draft => { draft.push(...entries); });
     setStatus('idle'); setOutput([]);
@@ -203,7 +216,7 @@ export default function PDFMergeTool() {
             <Button onClick={merge} disabled={files.length < 2 || status === 'processing'}>
               {status === 'processing' ? 'Merging…' : `Merge ${files.length} PDFs → ${totalPages} pages`}
             </Button>
-            <Button variant="secondary" onClick={() => { updateFiles(() => []); setOutput([]); setStatus('idle'); }}>
+            <Button variant="secondary" onClick={() => { updateFiles(() => []); setOutput([]); setStatus('idle'); clearSession(); }}>
               Reset
             </Button>
           </div>

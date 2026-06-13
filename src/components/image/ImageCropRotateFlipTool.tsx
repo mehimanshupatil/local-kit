@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
@@ -9,6 +9,7 @@ import DropZone from '@/components/shared/DropZone';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { applyTransform } from '@/lib/image/imageCropRotateFlip';
 import { formatFileSize, stripExtension, getExtension } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 export default function ImageCropRotateFlipTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -22,12 +23,14 @@ export default function ImageCropRotateFlipTool() {
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
   const imgRef = useRef<HTMLImageElement>(null);
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (files: File[]) => {
     const img = files.find(f => f.type.startsWith('image/'));
     if (!img) return;
     if (previewURL) URL.revokeObjectURL(previewURL);
     setFile(img);
+    setSessionFiles([img]);
     setPreviewURL(URL.createObjectURL(img));
     setCrop(undefined);
     setCompletedCrop(undefined);
@@ -51,7 +54,13 @@ export default function ImageCropRotateFlipTool() {
     setStatus('idle');
     setOutput([]);
     setError('');
+    clearSession();
   };
+
+  // Seed from session on mount
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) { handleFiles([sessionFiles[0]]); }
+  }, []);
 
   const rotateCW = () => setRotation(r => ((r + 90) % 360) as 0 | 90 | 180 | 270);
   const rotateCCW = () => setRotation(r => ((r + 270) % 360) as 0 | 90 | 180 | 270);

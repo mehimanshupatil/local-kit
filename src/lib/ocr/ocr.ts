@@ -28,17 +28,18 @@ export async function runOCR(
   onProgress?: (pct: number) => void
 ): Promise<OCRResult> {
   onProgress?.(5);
-  await scribe.importFiles([file]);
+  const doc = await scribe.openDocument([file]);
+
 
   onProgress?.(20);
-  await scribe.recognize({ langs: [lang], mode: 'quality' });
+  await doc.recognize({ langs: [lang], mode: 'quality' });
 
   onProgress?.(90);
-  const text = await scribe.exportData('txt') as string;
-  const pages = scribe.data.pageCount ?? 1;
+  const text = await doc.exportData('txt') as string;
+  const pages = doc.inputData.pageCount ?? 1;
 
   // Extract per-page word bboxes
-  const pageData: OcrPageResult[] = (scribe.data.ocr.active ?? []).map((page: any) => {
+  const pageData: OcrPageResult[] = (doc.ocr.active ?? []).map((page: any) => {
     const words: OcrWordResult[] = [];
     for (const line of (page.lines ?? [])) {
       const baseline: number = (line.bbox?.bottom ?? 0) + (line.baseline?.[1] ?? 0);
@@ -62,7 +63,7 @@ export async function runOCR(
     };
   });
 
-  await scribe.clear();
+  await doc.clear();
   onProgress?.(100);
 
   return { text: text.trim(), pages, pageData };

@@ -5,6 +5,7 @@ import DropZone from '@/components/shared/DropZone';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { removeImageBackground } from '@/lib/image/imageBackgroundRemoval';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 type Status = 'idle' | 'processing' | 'done' | 'error';
 
@@ -36,6 +37,7 @@ export default function ImageBackgroundRemovalTool() {
   const [stage, setStage] = useState('');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState('');
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (files: File[]) => {
     const f = files[0];
@@ -43,6 +45,7 @@ export default function ImageBackgroundRemovalTool() {
     if (previewURL) URL.revokeObjectURL(previewURL);
     if (resultURL) URL.revokeObjectURL(resultURL);
     setFile(f);
+    setSessionFiles([f]);
     setPreviewURL(URL.createObjectURL(f));
     setResultURL('');
     setResultBlob(null);
@@ -64,7 +67,13 @@ export default function ImageBackgroundRemovalTool() {
     setError('');
     setProgress(0);
     setStage('');
+    clearSession();
   };
+
+  // Seed from session on mount
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) { handleFiles([sessionFiles[0]]); }
+  }, []);
 
   useEffect(() => {
     if (file && status === 'idle') handleRemove();

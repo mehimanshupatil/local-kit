@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFEditMetadataTool from '../../components/pdf/PDFEditMetadataTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/edit-metadata');
+---
+<ToolLayout {...meta}>
+  <PDFEditMetadataTool client:load />
+</ToolLayout>

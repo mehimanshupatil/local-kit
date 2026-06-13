@@ -6,6 +6,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { compressAudio, type AudioBitrate } from '@/lib/audio/audioCompress';
 import { formatFileSize } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 const BITRATES: { value: AudioBitrate; label: string; note: string }[] = [
   { value: '320k', label: '320k', note: 'Best quality' },
@@ -24,14 +25,18 @@ export default function AudioCompressTool() {
   const [output,   setOutput]   = useState<OutputFile[]>([]);
   const [error,    setError]    = useState('');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('audio');
 
   useEffect(() => {
     return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };
   }, [audioUrl]);
 
+  useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
+
   const addFile = ([f]: File[]) => {
     setFile(f); setStatus('idle'); setOutput([]);
     if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); }
+    setSessionFiles([f]);
   };
 
   const compress = async () => {
@@ -65,7 +70,7 @@ export default function AudioCompressTool() {
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); } }}>Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); if (audioUrl) { URL.revokeObjectURL(audioUrl); setAudioUrl(null); } clearSession(); }}>Change</Button>
         </div>
       )}
 

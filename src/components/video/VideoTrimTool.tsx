@@ -9,6 +9,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { trimVideo } from '@/lib/video/videoTrim';
 import { formatFileSize } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -31,12 +32,16 @@ export default function VideoTrimTool() {
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [start, end] = range;
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('video');
+
+  useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
 
   const addFile = ([f]: File[]) => {
     if (videoURL) URL.revokeObjectURL(videoURL);
     const url = URL.createObjectURL(f);
     setFile(f); setVideoURL(url); setStatus('idle'); setOutput([]);
     stopPlaying(); setCurrentTime(0); setRange([0, 0]); setDuration(0);
+    setSessionFiles([f]);
   };
 
   const onMetadata = () => {
@@ -218,7 +223,7 @@ export default function VideoTrimTool() {
                   <Scissors className="size-4" />
                   {status === 'processing' ? 'Trimming…' : `Trim: ${fmt(start)} → ${fmt(end)}`}
                 </Button>
-                <Button variant="secondary" onClick={() => { if (videoURL) URL.revokeObjectURL(videoURL); setFile(null); setVideoURL(''); setOutput([]); }} >
+                <Button variant="secondary" onClick={() => { if (videoURL) URL.revokeObjectURL(videoURL); setFile(null); setVideoURL(''); setOutput([]); clearSession(); }} >
                   Change
                 </Button>
               </div>

@@ -1,12 +1,13 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FcVideoFile } from 'react-icons/fc';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { compressVideo, type VideoQuality } from '@/lib/video/videoCompress';
 import { formatFileSize } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 export default function VideoCompressTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -16,8 +17,11 @@ export default function VideoCompressTool() {
   const [log, setLog] = useState('');
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('video');
 
-  const addFile = ([f]: File[]) => { setFile(f); setStatus('idle'); setOutput([]); };
+  useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
+
+  const addFile = ([f]: File[]) => { setFile(f); setStatus('idle'); setOutput([]); setSessionFiles([f]); };
 
   const compress = async () => {
     if (!file) return;
@@ -47,7 +51,7 @@ export default function VideoCompressTool() {
             <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
             <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
           </div>
-          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); }}>Change</Button>
+          <Button variant="secondary" size="sm" onClick={() => { setFile(null); setOutput([]); clearSession(); }}>Change</Button>
         </div>
       )}
 

@@ -1,7 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
+import { useFileSession } from '@/stores/fileStore';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -66,6 +67,7 @@ function SortablePage({
 
 // ── Main tool ──────────────────────────────────────────────────────
 export default function PDFReorderTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer; pageCount: number } | null>(null);
   const [pdf,      setPdf]      = useState<PDFDocumentProxy | null>(null);
   const [pageOrder, updatePageOrder] = useImmer<number[]>([]);
@@ -76,10 +78,17 @@ export default function PDFReorderTool() {
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     const buf = await f.arrayBuffer();
     const pdfDoc = await loadPDFDocument(buf.slice(0));
     setFile({ name: f.name, size: f.size, buffer: buf, pageCount: pdfDoc.numPages });
+    setSessionFiles([f]);
     setPdf(pdfDoc);
     updatePageOrder(() => Array.from({ length: pdfDoc.numPages }, (_, i) => i));
     setStatus('idle'); setOutput([]);
@@ -126,7 +135,7 @@ export default function PDFReorderTool() {
           sublabel="Drag page thumbnails to reorder, then save"
         />
       ) : (
-        <PDFFileBar file={file} total={file.pageCount} onClear={() => { setFile(null); setPdf(null); updatePageOrder(() => []); setOutput([]); setStatus('idle'); }} />
+        <PDFFileBar file={file} total={file.pageCount} onClear={() => { setFile(null); setPdf(null); updatePageOrder(() => []); setOutput([]); setStatus('idle'); clearSession(); }} />
       )}
 
       {pdf && file && pageOrder.length > 0 && (

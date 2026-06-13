@@ -9,6 +9,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { convertImage } from '@/lib/image/imageConvert';
 import { formatFileSize, generateId } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 interface FileEntry { id: string; file: File; preview: string }
 
@@ -27,6 +28,7 @@ export default function ImageConvertTool() {
   const [progress, setProgress] = useState(0);
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const addFiles = (incoming: File[]) => {
     const entries = incoming.filter(f => f.type.startsWith('image/')).map(f => ({
@@ -35,6 +37,16 @@ export default function ImageConvertTool() {
     updateFiles(draft => { draft.push(...entries); });
     setStatus('idle'); setOutput([]);
   };
+
+  // Seed from session on mount
+  useEffect(() => {
+    if (sessionFiles.length > 0 && files.length === 0) { addFiles(sessionFiles); }
+  }, []);
+
+  // Sync session whenever files change
+  useEffect(() => {
+    setSessionFiles(files.map(f => f.file));
+  }, [files]);
 
   useEffect(() => {
     if (files.length > 0 && status === 'idle') convert();
@@ -104,7 +116,7 @@ export default function ImageConvertTool() {
             <Button onClick={convert} disabled={status === 'processing'} >
               {status === 'processing' ? 'Converting...' : `Convert ${files.length} image${files.length > 1 ? 's' : ''}`}
             </Button>
-            <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); setOutput([]); }} >Reset</Button>
+            <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); setOutput([]); clearSession(); }} >Reset</Button>
           </div>
         </div>
       )}

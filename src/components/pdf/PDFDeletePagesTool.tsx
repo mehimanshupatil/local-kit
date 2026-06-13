@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
+import { useFileSession } from '@/stores/fileStore';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import PDFPageThumbnail from './PDFPageThumbnail';
@@ -11,6 +12,7 @@ import { stripExtension } from '@/lib/utils/fileUtils';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 export default function PDFDeletePagesTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer; pageCount: number } | null>(null);
   const [pdf,      setPdf]      = useState<PDFDocumentProxy | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -19,10 +21,17 @@ export default function PDFDeletePagesTool() {
   const [output,   setOutput]   = useState<OutputFile[]>([]);
   const [error,    setError]    = useState('');
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     const buf = await f.arrayBuffer();
     const pdfDoc = await loadPDFDocument(buf.slice(0));
     setFile({ name: f.name, size: f.size, buffer: buf, pageCount: pdfDoc.numPages });
+    setSessionFiles([f]);
     setPdf(pdfDoc);
     setSelected(new Set());
     setStatus('idle'); setOutput([]);
@@ -78,7 +87,7 @@ export default function PDFDeletePagesTool() {
         <PDFFileBar
           file={file}
           total={file.pageCount}
-          onClear={() => { setFile(null); setPdf(null); setSelected(new Set()); setOutput([]); setStatus('idle'); }}
+          onClear={() => { setFile(null); setPdf(null); setSelected(new Set()); setOutput([]); setStatus('idle'); clearSession(); }}
         />
       )}
 

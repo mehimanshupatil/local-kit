@@ -1,14 +1,16 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { compressPDF } from '@/lib/pdf/pdfCompress';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import PDFFileBar from './PDFFileBar';
+import { useFileSession } from '@/stores/fileStore';
 
 export default function PDFCompressTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
@@ -16,8 +18,15 @@ export default function PDFCompressTool() {
   const [stats, setStats] = useState<{ original: number; compressed: number } | null>(null);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     setFile({ name: f.name, size: f.size, buffer: await f.arrayBuffer() });
+    setSessionFiles([f]);
     setStatus('idle'); setOutput([]); setStats(null);
   };
 
@@ -41,7 +50,7 @@ export default function PDFCompressTool() {
       {!file ? (
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false} label="Drop a PDF file" />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); setStats(null); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); setStats(null); clearSession(); }} />
       )}
 
       {file && (

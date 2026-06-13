@@ -1,7 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
+import { useFileSession } from '@/stores/fileStore';
 import DropZone from '@/components/shared/DropZone';
 import FileList from '@/components/shared/FileList';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -9,20 +10,31 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { imagesToPDF } from '@/lib/pdf/pdfFromImages';
 import { generateId } from '@/lib/utils/fileUtils';
 
-interface FileEntry { id: string; name: string; size: number; buffer: ArrayBuffer; type: string; preview: string }
+interface FileEntry { id: string; name: string; size: number; buffer: ArrayBuffer; type: string; preview: string; rawFile: File }
 
 export default function PDFFromImagesTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [files, updateFiles] = useImmer<FileEntry[]>([]);
   const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && files.length === 0) {
+      try { addFiles(sessionFiles); } catch {}
+    }
+  }, []);
+
+  useEffect(() => {
+    setSessionFiles(files.map(f => f.rawFile));
+  }, [files]);
+
   const addFiles = async (incoming: File[]) => {
     const entries = await Promise.all(
       incoming.filter(f => f.type.startsWith('image/')).map(async f => ({
         id: generateId(), name: f.name, size: f.size, type: f.type,
-        buffer: await f.arrayBuffer(), preview: URL.createObjectURL(f),
+        buffer: await f.arrayBuffer(), preview: URL.createObjectURL(f), rawFile: f,
       }))
     );
     updateFiles(draft => { draft.push(...entries); });
@@ -62,7 +74,7 @@ export default function PDFFromImagesTool() {
             <Button onClick={convert} disabled={files.length === 0 || status === 'processing'} >
               {status === 'processing' ? 'Creating PDF...' : `Create PDF from ${files.length} image${files.length > 1 ? 's' : ''}`}
             </Button>
-            <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); setOutput([]); }} >Reset</Button>
+            <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); setOutput([]); clearSession(); }} >Reset</Button>
           </div>
         </div>
       )}

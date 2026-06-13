@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useFileSession } from '@/stores/fileStore';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -43,6 +44,7 @@ const ROTATION_PRESETS: { key: RotationPreset; label: string; degrees: number }[
 ];
 
 export default function PDFWatermarkTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [text,     setText]     = useState('CONFIDENTIAL');
   const [fontSize, setFontSize] = useState(60);
@@ -54,9 +56,16 @@ export default function PDFWatermarkTool() {
   const [output,   setOutput]   = useState<OutputFile[]>([]);
   const [error,    setError]    = useState('');
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     const buf = await f.arrayBuffer();
     setFile({ name: f.name, size: f.size, buffer: buf });
+    setSessionFiles([f]);
     setStatus('idle'); setOutput([]);
   };
 
@@ -94,7 +103,7 @@ export default function PDFWatermarkTool() {
           sublabel="Add a watermark text to every page"
         />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); setStatus('idle'); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); setStatus('idle'); clearSession(); }} />
       )}
 
       {file && (

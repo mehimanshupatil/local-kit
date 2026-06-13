@@ -1,9 +1,10 @@
 import { enableMapSet } from 'immer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Check, RotateCcw, RotateCw, X } from 'lucide-react';
+import { useFileSession } from '@/stores/fileStore';
 
 enableMapSet();
 import DropZone from '@/components/shared/DropZone';
@@ -17,6 +18,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import PDFFileBar from './PDFFileBar';
 
 export default function PDFRotateTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file,  setFile]  = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [pdf,   setPdf]   = useState<PDFDocumentProxy | null>(null);
   const [total, setTotal] = useState(0);
@@ -28,10 +30,17 @@ export default function PDFRotateTool() {
   const [output,   setOutput] = useState<OutputFile[]>([]);
   const [error,    setError]  = useState('');
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     const buf = await f.arrayBuffer();
     const pdfDoc = await loadPDFDocument(buf.slice(0));
     setFile({ name: f.name, size: f.size, buffer: buf });
+    setSessionFiles([f]);
     setPdf(pdfDoc);
     setTotal(pdfDoc.numPages);
     updateRotations(() => Array(pdfDoc.numPages).fill(0));
@@ -102,7 +111,7 @@ export default function PDFRotateTool() {
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false}
           label="Drop a PDF file" sublabel="Click pages to select, then rotate" />
       ) : (
-        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); setOutput([]); }} />
+        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); setOutput([]); clearSession(); }} />
       )}
 
       {pdf && total > 0 && (

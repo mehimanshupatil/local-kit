@@ -9,6 +9,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { resizeImage, type ResizeMode } from '@/lib/image/imageResize';
 import { formatFileSize, generateId } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 interface FileEntry { id: string; file: File; preview: string; w: number; h: number }
 
@@ -45,6 +46,7 @@ export default function ImageResizeTool() {
   const [output,   setOutput] = useState<OutputFile[]>([]);
   const [error,    setError]  = useState('');
   const active = files[activeIdx] ?? null;
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   // Scale factor: how many display-px = 1 source-px
   const previewScale = active
@@ -58,6 +60,16 @@ export default function ImageResizeTool() {
   const rawBoxH = Math.round(height * previewScale);
   const boxW = Math.min(rawBoxW, PREVIEW_W);
   const boxH = Math.min(rawBoxH, PREVIEW_H);
+
+  // Seed from session on mount
+  useEffect(() => {
+    if (sessionFiles.length > 0 && files.length === 0) { addFiles(sessionFiles); }
+  }, []);
+
+  // Sync session whenever files change
+  useEffect(() => {
+    setSessionFiles(files.map(f => f.file));
+  }, [files]);
 
   // ── File handling ──────────────────────────────────────────────
   const addFiles = (incoming: File[]) => {
@@ -107,7 +119,7 @@ export default function ImageResizeTool() {
     }
   };
 
-  const reset = () => { files.forEach(f => URL.revokeObjectURL(f.preview)); setFiles([]); setOutput([]); setStatus('idle'); };
+  const reset = () => { files.forEach(f => URL.revokeObjectURL(f.preview)); setFiles([]); setOutput([]); setStatus('idle'); clearSession(); };
 
   useEffect(() => {
     if (files.length > 0 && status === 'idle') resize();

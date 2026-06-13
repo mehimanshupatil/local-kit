@@ -8,6 +8,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { trimAudio } from '@/lib/audio/audioTrim';
 import { formatFileSize } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 function fmt(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -31,6 +32,9 @@ export default function AudioTrimTool() {
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const [start, end] = range;
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('audio');
+
+  useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
 
   const addFile = ([f]: File[]) => {
     if (audioURL) URL.revokeObjectURL(audioURL);
@@ -38,6 +42,7 @@ export default function AudioTrimTool() {
     const url = URL.createObjectURL(f);
     setFile(f); setAudioURL(url); setStatus('idle'); setOutput([]);
     stopPlaying(); setCurrentTime(0); setRange([0, 0]); setDuration(0);
+    setSessionFiles([f]);
   };
 
   const onMetadata = () => {
@@ -229,7 +234,7 @@ export default function AudioTrimTool() {
                   <Scissors className="size-4" />
                   {status === 'processing' ? 'Trimming...' : `Trim: ${fmt(start)} → ${fmt(end)}`}
                 </Button>
-                <Button variant="secondary" onClick={() => { if (audioURL) URL.revokeObjectURL(audioURL); setFile(null); setAudioURL(''); setOutput([]); }}>
+                <Button variant="secondary" onClick={() => { if (audioURL) URL.revokeObjectURL(audioURL); setFile(null); setAudioURL(''); setOutput([]); clearSession(); }}>
                   Change
                 </Button>
               </div>

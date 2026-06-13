@@ -5,6 +5,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { readMetadata, removeMetadata, type MetadataSummary } from '@/lib/image/imageRemoveMetadata';
 import { formatFileSize, stripExtension, getExtension } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 export default function ImageRemoveMetadataTool() {
   const [file, setFile] = useState<File | null>(null);
@@ -14,16 +15,23 @@ export default function ImageRemoveMetadataTool() {
   const [progress, setProgress] = useState(0);
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (incoming: File[]) => {
     const f = incoming[0];
     if (!f) return;
     setFile(f);
+    setSessionFiles([f]);
     setSummary(null);
     setOutput([]);
     setStatus('idle');
     setError('');
   };
+
+  // Seed from session on mount
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) { handleFiles([sessionFiles[0]]); }
+  }, []);
 
   // Auto-read metadata when file changes
   useEffect(() => {
@@ -63,6 +71,7 @@ export default function ImageRemoveMetadataTool() {
     setStatus('idle');
     setError('');
     setProgress(0);
+    clearSession();
   };
 
   return (

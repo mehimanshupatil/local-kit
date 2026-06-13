@@ -1,7 +1,8 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDisclosure } from '@mantine/hooks';
+import { useFileSession } from '@/stores/fileStore';
 import { Lock, LockOpen, Eye, EyeOff } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -11,6 +12,7 @@ import { stripExtension } from '@/lib/utils/fileUtils';
 import PDFFileBar from './PDFFileBar';
 
 export default function PDFUnlockTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file, setFile]         = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [isLocked, setIsLocked] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');
@@ -20,9 +22,16 @@ export default function PDFUnlockTool() {
   const [output, setOutput]     = useState<OutputFile[]>([]);
   const [error, setError]       = useState('');
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     const buffer = await f.arrayBuffer();
     setFile({ name: f.name, size: f.size, buffer });
+    setSessionFiles([f]);
     setPassword('');
     setStatus('idle');
     setOutput([]);
@@ -66,7 +75,7 @@ export default function PDFUnlockTool() {
           sublabel="Upload a password-protected PDF to unlock it"
         />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setIsLocked(null); setOutput([]); setStatus('idle'); setError(''); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); setIsLocked(null); setOutput([]); setStatus('idle'); setError(''); clearSession(); }} />
       )}
 
       {file && (

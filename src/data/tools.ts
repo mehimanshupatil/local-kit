@@ -120,6 +120,12 @@ export const categories: Category[] = [
         pageTitle: 'Fill PDF Form Online — Free, No Upload | LocalKit',
         pageDesc: 'Fill interactive PDF form fields (text, checkboxes, dropdowns) and download the completed PDF — 100% in your browser.',
       },
+      {
+        name: 'Edit Metadata', href: '/pdf/edit-metadata', icon: FcInspection,
+        desc: 'Edit title, author, keywords and more',
+        pageTitle: 'Edit PDF Metadata — Title, Author, Keywords | LocalKit',
+        pageDesc: 'View and edit PDF metadata: title, author, subject, keywords, creator, producer and dates — 100% in your browser.',
+      },
     ],
   },
   {

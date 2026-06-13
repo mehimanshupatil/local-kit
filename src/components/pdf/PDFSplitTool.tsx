@@ -1,8 +1,9 @@
 import { enableMapSet } from 'immer';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
+import { useFileSession } from '@/stores/fileStore';
 
 enableMapSet();
 import { Scissors, X } from 'lucide-react';
@@ -29,6 +30,7 @@ const SECTION_COLORS = [
 const SECTION_DOTS = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500'];
 
 export default function PDFSplitTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file, setFile]    = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [pdf,  setPdf]     = useState<PDFDocumentProxy | null>(null);
   const [total, setTotal]  = useState(0);
@@ -39,10 +41,17 @@ export default function PDFSplitTool() {
   const [output,   setOutput] = useState<OutputFile[]>([]);
   const [error,    setError]  = useState('');
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     const buf = await f.arrayBuffer();
     const pdfDoc = await loadPDFDocument(buf.slice(0));
     setFile({ name: f.name, size: f.size, buffer: buf });
+    setSessionFiles([f]);
     setPdf(pdfDoc);
     setTotal(pdfDoc.numPages);
     updateCutPoints(() => new Set());
@@ -109,7 +118,7 @@ export default function PDFSplitTool() {
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false}
           label="Drop a PDF file" sublabel="Click between pages to add cut points" />
       ) : (
-        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); setOutput([]); }} />
+        <PDFFileBar file={file} total={total} onClear={() => { setFile(null); setPdf(null); setOutput([]); clearSession(); }} />
       )}
 
       {pdf && total > 0 && (

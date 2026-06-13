@@ -1,13 +1,15 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { pdfToImages } from '@/lib/pdf/pdfToImages';
 import PDFFileBar from './PDFFileBar';
+import { useFileSession } from '@/stores/fileStore';
 
 export default function PDFToImagesTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [scale, setScale] = useState(1.5);
   const [status, setStatus] = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
@@ -15,8 +17,15 @@ export default function PDFToImagesTool() {
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     setFile({ name: f.name, size: f.size, buffer: await f.arrayBuffer() });
+    setSessionFiles([f]);
     setStatus('idle'); setOutput([]);
   };
 
@@ -44,7 +53,7 @@ export default function PDFToImagesTool() {
       {!file ? (
         <DropZone onFiles={addFile} accept=".pdf,application/pdf" multiple={false} label="Drop a PDF file" />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); setOutput([]); clearSession(); }} />
       )}
 
       {file && (

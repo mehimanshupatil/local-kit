@@ -1,8 +1,9 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Images, Download } from 'lucide-react';
+import { useFileSession } from '@/stores/fileStore';
 // @ts-ignore
 import JSZip from 'jszip';
 import DropZone from '@/components/shared/DropZone';
@@ -21,14 +22,22 @@ function downloadBlob(blob: Blob, name: string) {
 }
 
 export default function PDFExtractImagesTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file, setFile]       = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [status, setStatus]   = useState<'idle' | 'processing' | 'done' | 'error'>('idle');
   const [progress, setProgress] = useState(0);
   const [error, setError]     = useState('');
   const [images, updateImages] = useImmer<ExtractedImage[]>([]);
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     setFile({ name: f.name, size: f.size, buffer: await f.arrayBuffer() });
+    setSessionFiles([f]);
     setStatus('idle');
     setError('');
     updateImages(() => []);
@@ -71,7 +80,7 @@ export default function PDFExtractImagesTool() {
           sublabel="Embedded images will be extracted from each page"
         />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setStatus('idle'); setError(''); updateImages(() => []); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); setStatus('idle'); setError(''); updateImages(() => []); clearSession(); }} />
       )}
 
       {file && (

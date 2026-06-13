@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useFileSession } from '@/stores/fileStore';
 import { Loader2, FileText } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -13,6 +14,7 @@ import PDFFileBar from './PDFFileBar';
 type Status = 'idle' | 'loading' | 'processing' | 'done' | 'error';
 
 export default function PDFFormFillTool() {
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [fields, setFields] = useState<FormField[]>([]);
   const [values, setValues] = useState<Record<string, string | boolean>>({});
@@ -22,9 +24,16 @@ export default function PDFFormFillTool() {
   const [error, setError] = useState('');
   const [flatten, setFlatten] = useState(true);
 
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) {
+      try { addFile([sessionFiles[0]]); } catch {}
+    }
+  }, []);
+
   const addFile = async ([f]: File[]) => {
     const buffer = await f.arrayBuffer();
     setFile({ name: f.name, size: f.size, buffer });
+    setSessionFiles([f]);
     setFields([]);
     setValues({});
     setOutput([]);
@@ -97,7 +106,7 @@ export default function PDFFormFillTool() {
           sublabel="Fill interactive AcroForm fields and download"
         />
       ) : (
-        <PDFFileBar file={file} onClear={() => { setFile(null); setFields([]); setValues({}); setOutput([]); setStatus('idle'); }} />
+        <PDFFileBar file={file} onClear={() => { setFile(null); setFields([]); setValues({}); setOutput([]); setStatus('idle'); clearSession(); }} />
       )}
 
       {/* Loading spinner while reading fields */}

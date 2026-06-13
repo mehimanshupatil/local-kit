@@ -9,6 +9,7 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { ditherImage } from '@/lib/image/imageDither';
 import type { DitherAlgorithm, DitherOptions, PaletteMode } from '@/lib/image/imageDither';
 import { formatFileSize, stripExtension, generateId } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 const ALGORITHM_OPTIONS: { value: DitherAlgorithm; label: string }[] = [
   { value: 'floyd-steinberg', label: 'Floyd-Steinberg' },
@@ -49,6 +50,7 @@ export default function ImageDitherTool() {
   const [error, setError] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevFileRef = useRef<File | null>(null);
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   function onFiles(files: File[]) {
     const f = files[0];
@@ -57,6 +59,7 @@ export default function ImageDitherTool() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     const url = URL.createObjectURL(f);
     setFile(f);
+    setSessionFiles([f]);
     setPreviewUrl(url);
     setOutput([]);
     setStatus('idle');
@@ -66,6 +69,11 @@ export default function ImageDitherTool() {
     img.onload = () => setDimensions({ w: img.naturalWidth, h: img.naturalHeight });
     img.src = url;
   }
+
+  // Seed from session on mount
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) { onFiles([sessionFiles[0]]); }
+  }, []);
 
   // Cleanup preview URL on unmount
   useEffect(() => {
@@ -264,6 +272,7 @@ export default function ImageDitherTool() {
                 setStatus('idle');
                 setError('');
                 prevFileRef.current = null;
+                clearSession();
               }}
             >
               Reset

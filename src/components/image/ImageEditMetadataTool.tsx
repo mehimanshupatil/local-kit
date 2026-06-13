@@ -1,11 +1,12 @@
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { embedMetadata } from '@/lib/image/imageEditMetadata';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
+import { useFileSession } from '@/stores/fileStore';
 
 interface FormState {
   description: string;
@@ -34,15 +35,22 @@ export default function ImageEditMetadataTool() {
   const [progress, setProgress] = useState(0);
   const [output, setOutput] = useState<OutputFile[]>([]);
   const [error, setError] = useState('');
+  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (incoming: File[]) => {
     const f = incoming[0];
     if (!f) return;
     setFile(f);
+    setSessionFiles([f]);
     setOutput([]);
     setStatus('idle');
     setError('');
   };
+
+  // Seed from session on mount
+  useEffect(() => {
+    if (sessionFiles.length > 0 && !file) { handleFiles([sessionFiles[0]]); }
+  }, []);
 
   const set = (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [field]: e.target.value }));
@@ -93,6 +101,7 @@ export default function ImageEditMetadataTool() {
     setStatus('idle');
     setError('');
     setProgress(0);
+    clearSession();
   };
 
   return (
