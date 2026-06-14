@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
 import { useToolVisit } from '@/stores/toolVisit';
-import { Lock, LockOpen, Eye, EyeOff } from 'lucide-react';
+import { Lock, LockOpen, Eye, EyeSlash } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';
@@ -111,7 +111,7 @@ export default function PDFUnlockTool() {
                     className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     tabIndex={-1}
                   >
-                    {showPw ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    {showPw ? <EyeSlash className="size-4" /> : <Eye className="size-4" />}
                   </Button>
                 </div>
               </div>

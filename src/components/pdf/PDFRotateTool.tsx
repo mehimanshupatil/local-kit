@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
-import { Check, RotateCcw, RotateCw, X } from 'lucide-react';
+import { Check, ArrowCounterClockwise, ArrowClockwise, X } from '@phosphor-icons/react';
 import { useToolVisit } from '@/stores/toolVisit';
 
 enableMapSet();
@@ -195,7 +195,7 @@ export default function PDFRotateTool() {
                         className="size-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                         title="Rotate 90° CCW"
                       >
-                        <RotateCcw className="size-3.5" />
+                        <ArrowCounterClockwise className="size-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
@@ -204,7 +204,7 @@ export default function PDFRotateTool() {
                         className="size-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                         title="Rotate 90° CW"
                       >
-                        <RotateCw className="size-3.5" />
+                        <ArrowClockwise className="size-3.5" />
                       </Button>
                       {rot !== 0 && (
                         <Button

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
-import { Lock, LockOpen } from 'lucide-react';
+import { Lock, LockOpen } from '@phosphor-icons/react';
 import { Resizable } from 're-resizable';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';

@@ -2,7 +2,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, Download, AlertCircle } from 'lucide-react';
+import { Copy, Check, DownloadSimple, WarningCircle } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import imageType from 'image-type';
 
@@ -80,7 +80,7 @@ export default function Base64ImageTool() {
           />
           {error && (
             <p className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
-              <AlertCircle className="size-4 shrink-0" /> {error}
+              <WarningCircle className="size-4 shrink-0" /> {error}
             </p>
           )}
         </CardContent>
@@ -107,7 +107,7 @@ export default function Base64ImageTool() {
 
             <div className="flex flex-wrap gap-2">
               <Button onClick={download} className="gap-2">
-                <Download className="size-4" /> Download
+                <DownloadSimple className="size-4" /> Download
               </Button>
               <Button variant="ghost" onClick={() => clipboard.copy(parsed.dataUrl)} className="gap-2">
                 {clipboard.copied

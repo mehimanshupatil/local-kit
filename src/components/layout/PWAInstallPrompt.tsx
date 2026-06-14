@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDisclosure, useLocalStorage, useWindowEvent } from '@mantine/hooks';
 import { Button } from '@/components/ui/button';
-import { X, RefreshCw, Download } from 'lucide-react';
+import { X, ArrowsCounterClockwise, DownloadSimple } from '@phosphor-icons/react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 
 const SW_POLL_INTERVAL = 60 * 60 * 1000;
@@ -69,7 +69,7 @@ export default function PWAInstallPrompt() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Reload to get the latest version.</p>
                 <div className="flex gap-2 mt-3">
                   <Button onClick={() => updateServiceWorker(true)} className="btn-primary text-xs py-1.5 px-3 gap-1.5">
-                    <RefreshCw className="size-3" /> Reload
+                    <ArrowsCounterClockwise className="size-3" /> Reload
                   </Button>
                   <Button onClick={dismissStatus} className="btn-secondary text-xs py-1.5 px-3">
                     Later
@@ -97,7 +97,7 @@ export default function PWAInstallPrompt() {
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Works offline · No uploads · Free</p>
             <div className="flex gap-2 mt-3">
               <Button onClick={install} className="btn-primary text-xs py-1.5 px-3 gap-1.5">
-                <Download className="size-3" /> Install
+                <DownloadSimple className="size-3" /> Install
               </Button>
               <Button onClick={dismissInstall} className="btn-secondary text-xs py-1.5 px-3">
                 Not now

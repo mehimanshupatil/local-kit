@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, type RefObject } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, SkipBack, SkipForward, Scissors } from 'lucide-react';
+import { Play, Pause, SkipBack, SkipForward, Scissors } from '@phosphor-icons/react';
 import ProgressBar from '@/components/shared/ProgressBar';
 import { fmtTime } from '@/lib/utils/timeFormat';
 import type { ToolStatus } from '@/lib/utils/toolState';

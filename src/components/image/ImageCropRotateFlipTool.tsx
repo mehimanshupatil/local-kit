@@ -5,7 +5,7 @@ import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { RotateCcw, RotateCw } from 'lucide-react';
+import { ArrowCounterClockwise, ArrowClockwise } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { applyTransform } from '@/lib/image/imageCropRotateFlip';
@@ -152,7 +152,7 @@ export default function ImageCropRotateFlipTool() {
                 className="flex-1"
                 title="Rotate 90° counter-clockwise"
               >
-                <RotateCcw className="size-4" />
+                <ArrowCounterClockwise className="size-4" />
                 <span>90° CCW</span>
               </Button>
               <Button variant="secondary"
@@ -160,7 +160,7 @@ export default function ImageCropRotateFlipTool() {
                 className="flex-1"
                 title="Rotate 90° clockwise"
               >
-                <RotateCw className="size-4" />
+                <ArrowClockwise className="size-4" />
                 <span>90° CW</span>
               </Button>
               <Button variant="secondary"

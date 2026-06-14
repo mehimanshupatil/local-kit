@@ -1,6 +1,6 @@
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X } from '@phosphor-icons/react';
 
 interface FileItem {
   id: string;

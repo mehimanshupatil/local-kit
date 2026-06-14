@@ -6,7 +6,7 @@ import { useImmer } from 'use-immer';
 import { useToolVisit } from '@/stores/toolVisit';
 
 enableMapSet();
-import { Scissors, X } from 'lucide-react';
+import { Scissors, X } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';

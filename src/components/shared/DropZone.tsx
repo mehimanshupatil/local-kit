@@ -1,7 +1,7 @@
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils/cn';
 import { Button } from '@/components/ui/button';
-import { Upload } from 'lucide-react';
+import { Upload } from '@phosphor-icons/react';
 import { useWindowEvent } from '@mantine/hooks';
 
 interface Props {

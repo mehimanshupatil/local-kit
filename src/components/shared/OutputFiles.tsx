@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { downloadBlob, downloadAllAsZip } from '@/lib/utils/downloadUtils';
 import { formatFileSize } from '@/lib/utils/fileUtils';
-import { Download, Archive, Eye, EyeOff, Copy, Check } from 'lucide-react';
+import { DownloadSimple, Archive, Eye, EyeSlash, Copy, Check } from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 import { useDisclosure, useTimeout } from '@mantine/hooks';
 
@@ -29,7 +29,7 @@ function PDFPreview({ blob }: { blob: Blob }) {
   return (
     <div className="mt-2 space-y-2">
       <Button variant="secondary" size="sm" onClick={toggle}>
-        {opened ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+        {opened ? <EyeSlash className="size-3.5" /> : <Eye className="size-3.5" />}
         {opened ? 'Hide preview' : 'Preview PDF'}
       </Button>
       {opened && url && (
@@ -146,7 +146,7 @@ export default function OutputFiles({ files }: Props) {
               </div>
               {isImage(file) && <CopyImageButton blob={file.blob} />}
               <Button size="sm" onClick={() => downloadBlob(file.blob, file.name)}>
-                <Download className="size-3.5" />
+                <DownloadSimple className="size-3.5" />
                 Download
               </Button>
             </div>

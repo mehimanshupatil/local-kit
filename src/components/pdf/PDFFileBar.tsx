@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeSlash } from '@phosphor-icons/react';
 import { FcDocument } from 'react-icons/fc';
 import { useEffect, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
@@ -33,7 +33,7 @@ export default function PDFFileBar({ file, total, onClear }: Props) {
           </p>
         </div>
         <Button variant="ghost" size="icon" onClick={toggle} title={opened ? 'Hide preview' : 'Preview PDF'}>
-          {opened ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          {opened ? <EyeSlash className="size-4" /> : <Eye className="size-4" />}
         </Button>
         <Button variant="secondary" size="sm" onClick={onClear}>Change</Button>
       </div>

@@ -3,7 +3,7 @@ import { useImmer } from 'use-immer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToolVisit } from '@/stores/toolVisit';
-import { Loader2, FileText } from 'lucide-react';
+import { CircleNotch, FileText } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';
@@ -102,7 +102,7 @@ export default function PDFFormFillTool() {
       {/* Loading spinner while reading fields */}
       {status === 'loading' && (
         <div className="card p-6 flex items-center justify-center gap-3 text-muted-foreground">
-          <Loader2 className="size-5 animate-spin text-brand-500" />
+          <CircleNotch className="size-5 animate-spin text-brand-500" />
           <span className="text-sm">Reading form fields…</span>
         </div>
       )}

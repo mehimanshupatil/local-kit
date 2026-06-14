@@ -30,6 +30,9 @@ _Avoid_: workspace, project, upload session
 **Processing**: The act of transforming a user-supplied file using browser APIs. Processing runs on the main thread or in a Web Worker (FFmpeg), never on a server.
 _Avoid_: upload, server-side processing, backend operation
 
+**Visual identity**: Dark-first developer tool. Default theme is dark. Accent is emerald green (`#10b981` family). Typeface is Geist Sans + Geist Mono. Border radius is 4px. Cards use `1px` borders on layered dark backgrounds — no shadows.
+_Avoid_: sky blue, rounded/bubbly shapes, light-default
+
 **PDF Renderer**: The library used to display PDF page thumbnails, render pages to images, and feed OCR. Always `pdfjs-dist` — the only MIT-licensed browser library that renders PDF pages to canvas.
 _Avoid_: pdf-lib for rendering
 

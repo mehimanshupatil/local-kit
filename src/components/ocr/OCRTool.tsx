@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useClipboard } from '@mantine/hooks';
-import { Copy, Check, Loader2, FileText, Image, Layers } from 'lucide-react';
+import { Copy, Check, CircleNotch, FileText, Image, Stack } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import { runOCR, type OCRResult } from '@/lib/ocr/ocr';
@@ -125,7 +125,7 @@ export default function OCRTool() {
 
           <Button onClick={run} disabled={status === 'processing'}>
             {status === 'processing'
-              ? <><Loader2 className="size-4 animate-spin" /> Recognizing…</>
+              ? <><CircleNotch className="size-4 animate-spin" /> Recognizing…</>
               : <><Image className="size-4" /> Extract Text</>
             }
           </Button>
@@ -145,7 +145,7 @@ export default function OCRTool() {
                     : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
                 }`}
               >
-                <Layers className="w-3.5 h-3.5" />
+                <Stack className="w-3.5 h-3.5" />
                 Overlay
               </button>
               <button

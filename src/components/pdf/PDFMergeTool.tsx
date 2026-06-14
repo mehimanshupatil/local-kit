@@ -10,7 +10,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, X, ChevronRight } from 'lucide-react';
+import { DotsSixVertical, X, CaretRight } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DropZone from '@/components/shared/DropZone';
@@ -57,7 +57,7 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
         size="icon"
         className="touch-none cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400"
       >
-        <GripVertical className="size-4" />
+        <DotsSixVertical className="size-4" />
       </Button>
 
       <span className="text-xs text-gray-400 font-mono w-5 text-center shrink-0">{index + 1}</span>
@@ -192,7 +192,7 @@ export default function PDFMergeTool() {
                     <p className="text-[10px] text-gray-400 mt-0.5 w-9 truncate text-center">{f.pageCount}p</p>
                   </div>
                   {i < files.length - 1 && (
-                    <ChevronRight className="size-4 text-brand-400 shrink-0" />
+                    <CaretRight className="size-4 text-brand-400 shrink-0" />
                   )}
                 </div>
               ))}

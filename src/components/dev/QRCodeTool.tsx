@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { generateQRDataURL, generateQRSVG } from '@/lib/dev/qrCode';
 import type { QROptions, ErrorCorrectionLevel } from '@/lib/dev/qrCode';
-import { Copy, Check, Download } from 'lucide-react';
+import { Copy, Check, DownloadSimple } from '@phosphor-icons/react';
 
 const EC_LEVELS: { value: ErrorCorrectionLevel; label: string; desc: string }[] = [
   { value: 'L', label: 'L', desc: '7% recovery' },
@@ -227,10 +227,10 @@ export default function QRCodeTool() {
             {dataUrl && (
               <div className="flex flex-wrap gap-2">
                 <Button onClick={downloadPng} className="gap-2">
-                  <Download className="size-4" /> Download PNG
+                  <DownloadSimple className="size-4" /> Download PNG
                 </Button>
                 <Button variant="secondary" onClick={downloadSvg} className="gap-2">
-                  <Download className="size-4" /> Download SVG
+                  <DownloadSimple className="size-4" /> Download SVG
                 </Button>
                 <Button variant="ghost" onClick={copyPng} className="gap-2">
                   {clipboard.copied

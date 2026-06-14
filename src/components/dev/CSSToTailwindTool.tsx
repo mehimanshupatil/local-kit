@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, Wand2, RotateCcw } from 'lucide-react';
+import { Copy, Check, MagicWand, ArrowCounterClockwise } from '@phosphor-icons/react';
 
 // ─── Conversion helpers ─────────────────────────────────────────────────────
 
@@ -1281,10 +1281,10 @@ export default function CSSToTailwindTool() {
             </div>
             <div className="flex gap-2 pb-0.5">
               <Button onClick={handleConvert} className="gap-2">
-                <Wand2 className="size-4" /> Convert
+                <MagicWand className="size-4" /> Convert
               </Button>
               <Button variant="secondary" onClick={handleReset} className="gap-2">
-                <RotateCcw className="size-4" /> Reset
+                <ArrowCounterClockwise className="size-4" /> Reset
               </Button>
             </div>
           </div>

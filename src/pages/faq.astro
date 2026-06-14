@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Header from "../components/layout/Header.astro";
 import Footer from "../components/layout/Footer.astro";
-import { ChevronDown, Shield } from "lucide-react";
+import { CaretDown, Shield } from '@phosphor-icons/react';
 const faqs = [
   {
     q: "Are my files uploaded to any server?",
@@ -94,7 +94,7 @@ const faqs = [
                   {faq.q}
                 </span>
 
-                <ChevronDown className="size-4 text-gray-400 shrink-0 transition-transform duration-200 group-open:rotate-180" />
+                <CaretDown className="size-4 text-gray-400 shrink-0 transition-transform duration-200 group-open:rotate-180" />
               </summary>
               <div class="px-6 pb-5 pt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed border-t border-gray-100 dark:border-gray-800">
                 {faq.a}

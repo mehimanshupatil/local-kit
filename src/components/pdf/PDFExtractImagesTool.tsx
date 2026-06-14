@@ -2,7 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
-import { Images, Download } from 'lucide-react';
+import { Images, DownloadSimple } from '@phosphor-icons/react';
 import { useToolVisit } from '@/stores/toolVisit';
 // @ts-ignore
 import JSZip from 'jszip';
@@ -139,7 +139,7 @@ export default function PDFExtractImagesTool() {
             </h3>
             {images.length > 1 && (
               <Button size="sm" onClick={downloadAll}>
-                <Download className="size-3.5" />
+                <DownloadSimple className="size-3.5" />
                 Download All (.zip)
               </Button>
             )}
@@ -177,7 +177,7 @@ export default function PDFExtractImagesTool() {
                         onClick={() => downloadBlob(img.blob, img.name)}
                         title="Download"
                       >
-                        <Download className="size-3" />
+                        <DownloadSimple className="size-3" />
                       </Button>
                     </div>
                   </div>

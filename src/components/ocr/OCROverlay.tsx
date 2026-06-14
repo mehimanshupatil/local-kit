@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect, Text, Group } from 'react-konva';
 import { useClipboard } from '@mantine/hooks';
-import { Copy, Check } from 'lucide-react';
+import { Copy, Check } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import type { KonvaEventObject } from 'konva/lib/Node';
 import type { OcrPageResult, OcrWordResult } from '@/lib/ocr/ocr';
