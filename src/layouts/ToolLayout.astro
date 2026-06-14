@@ -11,6 +11,7 @@ interface Props {
   categoryHref: string;
   toolName: string;
   icon: IconType;
+  wide?: boolean;
 }
 
 const {
@@ -21,12 +22,13 @@ const {
   categoryHref,
   toolName,
   icon,
+  wide = false,
 } = Astro.props;
 ---
 
 <BaseLayout title={title} description={description} canonicalURL={canonicalURL}>
   <main class="min-h-screen pt-6 pb-16">
-    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+    <div class:list={[wide ? 'max-w-6xl' : 'max-w-3xl', 'mx-auto px-4 sm:px-6']}>
 
       <!-- Breadcrumb -->
       <nav class="flex items-center gap-2 text-xs text-muted-foreground mb-6 font-mono">

@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import VideoRemoveAudioTool from '../../components/video/VideoRemoveAudioTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/video/remove-audio');
+---
+<ToolLayout {...meta}>
+  <VideoRemoveAudioTool client:load />
+</ToolLayout>

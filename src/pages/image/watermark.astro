@@ -1,0 +1,9 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import { getToolMeta } from '../../data/tools';
+import ImageWatermarkTool from '../../components/image/ImageWatermarkTool';
+const meta = getToolMeta('/image/watermark');
+---
+<ToolLayout {...meta}>
+  <ImageWatermarkTool client:load />
+</ToolLayout>

@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import HashGeneratorTool from '../../components/dev/HashGeneratorTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/hash-generator');
+---
+<ToolLayout {...meta}>
+  <HashGeneratorTool client:load />
+</ToolLayout>

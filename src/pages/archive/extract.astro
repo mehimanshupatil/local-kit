@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ExtractZipTool from '../../components/archive/ExtractZipTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/archive/extract');
+---
+<ToolLayout {...meta}>
+  <ExtractZipTool client:load />
+</ToolLayout>

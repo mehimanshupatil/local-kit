@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import AudioMergeTool from '../../components/audio/AudioMergeTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/audio/merge');
+---
+<ToolLayout {...meta}>
+  <AudioMergeTool client:load />
+</ToolLayout>

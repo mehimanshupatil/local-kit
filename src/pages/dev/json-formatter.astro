@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import JSONFormatterTool from '../../components/dev/JSONFormatterTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/json-formatter');
+---
+<ToolLayout {...meta}>
+  <JSONFormatterTool client:load />
+</ToolLayout>

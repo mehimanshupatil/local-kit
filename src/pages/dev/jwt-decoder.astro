@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import JWTDecoderTool from '../../components/dev/JWTDecoderTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/jwt-decoder');
+---
+<ToolLayout {...meta}>
+  <JWTDecoderTool client:load />
+</ToolLayout>

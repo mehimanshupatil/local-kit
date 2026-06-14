@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import URLEncoderTool from '../../components/dev/URLEncoderTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/url-encoder');
+---
+<ToolLayout {...meta}>
+  <URLEncoderTool client:load />
+</ToolLayout>

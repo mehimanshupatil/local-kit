@@ -1,0 +1,11 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PassportPhotoTool from '../../components/image/PassportPhotoTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/image/passport-photo');
+---
+
+<ToolLayout {...meta}>
+  <PassportPhotoTool client:load />
+</ToolLayout>

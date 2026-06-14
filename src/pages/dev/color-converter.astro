@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ColorConverterTool from '../../components/dev/ColorConverterTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/color-converter');
+---
+<ToolLayout {...meta}>
+  <ColorConverterTool client:load />
+</ToolLayout>

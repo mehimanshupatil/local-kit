@@ -4,6 +4,8 @@ import {
   FcLock, FcUnlock, FcGallery, FcCamera, FcPicture, FcRuler, FcFlashOn,
   FcVideoFile, FcMusic, FcSettings, FcTemplate, FcAudioFile, FcDeleteDatabase,
   FcReading, FcEditImage, FcPrivacy, FcGlobe, FcPortraitMode, FcInspection,
+  FcFilm, FcSpeaker, FcFile, FcOpenedFolder, FcWorkflow,
+  FcBinoculars, FcKey, FcDataSheet, FcMultipleInputs,
 } from 'react-icons/fc';
 
 export interface Tool {
@@ -187,6 +189,18 @@ export const categories: Category[] = [
         pageTitle: 'Image Dithering — Floyd-Steinberg, Atkinson, Bayer | LocalKit',
         pageDesc: 'Apply dithering algorithms to images: Floyd-Steinberg, Atkinson, Bayer ordered, and more. Runs 100% in your browser.',
       },
+      {
+        name: 'Passport Photo', href: '/image/passport-photo', icon: FcPortraitMode,
+        desc: 'Crop any photo to passport size with face guide',
+        pageTitle: 'Passport Photo Maker — Free, No Upload | LocalKit',
+        pageDesc: 'Crop any photo to the correct passport size for 6 countries (ICAO, US, India, UK, Canada, China). Choose DPI, optional background removal — 100% in your browser.',
+      },
+      {
+        name: 'Image Watermark', href: '/image/watermark', icon: FcEditImage,
+        desc: 'Add text or image overlay to photos',
+        pageTitle: 'Add Watermark to Images — Free, No Upload | LocalKit',
+        pageDesc: 'Add text or image watermarks to your photos. Control position, opacity and style — 100% in your browser.',
+      },
     ],
   },
   {
@@ -225,6 +239,18 @@ export const categories: Category[] = [
         pageTitle: 'Extract Audio from Video — MP3, AAC, WAV | LocalKit',
         pageDesc: 'Extract the audio track from any video file as MP3, AAC, WAV or OGG. Powered by FFmpeg WASM.',
       },
+      {
+        name: 'Video → GIF', href: '/video/to-gif', icon: FcFilm,
+        desc: 'Convert a video clip to an animated GIF',
+        pageTitle: 'Convert Video to GIF — Free, No Upload | LocalKit',
+        pageDesc: 'Convert any video clip to an animated GIF. Control FPS and size — powered by FFmpeg WASM.',
+      },
+      {
+        name: 'Remove Audio', href: '/video/remove-audio', icon: FcSpeaker,
+        desc: 'Strip audio track from a video',
+        pageTitle: 'Remove Audio from Video — Mute Video | LocalKit',
+        pageDesc: 'Remove the audio track from any video file. Produces a silent video — powered by FFmpeg WASM.',
+      },
     ],
   },
   {
@@ -256,6 +282,12 @@ export const categories: Category[] = [
         desc: 'Reduce audio file size with bitrate control',
         pageTitle: 'Compress Audio Online — Reduce File Size | LocalKit',
         pageDesc: 'Compress audio files by adjusting bitrate. Powered by FFmpeg WASM — runs entirely in your browser.',
+      },
+      {
+        name: 'Merge Audio', href: '/audio/merge', icon: FcLink,
+        desc: 'Concatenate multiple audio files',
+        pageTitle: 'Merge Audio Files — Free, No Upload | LocalKit',
+        pageDesc: 'Concatenate multiple audio files into one. Reorder tracks — powered by FFmpeg WASM.',
       },
     ],
   },
@@ -307,6 +339,67 @@ export const categories: Category[] = [
         desc: 'Decode a base64 string or data URL and preview the image',
         pageTitle: 'Base64 to Image Decoder — LocalKit',
         pageDesc: 'Paste a base64 string or data URL and instantly preview the decoded image. Download or copy — 100% in your browser.',
+      },
+      {
+        name: 'JSON Formatter', href: '/dev/json-formatter', icon: FcDataSheet,
+        desc: 'Format, validate and minify JSON',
+        pageTitle: 'JSON Formatter & Validator — LocalKit',
+        pageDesc: 'Format, validate, and minify JSON in your browser. Syntax highlighting, error detection — no uploads.',
+      },
+      {
+        name: 'Hash Generator', href: '/dev/hash-generator', icon: FcKey,
+        desc: 'Generate SHA-256, SHA-512, MD5 hashes',
+        pageTitle: 'Hash Generator — SHA-256, SHA-512 | LocalKit',
+        pageDesc: 'Generate cryptographic hashes (SHA-256, SHA-512) from text or files. Uses the native Web Crypto API.',
+      },
+      {
+        name: 'URL Encoder', href: '/dev/url-encoder', icon: FcLink,
+        desc: 'Encode and decode URLs and query strings',
+        pageTitle: 'URL Encoder / Decoder — LocalKit',
+        pageDesc: 'Encode and decode URLs and query string components. Supports percent-encoding and form encoding.',
+      },
+      {
+        name: 'JWT Decoder', href: '/dev/jwt-decoder', icon: FcBinoculars,
+        desc: 'Decode and inspect JWT tokens',
+        pageTitle: 'JWT Decoder — Inspect JSON Web Tokens | LocalKit',
+        pageDesc: 'Decode JWT tokens and inspect header, payload and signature. Works entirely in your browser — tokens never leave your device.',
+      },
+      {
+        name: 'Color Converter', href: '/dev/color-converter', icon: FcMultipleInputs,
+        desc: 'Convert between HEX, RGB, HSL, and OKLCH',
+        pageTitle: 'Color Converter — HEX RGB HSL | LocalKit',
+        pageDesc: 'Convert colors between HEX, RGB, HSL, and OKLCH formats instantly in your browser.',
+      },
+      {
+        name: 'Markdown Preview', href: '/dev/markdown-preview', icon: FcReading,
+        desc: 'Preview Markdown — paste, upload, or fetch a URL',
+        pageTitle: 'Markdown Preview — LocalKit',
+        pageDesc: 'Preview Markdown files in your browser. Paste text, upload a .md file, or fetch from a URL. No uploads.',
+      },
+    ],
+  },
+  {
+    id: 'archive',
+    title: 'Archive Tools',
+    icon: FcOpenedFolder,
+    href: '/archive',
+    color: 'yellow',
+    pageTitle: 'Archive Tools — ZIP Files | LocalKit',
+    pageDesc: 'Create and extract ZIP archives entirely in your browser. No uploads, no servers.',
+    heading: 'Archive Tools',
+    subheading: 'Create, inspect and extract ZIP archives — all processed locally in your browser.',
+    tools: [
+      {
+        name: 'Create ZIP', href: '/archive/create', icon: FcPackage,
+        desc: 'Compress files into a ZIP archive',
+        pageTitle: 'Create ZIP Archive — Free, No Upload | LocalKit',
+        pageDesc: 'Select multiple files and compress them into a ZIP archive. 100% in your browser using JSZip.',
+      },
+      {
+        name: 'Extract ZIP', href: '/archive/extract', icon: FcFile,
+        desc: 'Extract files from a ZIP archive',
+        pageTitle: 'Extract ZIP Archive — Free, No Upload | LocalKit',
+        pageDesc: 'Extract files from any ZIP archive and download them individually or all at once.',
       },
     ],
   },

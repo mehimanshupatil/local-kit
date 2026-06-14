@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import MarkdownPreviewTool from '../../components/dev/MarkdownPreviewTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/markdown-preview');
+---
+<ToolLayout {...meta} wide>
+  <MarkdownPreviewTool client:load />
+</ToolLayout>
