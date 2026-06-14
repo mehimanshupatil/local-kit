@@ -36,14 +36,14 @@ function NavContent({ currentPath, onNavigate }: { currentPath: string; onNaviga
               <button
                 onClick={() => setOpen(isOpen ? null : cat.id)}
                 className={cn(
-                  'w-full flex items-center justify-between gap-2 px-3 py-2 text-xs font-medium transition-colors',
+                  'w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-medium transition-colors',
                   isCatActive
                     ? 'text-brand-500 bg-brand-500/8'
                     : 'text-muted-foreground hover:text-foreground hover:bg-secondary'
                 )}
               >
                 <span className="flex items-center gap-2">
-                  <Icon icon={cat.icon} size={14} />
+                  <Icon icon={cat.icon} size={16} />
                   {cat.title.replace(' Tools', '')}
                 </span>
                 <svg
@@ -64,7 +64,7 @@ function NavContent({ currentPath, onNavigate }: { currentPath: string; onNaviga
                         href={tool.href}
                         onClick={onNavigate}
                         className={cn(
-                          'block pl-9 pr-3 py-1.5 text-xs transition-colors',
+                          'block pl-9 pr-3 py-2 text-sm transition-colors',
                           isActive
                             ? 'text-brand-500 bg-brand-500/8 font-medium'
                             : 'text-muted-foreground hover:text-foreground hover:bg-secondary'

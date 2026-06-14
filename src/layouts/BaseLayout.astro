@@ -13,7 +13,7 @@ interface Props {
 }
 
 const { title, description, canonicalURL, ogImage } = Astro.props;
-const siteURL = "https://localkit.app";
+const siteURL = "https://local-kit.himanshupatil.dev";
 const fullTitle = title.includes("LocalKit") ? title : `${title} | LocalKit`;
 const ogImageURL = `${siteURL}${ogImage ?? "/og/home.png"}`;
 ---
