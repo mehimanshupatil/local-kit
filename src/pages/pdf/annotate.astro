@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PDFAnnotateTool from '../../components/pdf/PDFAnnotateTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/annotate');
+---
+<ToolLayout {...meta} wide>
+  <PDFAnnotateTool client:load />
+</ToolLayout>

@@ -1,0 +1,11 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import WordToPdfTool from '../../components/pdf/WordToPdfTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/pdf/word-to-pdf');
+---
+
+<ToolLayout {...meta}>
+  <WordToPdfTool client:load />
+</ToolLayout>

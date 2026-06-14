@@ -37,14 +37,14 @@ export default defineConfig({
   integrations: [
     react(),
     AstroPWA({
-      registerType: 'prompt',
+      registerType: 'autoUpdate',
       devOptions: { enabled: true },
       manifest: {
         name: 'LocalKit',
         short_name: 'LocalKit',
         description: 'Privacy-first PDF, image & video tools — 100% in your browser, no uploads',
-        theme_color: '#0284c7',
-        background_color: '#ffffff',
+        theme_color: '#10b981',
+        background_color: '#080808',
         display: 'standalone',
         orientation: 'portrait-primary',
         scope: '/',
@@ -75,6 +75,11 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Activate new SW immediately — don't leave users on stale versions
+        skipWaiting: true,
+        clientsClaim: true,
+        // Remove old precaches from previous deploys automatically
+        cleanupOutdatedCaches: true,
         // Precache all built assets
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2,mjs}'],
         // Don't precache the large PDF worker — handle at runtime

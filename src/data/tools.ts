@@ -128,6 +128,24 @@ export const categories: Category[] = [
         pageTitle: 'Edit PDF Metadata — Title, Author, Keywords | LocalKit',
         pageDesc: 'View and edit PDF metadata: title, author, subject, keywords, creator, producer and dates — 100% in your browser.',
       },
+      {
+        name: 'Annotate PDF', href: '/pdf/annotate', icon: FcEditImage,
+        desc: 'Draw, add images and text on PDF pages',
+        pageTitle: 'Annotate PDF — Draw & Add Images | LocalKit',
+        pageDesc: 'Draw on PDF pages, insert images and add text overlays — freehand annotation tool, 100% in your browser.',
+      },
+      {
+        name: 'Sign PDF', href: '/pdf/sign', icon: FcInspection,
+        desc: 'Place your signature on any PDF page',
+        pageTitle: 'Sign PDF — Free, No Upload | LocalKit',
+        pageDesc: 'Draw, type or upload your signature and place it on any PDF page. 100% private, runs in your browser.',
+      },
+      {
+        name: 'Word → PDF', href: '/pdf/word-to-pdf', icon: FcDocument,
+        desc: 'Convert .docx Word files to PDF',
+        pageTitle: 'Word to PDF — Free, No Upload | LocalKit',
+        pageDesc: 'Convert Microsoft Word .docx files to PDF entirely in your browser. No uploads, no servers.',
+      },
     ],
   },
   {

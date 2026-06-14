@@ -22,6 +22,14 @@ function parseAccept(accept?: string): Record<string, string[]> | undefined {
         '.pdf': 'application/pdf',
         '.mp4': 'video/mp4', '.webm': 'video/webm', '.mov': 'video/quicktime',
         '.avi': 'video/x-msvideo', '.mkv': 'video/x-matroska',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.doc':  'application/msword',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        '.zip':  'application/zip',
+        '.md': 'text/markdown', '.markdown': 'text/markdown',
+        '.txt': 'text/plain',
+        '.svg': 'image/svg+xml',
       };
       const mime = mimes[token];
       if (mime) { result[mime] = result[mime] ?? []; }
