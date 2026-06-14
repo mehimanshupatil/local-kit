@@ -9,11 +9,13 @@ interface Props {
   title: string;
   description: string;
   canonicalURL?: string;
+  ogImage?: string; // path like /og/pdf-merge.png — defaults to /og/home.png
 }
 
-const { title, description, canonicalURL } = Astro.props;
+const { title, description, canonicalURL, ogImage } = Astro.props;
 const siteURL = "https://localkit.app";
 const fullTitle = title.includes("LocalKit") ? title : `${title} | LocalKit`;
+const ogImageURL = `${siteURL}${ogImage ?? "/og/home.png"}`;
 ---
 
 <!doctype html>
@@ -23,16 +25,29 @@ const fullTitle = title.includes("LocalKit") ? title : `${title} | LocalKit`;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content={description} />
     <title>{fullTitle}</title>
-    {canonicalURL && <link rel="canonical" href={`${siteURL}${canonicalURL}`} />}
+    {
+      canonicalURL && (
+        <link rel="canonical" href={`${siteURL}${canonicalURL}`} />
+      )
+    }
 
     <!-- OG -->
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content="website" />
-    {canonicalURL && <meta property="og:url" content={`${siteURL}${canonicalURL}`} />}
+    {
+      canonicalURL && (
+        <meta property="og:url" content={`${siteURL}${canonicalURL}`} />
+      )
+    }
+    <meta property="og:image" content={ogImageURL} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={ogImageURL} />
 
     <!-- Favicon & PWA -->
-    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" sizes="48x48" />
     <link rel="icon" href="/icon.svg" sizes="any" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <meta name="theme-color" content="#10b981" />

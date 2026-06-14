@@ -20,9 +20,10 @@ Privacy-first browser-based file utilities. 100% client-side — no uploads, no 
 ## Commands
 
 ```bash
-pnpm dev        # dev server with HMR
-pnpm build      # static output → dist/
-pnpm preview    # preview production build
+pnpm dev             # dev server with HMR
+pnpm build           # static output → dist/
+pnpm preview         # preview production build
+pnpm generate-og     # regenerate OG images in public/og/ — re-run when tools change
 ```
 
 No env vars needed — fully client-side.

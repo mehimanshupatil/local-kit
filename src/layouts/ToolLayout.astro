@@ -26,7 +26,7 @@ const {
 } = Astro.props;
 ---
 
-<BaseLayout title={title} description={description} canonicalURL={canonicalURL}>
+<BaseLayout title={title} description={description} canonicalURL={canonicalURL} ogImage={canonicalURL ? `/og/${canonicalURL.replace(/^\//, '').replace(/\//g, '-')}.png` : undefined}>
   <main class="min-h-screen pt-6 pb-16">
     <div class:list={[wide ? 'max-w-6xl' : 'max-w-3xl', 'mx-auto px-4 sm:px-6']}>
 

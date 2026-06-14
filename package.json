@@ -6,7 +6,8 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "generate-og": "node --experimental-strip-types scripts/generate-og.ts"
   },
   "dependencies": {
     "@astrojs/react": "^5.0.7",
@@ -63,11 +64,13 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/dompurify": "^3.2.0",
     "@types/piexifjs": "^1.0.0",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "satori": "^0.26.0",
     "typescript": "^6.0.3"
   }
 }
