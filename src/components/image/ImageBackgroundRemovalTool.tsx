@@ -109,24 +109,24 @@ export default function ImageBackgroundRemovalTool() {
   return (
     <div className="space-y-5">
       {/* File info bar */}
-      <div className="card p-5 flex items-center gap-3">
+      <Card className="p-5 flex items-center gap-3">
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
+          <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+          <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
         </div>
         <Button variant="secondary" onClick={handleChange} className="text-sm">
           Change
         </Button>
-      </div>
+      </Card>
 
       {/* Preview area */}
       {status !== 'processing' && (
-        <div className="card p-5 space-y-4">
+        <Card className="p-5 space-y-4">
           {resultURL ? (
             /* Side-by-side before / after */
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
                   Before
                 </p>
                 <div
@@ -141,7 +141,7 @@ export default function ImageBackgroundRemovalTool() {
                 </div>
               </div>
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 text-center">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
                   After
                 </p>
                 <div
@@ -174,7 +174,7 @@ export default function ImageBackgroundRemovalTool() {
 
           {/* Error display */}
           {status === 'error' && (
-            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">
+            <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">
               {error}
             </p>
           )}
@@ -188,36 +188,36 @@ export default function ImageBackgroundRemovalTool() {
               <Button onClick={handleChange} variant="secondary">Try another</Button>
             )}
           </div>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}
 
       {/* Processing state */}
       {status === 'processing' && (
-        <div className="card p-5 space-y-4">
+        <Card className="p-5 space-y-4">
           <div className="flex flex-col items-center gap-4 py-4">
             {/* Spinner */}
-            <div className="w-10 h-10 rounded-full border-4 border-gray-200 dark:border-gray-700 border-t-brand-500 animate-spin" />
+            <div className="w-10 h-10 rounded-full border-4 border-border border-t-brand-500 animate-spin" />
 
             {/* Stage label */}
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{stage}</p>
+            <p className="text-sm font-medium text-foreground">{stage}</p>
 
             {/* Progress bar */}
-            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
               <div
                 className="h-2 rounded-full bg-brand-500 transition-all duration-300"
                 style={{ width: `${progress}%` }}
               />
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{progress}%</p>
+            <p className="text-xs text-muted-foreground">{progress}%</p>
 
             {/* Model download note */}
-            <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+            <p className="text-xs text-muted-foreground text-center">
               First run downloads ~50 MB model. Cached for future use.
             </p>
           </div>
-        </div>
+        </Card>
       )}
     </div>
   );

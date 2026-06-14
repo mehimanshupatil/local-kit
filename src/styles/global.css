@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "@fontsource-variable/geist";
 @import "@fontsource-variable/geist-mono";
-
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
@@ -124,46 +125,8 @@
   }
 
   body {
-    @apply bg-[--background] text-[--foreground] transition-colors duration-150;
+    @apply bg-background text-foreground transition-colors duration-150;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-@layer components {
-  .btn-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-[0.25rem]
-           bg-brand-500 text-black font-medium text-sm tracking-tight
-           hover:bg-brand-400 active:scale-[0.98]
-           transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed;
-  }
-
-  .btn-secondary {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-[0.25rem]
-           bg-[--secondary] text-[--secondary-foreground] font-medium text-sm
-           border border-[--border-color]
-           hover:bg-[--muted] active:scale-[0.98]
-           transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed;
-  }
-
-  .btn-danger {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-[0.25rem]
-           bg-red-600 text-white font-medium text-sm
-           hover:bg-red-500 active:scale-[0.98]
-           transition-all duration-100 disabled:opacity-40 disabled:cursor-not-allowed;
-  }
-
-  .card {
-    @apply bg-[--card] rounded-[0.25rem] border border-[--border-color];
-  }
-
-  .input {
-    @apply w-full px-3 py-2 rounded-[0.25rem] border border-[--border-color]
-           bg-[--input] text-[--foreground] text-sm
-           focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500
-           placeholder:text-[--muted-foreground] transition-all duration-100;
-  }
-
-  .label {
-    @apply block text-xs font-medium text-[--muted-foreground] uppercase tracking-wider mb-1.5;
-  }
-}

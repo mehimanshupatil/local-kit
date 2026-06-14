@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { FcVideoFile } from 'react-icons/fc';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
@@ -43,40 +44,40 @@ export default function VideoCompressTool() {
 
   return (
     <div className="space-y-5">
-      <div className="card p-4 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 text-sm rounded-xl">
+      <Card className="p-4 bg-amber-500/10 border-amber-500/30 text-amber-500 text-sm rounded-xl">
         ⚠️ FFmpeg WASM is ~30MB and loads once. Large videos may take several minutes to process.
-      </div>
+      </Card>
 
       {!file ? (
         <DropZone onFiles={addFile} accept="video/*" multiple={false} label="Drop a video file" sublabel="MP4, WebM, AVI, MOV supported" />
       ) : (
-        <div className="flex items-center gap-3 px-4 py-3 card rounded-xl border">
+        <Card className="flex items-center gap-3 px-4 py-3 rounded-xl border">
           <FcVideoFile size={28} />
           <div className="flex-1">
-            <p className="font-medium text-gray-900 dark:text-gray-100">{file.name}</p>
-            <p className="text-xs text-gray-500">{formatFileSize(file.size)}</p>
+            <p className="font-medium text-foreground">{file.name}</p>
+            <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
           </div>
           <Button variant="secondary" size="sm" onClick={() => { setFile(null); updateOp(() => ({ ...IDLE_OP })); clearSession(); }}>Change</Button>
-        </div>
+        </Card>
       )}
 
       {file && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
           <div>
-            <label className="label">Quality preset</label>
+            <Label>Quality preset</Label>
             <div className="grid grid-cols-3 gap-2">
               {(['high', 'medium', 'low'] as VideoQuality[]).map(q => (
                 <Button
                   key={q}
                   variant="outline"
                   onClick={() => setQuality(q)}
-                  className={`transition-all ${quality === q ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400'}`}
+                  className={`transition-all ${quality === q ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'text-muted-foreground'}`}
                 >
                   {q === 'high' ? 'High' : q === 'medium' ? 'Medium' : 'Low'}
                 </Button>
               ))}
             </div>
-            <p className="text-xs text-gray-400 mt-2">
+            <p className="text-xs text-muted-foreground mt-2">
               {quality === 'high' ? 'Best quality, larger file' : quality === 'medium' ? 'Good balance of quality and size' : 'Smallest file, reduced quality'}
             </p>
           </div>
@@ -87,12 +88,12 @@ export default function VideoCompressTool() {
             </div>
           )}
 
-          {status === 'error' && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>}
+          {status === 'error' && <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">{error}</p>}
 
           <Button onClick={compress} disabled={status === 'loading' || status === 'processing'} >
             {status === 'loading' ? 'Loading FFmpeg...' : status === 'processing' ? 'Compressing...' : 'Compress Video'}
           </Button>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

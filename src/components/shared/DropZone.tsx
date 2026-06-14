@@ -1,7 +1,7 @@
 import { useDropzone } from 'react-dropzone';
 import { cn } from '@/lib/utils/cn';
 import { Button } from '@/components/ui/button';
-import { Upload } from '@phosphor-icons/react';
+import { UploadIcon } from '@phosphor-icons/react';
 import { useWindowEvent } from '@mantine/hooks';
 
 interface Props {
@@ -57,35 +57,35 @@ export default function DropZone({ onFiles, accept, multiple = true, label, subl
     <div
       {...getRootProps({
         className: cn(
-          'flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed',
+          'flex flex-col items-center justify-center gap-4 rounded-xl border-2 border-dashed',
           'py-12 px-6 text-center transition-all duration-200 select-none outline-none',
-          isDragActive && !isDragReject && 'border-brand-500 bg-brand-50 dark:bg-brand-950/30',
+          isDragActive && !isDragReject && 'border-brand-500 bg-brand-500/10',
           isDragReject && 'border-red-400 bg-red-50 dark:bg-red-950/30',
-          !isDragActive && 'border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900',
+          !isDragActive && 'border-border bg-card',
         ),
       })}
     >
       <input {...getInputProps()} />
 
       <div className={cn(
-        'flex items-center justify-center w-14 h-14 rounded-2xl transition-all duration-200',
+        'flex items-center justify-center w-14 h-14 rounded-xl transition-all duration-200',
         isDragActive && !isDragReject && 'bg-brand-100 dark:bg-brand-900/50 scale-110',
         isDragReject && 'bg-red-100 dark:bg-red-900/50',
-        !isDragActive && 'bg-gray-100 dark:bg-gray-800',
+        !isDragActive && 'bg-secondary',
       )}>
-        <Upload className={cn(
+        <UploadIcon className={cn(
           'w-6 h-6 transition-colors',
-          isDragActive && !isDragReject && 'text-brand-600 dark:text-brand-400',
+          isDragActive && !isDragReject && 'text-brand-500',
           isDragReject && 'text-red-500',
-          !isDragActive && 'text-gray-400 dark:text-gray-500',
+          !isDragActive && 'text-muted-foreground',
         )} />
       </div>
 
       <div className="space-y-1">
-        <p className="font-semibold text-gray-800 dark:text-gray-200">
+        <p className="font-semibold text-foreground">
           {isDragReject ? 'File type not supported' : isDragActive ? 'Drop to add files' : label || 'Drop files here'}
         </p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-sm text-muted-foreground">
           {sublabel || (accept ? `Accepted: ${accept}` : 'All file types supported')}
           {acceptsImages && <span className="ml-1 opacity-60">· or paste (Ctrl+V)</span>}
         </p>

@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
@@ -89,11 +90,11 @@ export default function PDFDeletePagesTool() {
       )}
 
       {pdf && file && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
 
           {/* Toolbar */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-sm text-muted-foreground">
               {selected.size === 0
                 ? 'Click pages to mark for deletion'
                 : <span className="text-red-600 dark:text-red-400 font-medium">{selected.size} page{selected.size > 1 ? 's' : ''} marked — {remainingCount} will remain</span>
@@ -114,15 +115,16 @@ export default function PDFDeletePagesTool() {
             {Array.from({ length: file.pageCount }, (_, i) => {
               const marked = selected.has(i);
               return (
-                <button
+                <Button
                   key={i}
+                  variant="ghost"
                   type="button"
                   onClick={() => togglePage(i)}
                   className={`
-                    relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all select-none
+                    relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all select-none h-auto
                     ${marked
                       ? 'border-red-500 bg-red-50 dark:bg-red-950/30 opacity-60'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-900'}
+                      : 'border-border hover:border-border bg-card'}
                   `}
                 >
                   {marked && (
@@ -131,8 +133,8 @@ export default function PDFDeletePagesTool() {
                     </div>
                   )}
                   <PDFPageThumbnail pdf={pdf} pageNumber={i + 1} width={80} className="pointer-events-none" />
-                  <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">{i + 1}</span>
-                </button>
+                  <span className="text-[10px] font-mono text-muted-foreground">{i + 1}</span>
+                </Button>
               );
             })}
           </div>
@@ -156,7 +158,7 @@ export default function PDFDeletePagesTool() {
               Clear selection
             </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

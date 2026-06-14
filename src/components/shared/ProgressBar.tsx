@@ -11,10 +11,10 @@ export default function ProgressBar({ progress, label }: Props) {
       {label && (
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted-foreground">{label}</span>
-          <span className="font-medium text-brand-600 dark:text-brand-400">{progress}%</span>
+          <span className="font-medium text-brand-500">{progress}%</span>
         </div>
       )}
-      <Progress value={progress} className="h-2.5" />
+      <Progress value={progress} />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { useState, useRef, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
@@ -54,9 +55,9 @@ export default function AudioTrimTool() {
           label="Drop an audio file" sublabel="MP3, AAC, WAV, OGG, FLAC supported" />
       ) : (
         <>
-          <div className="card p-4">
+          <Card className="p-4">
             <audio ref={audioRef} src={audioURL} className="w-full" preload="metadata" />
-          </div>
+          </Card>
           <MediaTrimmer
             mediaRef={audioRef} mediaURL={audioURL}
             status={status} progress={progress} error={error}
@@ -64,10 +65,10 @@ export default function AudioTrimTool() {
             onTrim={trim} onClear={clear}
           />
           {trimmedUrl && (
-            <div className="card p-4 space-y-2">
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Preview</p>
+            <Card className="p-4 space-y-2">
+              <p className="text-sm font-semibold text-foreground">Preview</p>
               <audio src={trimmedUrl} controls className="w-full h-10" />
-            </div>
+            </Card>
           )}
         </>
       )}

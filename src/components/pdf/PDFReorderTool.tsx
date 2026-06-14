@@ -43,8 +43,8 @@ function SortablePage({
       className={`
         relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all select-none cursor-grab active:cursor-grabbing
         ${isDragging
-          ? 'border-brand-500 shadow-xl opacity-90 z-50 bg-white dark:bg-gray-900 scale-105'
-          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-900'}
+          ? 'border-brand-500 shadow-xl opacity-90 z-50 bg-card scale-105'
+          : 'border-border hover:border-border bg-card'}
       `}
       {...attributes}
       {...listeners}
@@ -59,7 +59,7 @@ function SortablePage({
       <PDFPageThumbnail pdf={pdf} pageNumber={pageIndex + 1} width={80} />
 
       {/* Current display position */}
-      <span className="text-[10px] font-mono text-gray-400 dark:text-gray-500">
+      <span className="text-[10px] font-mono text-muted-foreground">
         {displayIndex + 1}
       </span>
     </div>
@@ -136,10 +136,10 @@ export default function PDFReorderTool() {
       )}
 
       {pdf && file && pageOrder.length > 0 && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
 
           {/* Order hint */}
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="text-xs text-muted-foreground">
             {isReordered
               ? <span className="text-amber-600 dark:text-amber-400">Order changed — amber badge shows original page number</span>
               : 'Drag thumbnails to reorder pages'}
@@ -184,7 +184,7 @@ export default function PDFReorderTool() {
               Reset Order
             </Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

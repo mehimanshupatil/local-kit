@@ -7,7 +7,7 @@ Privacy-first browser-based file utilities. 100% client-side — no uploads, no 
 | Layer | Tech |
 |---|---|
 | Framework | Astro 6 (static + React islands) |
-| UI | React 19 + shadcn/ui (Radix + Tailwind v4) |
+| UI | React 19 + shadcn/ui (Base UI + Tailwind v4) |
 | State | Zustand 5 (global), use-immer (local) |
 | PDF | @cantoo/pdf-lib + pdfjs-dist |
 | Video/Audio | @ffmpeg/ffmpeg (WASM) |
@@ -47,7 +47,7 @@ src/
   stores/
     uiStore.ts    # Zustand: toasts/notifications only
   styles/
-    global.css    # Tailwind v4 theme vars, custom component layer
+    global.css    # Tailwind v4 theme vars and design tokens
 ```
 
 ## Key Conventions
@@ -66,10 +66,11 @@ src/
 **Hooks**: Use `@mantine/hooks` before writing custom hooks. e.g. `useTimeout` not `setTimeout`, `useClipboard` for text copy, `useDisclosure` for toggle state, etc.
 
 **Styling**:
-- Brand color: `--color-brand-*` (sky blue `#0284c7`)
-- Dark mode: auto via `prefers-color-scheme`, manual toggle in localStorage
+- Brand color: `--color-brand-*` (emerald `#10b981`) — dark-first design
+- Dark mode: dark by default, light available via toggle stored in localStorage
 - Use `cn()` (`src/lib/utils/`) for all Tailwind class merging
-- Custom component layer in `global.css`: `.btn-primary`, `.card`, `.input`, `.label`
+- No custom component CSS — use shadcn/ui components: `<Button variant>`, `<Card>`, `<Input>`, `<Label>`, etc.
+- Icons: `@phosphor-icons/react` (use `Icon` suffix names e.g. `XIcon`, `CheckIcon`)
 
 **File utilities** (`src/lib/utils/`): `formatFileSize`, `generateId` (nanoid), `stripExtension`, `getExtension`.
 

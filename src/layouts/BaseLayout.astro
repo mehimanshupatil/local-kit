@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import Sidebar from "../components/layout/Sidebar";
 import ToasterProvider from "../components/layout/ToasterProvider";
 import PWAInstallPrompt from "../components/layout/PWAInstallPrompt";
 import { pwaInfo } from "virtual:pwa-info";
@@ -46,8 +47,14 @@ const fullTitle = title.includes("LocalKit") ? title : `${title} | LocalKit`;
       }
     </script>
   </head>
-  <body>
-    <slot />
+  <body class="min-h-screen">
+    <Sidebar client:load />
+
+    <!-- Content offset: sidebar width on md+, top bar height on mobile -->
+    <div class="md:pl-[220px] pt-12 md:pt-0">
+      <slot />
+    </div>
+
     <ToasterProvider client:load />
     <PWAInstallPrompt client:load />
   </body>

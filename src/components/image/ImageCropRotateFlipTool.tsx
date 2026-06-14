@@ -5,7 +5,7 @@ import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
 import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
-import { ArrowCounterClockwise, ArrowClockwise } from '@phosphor-icons/react';
+import { ArrowCounterClockwiseIcon, ArrowClockwiseIcon } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { applyTransform } from '@/lib/image/imageCropRotateFlip';
@@ -100,23 +100,23 @@ export default function ImageCropRotateFlipTool() {
     <div className="space-y-5">
 
       {/* File info bar */}
-      <div className="card p-4 flex items-center justify-between gap-3">
+      <Card className="p-4 flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
+          <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+          <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
         </div>
         <Button variant="secondary" size="sm" className="shrink-0" onClick={handleChange}>
           Change
         </Button>
-      </div>
+      </Card>
 
       {/* Two-column layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
         {/* LEFT: Interactive crop/preview */}
-        <div className="card p-4 space-y-3">
-          <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Preview</h3>
-          <div className="overflow-auto rounded-xl bg-gray-100 dark:bg-gray-800 flex items-start justify-center p-2">
+        <Card className="p-4 space-y-3">
+          <h3 className="text-sm font-semibold text-foreground">Preview</h3>
+          <div className="overflow-auto rounded-xl bg-secondary flex items-start justify-center p-2">
             <ReactCrop
               crop={crop}
               onChange={c => setCrop(c)}
@@ -138,21 +138,21 @@ export default function ImageCropRotateFlipTool() {
               />
             </ReactCrop>
           </div>
-        </div>
+        </Card>
 
         {/* RIGHT: Controls */}
         <div className="space-y-4 flex flex-col">
 
           {/* Rotate */}
-          <div className="card p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Rotate</h3>
+          <Card className="p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Rotate</h3>
             <div className="flex gap-2">
               <Button variant="secondary"
                 onClick={rotateCCW}
                 className="flex-1"
                 title="Rotate 90° counter-clockwise"
               >
-                <ArrowCounterClockwise className="size-4" />
+                <ArrowCounterClockwiseIcon className="size-4" />
                 <span>90° CCW</span>
               </Button>
               <Button variant="secondary"
@@ -160,7 +160,7 @@ export default function ImageCropRotateFlipTool() {
                 className="flex-1"
                 title="Rotate 90° clockwise"
               >
-                <ArrowClockwise className="size-4" />
+                <ArrowClockwiseIcon className="size-4" />
                 <span>90° CW</span>
               </Button>
               <Button variant="secondary"
@@ -180,18 +180,18 @@ export default function ImageCropRotateFlipTool() {
               </Button>
             </div>
             {rotation !== 0 && (
-              <p className="text-xs text-brand-600 dark:text-brand-400">Current: {rotation}°</p>
+              <p className="text-xs text-brand-500">Current: {rotation}°</p>
             )}
-          </div>
+          </Card>
 
           {/* Flip */}
-          <div className="card p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Flip</h3>
+          <Card className="p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Flip</h3>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 onClick={toggleFlipH}
-                className={`flex-1 transition-all ${flipH ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-700 dark:text-gray-300'}`}
+                className={`flex-1 transition-all ${flipH ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'text-foreground'}`}
               >
                 <span className="text-base">↔</span>
                 <span>Flip H</span>
@@ -199,23 +199,23 @@ export default function ImageCropRotateFlipTool() {
               <Button
                 variant="outline"
                 onClick={toggleFlipV}
-                className={`flex-1 transition-all ${flipV ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-700 dark:text-gray-300'}`}
+                className={`flex-1 transition-all ${flipV ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'text-foreground'}`}
               >
                 <span className="text-base">↕</span>
                 <span>Flip V</span>
               </Button>
             </div>
-          </div>
+          </Card>
 
           {/* Crop */}
-          <div className="card p-4 space-y-3">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Crop</h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+          <Card className="p-4 space-y-3">
+            <h3 className="text-sm font-semibold text-foreground">Crop</h3>
+            <p className="text-sm text-muted-foreground">
               Draw a crop area on the image.
             </p>
             {completedCrop && (
               <div className="flex items-center justify-between">
-                <p className="text-xs text-brand-600 dark:text-brand-400">
+                <p className="text-xs text-brand-500">
                   {Math.round(completedCrop.width)} × {Math.round(completedCrop.height)}px selected
                 </p>
                 <Button variant="secondary" size="sm"
@@ -225,14 +225,14 @@ export default function ImageCropRotateFlipTool() {
                 </Button>
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Spacer to push apply button to bottom */}
           <div className="flex-1" />
 
           {/* Error */}
           {status === 'error' && (
-            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">
+            <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">
               {error}
             </p>
           )}

@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
@@ -76,17 +77,17 @@ export default function ImageRemoveMetadataTool() {
       />
 
       {file && (
-        <div className="card p-5 space-y-4">
+        <Card className="p-5 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900 dark:text-white text-sm truncate max-w-xs">{file.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{formatFileSize(file.size)}</p>
+              <p className="font-medium text-foreground text-sm truncate max-w-xs">{file.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatFileSize(file.size)}</p>
             </div>
             <Button variant="secondary" onClick={reset} className="text-xs">Clear</Button>
           </div>
 
           {reading && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <svg className="animate-spin size-4 shrink-0 text-brand-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -100,23 +101,23 @@ export default function ImageRemoveMetadataTool() {
               {summary.fields.length > 0 ? (
                 <>
                   <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 text-xs font-medium px-2.5 py-0.5">
+                    <span className="inline-flex items-center rounded-full bg-amber-500/15 text-amber-500 text-xs font-medium px-2.5 py-0.5">
                       {summary.fields.length} metadata field{summary.fields.length !== 1 ? 's' : ''} found
                     </span>
                   </div>
-                  <div className="overflow-auto max-h-64 rounded-xl border border-gray-200 dark:border-gray-700">
+                  <div className="overflow-auto max-h-64 rounded-xl border border-border">
                     <table className="w-full text-xs">
-                      <thead className="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                      <thead className="bg-secondary sticky top-0">
                         <tr>
-                          <th className="text-left px-3 py-2 font-medium text-gray-600 dark:text-gray-300 w-1/3">Field</th>
-                          <th className="text-left px-3 py-2 font-medium text-gray-600 dark:text-gray-300">Value</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground w-1/3">Field</th>
+                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Value</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                      <tbody className="divide-y divide-[--border-color]">
                         {summary.fields.map(({ key, value }) => (
-                          <tr key={key} className="hover:bg-gray-50 dark:hover:bg-gray-800/50">
-                            <td className="px-3 py-1.5 text-gray-600 dark:text-gray-400 font-mono break-all">{key}</td>
-                            <td className="px-3 py-1.5 text-gray-800 dark:text-gray-200 break-all">{value}</td>
+                          <tr key={key} className="hover:bg-secondary">
+                            <td className="px-3 py-1.5 text-muted-foreground font-mono break-all">{key}</td>
+                            <td className="px-3 py-1.5 text-foreground break-all">{value}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -124,7 +125,7 @@ export default function ImageRemoveMetadataTool() {
                   </div>
                 </>
               ) : (
-                <p className="text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 rounded-xl px-4 py-3">
+                <p className="text-sm text-muted-foreground bg-secondary rounded-xl px-4 py-3">
                   No metadata found in this image.
                 </p>
               )}
@@ -133,7 +134,7 @@ export default function ImageRemoveMetadataTool() {
 
           {status === 'processing' && <ProgressBar progress={progress} label="Stripping metadata…" />}
           {status === 'error' && (
-            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>
+            <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">{error}</p>
           )}
 
           <div className="flex gap-3">
@@ -142,7 +143,7 @@ export default function ImageRemoveMetadataTool() {
             </Button>
             <Button variant="secondary" onClick={reset}>Reset</Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

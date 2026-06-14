@@ -10,7 +10,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { DotsSixVertical, X, CaretRight } from '@phosphor-icons/react';
+import { DotsSixVerticalIcon, XIcon, CaretRightIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DropZone from '@/components/shared/DropZone';
@@ -43,10 +43,10 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 bg-white dark:bg-gray-900 transition-all',
+        'flex items-center gap-3 px-3 py-2.5 rounded-xl border-2 bg-card transition-all',
         isDragging
           ? 'border-brand-500 shadow-lg opacity-90 z-50'
-          : 'border-gray-200 dark:border-gray-800 hover:border-gray-300 dark:hover:border-gray-700',
+          : 'border-border hover:border-border',
       )}
     >
       {/* Drag grip */}
@@ -55,12 +55,12 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
         {...listeners}
         variant="ghost"
         size="icon"
-        className="touch-none cursor-grab active:cursor-grabbing text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400"
+        className="touch-none cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
       >
-        <DotsSixVertical className="size-4" />
+        <DotsSixVerticalIcon className="size-4" />
       </Button>
 
-      <span className="text-xs text-gray-400 font-mono w-5 text-center shrink-0">{index + 1}</span>
+      <span className="text-xs text-muted-foreground font-mono w-5 text-center shrink-0">{index + 1}</span>
 
       {/* First page thumbnail */}
       <div className="shrink-0">
@@ -69,8 +69,8 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
 
       {/* Info */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-        <p className="text-xs text-gray-400 dark:text-gray-500">
+        <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+        <p className="text-xs text-muted-foreground">
           {file.pageCount} page{file.pageCount !== 1 ? 's' : ''} · {formatFileSize(file.size)}
         </p>
       </div>
@@ -82,7 +82,7 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
             <PDFPageThumbnail key={p} pdf={file.pdf} pageNumber={p + 1} width={28} />
           ))}
           {file.pageCount > 3 && (
-            <span className="text-xs text-gray-400 ml-0.5">+{file.pageCount - 3}</span>
+            <span className="text-xs text-muted-foreground ml-0.5">+{file.pageCount - 3}</span>
           )}
         </div>
       )}
@@ -91,9 +91,9 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
         variant="ghost"
         size="icon"
         onClick={() => onRemove(file.id)}
-        className="shrink-0 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30"
+        className="shrink-0 text-muted-foreground hover:text-red-500 hover:bg-red-50"
       >
-        <X className="size-4" />
+        <XIcon className="size-4" />
       </Button>
     </div>
   );
@@ -166,9 +166,9 @@ export default function PDFMergeTool() {
 
           {/* Sortable list */}
           <div className="space-y-2">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+            <p className="text-xs text-muted-foreground mb-3">
               {files.length} files · {totalPages} pages total
-              {files.length > 1 && <span className="ml-2 text-gray-400">· drag ⠿ to reorder</span>}
+              {files.length > 1 && <span className="ml-2 text-muted-foreground">· drag ⠿ to reorder</span>}
             </p>
 
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
@@ -184,20 +184,20 @@ export default function PDFMergeTool() {
 
           {/* Visual merge preview */}
           {files.length >= 2 && (
-            <div className="flex items-center gap-2 px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded-xl overflow-x-auto">
+            <div className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-xl overflow-x-auto">
               {files.map((f, i) => (
                 <div key={f.id} className="flex items-center gap-2 shrink-0">
                   <div className="text-center">
                     <PDFPageThumbnail pdf={f.pdf} pageNumber={1} width={36} />
-                    <p className="text-[10px] text-gray-400 mt-0.5 w-9 truncate text-center">{f.pageCount}p</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 w-9 truncate text-center">{f.pageCount}p</p>
                   </div>
                   {i < files.length - 1 && (
-                    <CaretRight className="size-4 text-brand-400 shrink-0" />
+                    <CaretRightIcon className="size-4 text-brand-400 shrink-0" />
                   )}
                 </div>
               ))}
               {/* Output placeholder */}
-              <div className="flex items-center gap-2 shrink-0 border-l border-gray-200 dark:border-gray-700 pl-3 ml-1">
+              <div className="flex items-center gap-2 shrink-0 border-l border-border pl-3 ml-1">
                 <div className="w-10 h-14 rounded border-2 border-dashed border-brand-400 flex items-center justify-center">
                   <span className="text-[10px] text-brand-500 font-mono">{totalPages}p</span>
                 </div>

@@ -62,7 +62,7 @@ export default function PDFFromImagesTool() {
       <DropZone onFiles={addFiles} accept="image/*" label="Drop images here" sublabel="JPG, PNG images will be combined into a PDF" />
 
       {files.length > 0 && (
-        <div className="card p-5 space-y-4">
+        <Card className="p-5 space-y-4">
           <FileList files={files.map(f => ({ id: f.id, name: f.name, size: f.size, preview: f.preview }))} onRemove={remove} />
 
           {status === 'processing' && <ProgressBar progress={progress} label="Creating PDF..." />}
@@ -74,7 +74,7 @@ export default function PDFFromImagesTool() {
             </Button>
             <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} >Reset</Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

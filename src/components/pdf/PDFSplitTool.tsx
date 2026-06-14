@@ -6,7 +6,7 @@ import { useImmer } from 'use-immer';
 import { useToolVisit } from '@/stores/toolVisit';
 
 enableMapSet();
-import { Scissors, X } from '@phosphor-icons/react';
+import { ScissorsIcon   } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';
@@ -121,20 +121,20 @@ export default function PDFSplitTool() {
       )}
 
       {pdf && total > 0 && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
 
           {/* Instructions */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <p className="text-sm font-semibold text-foreground">
                 Click ✂ between pages to add cut points
               </p>
-              <p className="text-xs text-gray-400 mt-0.5">
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {cutPoints.size === 0 ? 'No cuts — all pages in one file' : `${cutPoints.size} cut${cutPoints.size > 1 ? 's' : ''} → ${numOutputs} output files`}
               </p>
             </div>
             {cutPoints.size > 0 && (
-              <Button variant="ghost" size="sm" onClick={() => updateCutPoints(() => new Set())} className="text-gray-400 hover:text-red-500">
+              <Button variant="ghost" size="sm" onClick={() => updateCutPoints(() => new Set())} className="text-muted-foreground hover:text-red-500">
                 Clear all cuts
               </Button>
             )}
@@ -146,7 +146,7 @@ export default function PDFSplitTool() {
               {sections.map((sec, s) => (
                 <div key={s} className="flex items-center gap-1.5 text-xs">
                   <div className={`w-2.5 h-2.5 rounded-full ${SECTION_DOTS[s % SECTION_DOTS.length]}`} />
-                  <span className="text-gray-600 dark:text-gray-400">Part {s + 1} ({sec.length} page{sec.length > 1 ? 's' : ''})</span>
+                  <span className="text-muted-foreground">Part {s + 1} ({sec.length} page{sec.length > 1 ? 's' : ''})</span>
                 </div>
               ))}
             </div>
@@ -167,37 +167,38 @@ export default function PDFSplitTool() {
                       {pdf && (
                         <PDFPageThumbnail pdf={pdf} pageNumber={i + 1} width={72} />
                       )}
-                      <span className="text-[10px] font-mono text-gray-500 dark:text-gray-400 mt-1">{i + 1}</span>
+                      <span className="text-[10px] font-mono text-muted-foreground mt-1">{i + 1}</span>
                     </div>
 
                     {/* Cut point button (between pages, not after last) */}
                     {i < total - 1 && (
-                      <button
+                      <Button
+                        variant="ghost"
                         type="button"
                         onClick={() => toggleCut(i)}
                         title={cutPoints.has(i) ? 'Remove cut' : 'Add cut here'}
                         className={`
-                          relative mx-0.5 flex flex-col items-center justify-center group transition-all cursor-pointer
+                          relative mx-0.5 flex flex-col items-center justify-center group transition-all cursor-pointer p-0
                           ${cutPoints.has(i) ? 'w-8' : 'w-5 hover:w-8'}
                         `}
                         style={{ height: 100 }}
                       >
                         {cutPoints.has(i) ? (
                           <>
-                            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-red-400 dark:bg-red-500" />
-                            <div className="relative z-10 bg-red-100 dark:bg-red-950 border-2 border-red-400 dark:border-red-500 rounded-full p-1">
-                              <Scissors className="size-3.5 text-red-500" />
+                            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-red-400" />
+                            <div className="relative z-10 bg-red-100 border-2 border-red-400 rounded-full p-1">
+                              <ScissorsIcon className="size-3.5 text-red-500" />
                             </div>
                           </>
                         ) : (
                           <>
-                            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px border-l-2 border-dashed border-gray-300 dark:border-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-full p-1">
-                              <Scissors className="size-3 text-gray-400" />
+                            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px border-l-2 border-dashed border-border opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 bg-secondary border border-border rounded-full p-1">
+                              <ScissorsIcon className="size-3 text-muted-foreground" />
                             </div>
                           </>
                         )}
-                      </button>
+                      </Button>
                     )}
                   </div>
                 );
@@ -212,15 +213,15 @@ export default function PDFSplitTool() {
                 <div key={s} className={`p-3 rounded-xl border-2 ${SECTION_COLORS[s % SECTION_COLORS.length]}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`size-2 rounded-full ${SECTION_DOTS[s % SECTION_DOTS.length]}`} />
-                    <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Part {s + 1}.pdf</span>
+                    <span className="text-xs font-semibold text-foreground">Part {s + 1}.pdf</span>
                   </div>
                   <div className="flex gap-1 flex-wrap">
                     {sec.slice(0, 4).map(p => (
                       pdf && <PDFPageThumbnail key={p} pdf={pdf} pageNumber={p + 1} width={36} />
                     ))}
-                    {sec.length > 4 && <span className="text-xs text-gray-400 self-center">+{sec.length - 4}</span>}
+                    {sec.length > 4 && <span className="text-xs text-muted-foreground self-center">+{sec.length - 4}</span>}
                   </div>
-                  <p className="text-[10px] text-gray-400 mt-1.5">
+                  <p className="text-[10px] text-muted-foreground mt-1.5">
                     Pages {sec[0] + 1}–{sec[sec.length - 1] + 1} ({sec.length} page{sec.length > 1 ? 's' : ''})
                   </p>
                 </div>
@@ -234,7 +235,7 @@ export default function PDFSplitTool() {
           <Button onClick={split} disabled={status === 'processing'} >
             {status === 'processing' ? 'Splitting...' : cutPoints.size === 0 ? 'Export as single PDF' : `Split into ${numOutputs} PDFs`}
           </Button>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

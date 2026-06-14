@@ -1,10 +1,7 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
-import Header from "../components/layout/Header.astro";
-import Footer from "../components/layout/Footer.astro";
 import Icon from "../components/ui/Icon";
 import type { IconType } from "react-icons";
-import { Lock } from '@phosphor-icons/react';
 
 interface Props {
   title: string;
@@ -28,52 +25,29 @@ const {
 ---
 
 <BaseLayout title={title} description={description} canonicalURL={canonicalURL}>
-  <Header />
-  <main class="min-h-screen bg-gray-50 dark:bg-gray-950 pt-6 pb-16">
-    <div class="max-w-5xl mx-auto px-4 sm:px-6">
+  <main class="min-h-screen pt-6 pb-16">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6">
+
       <!-- Breadcrumb -->
-      <nav
-        class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mb-6"
-      >
-        <a
-          href="/"
-          class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-          >Home</a
-        >
-        <span>/</span>
-        <a
-          href={categoryHref}
-          class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-          >{category}</a
-        >
-        <span>/</span>
-        <span class="text-gray-900 dark:text-gray-100">{toolName}</span>
+      <nav class="flex items-center gap-2 text-xs text-muted-foreground mb-6 font-mono">
+        <a href="/" class="hover:text-brand-500 transition-colors">home</a>
+        <span class="opacity-40">/</span>
+        <a href={categoryHref} class="hover:text-brand-500 transition-colors lowercase">{category}</a>
+        <span class="opacity-40">/</span>
+        <span class="text-foreground lowercase">{toolName}</span>
       </nav>
 
       <!-- Tool Header -->
-      <div class="flex items-center gap-4 mb-8">
-        <Icon icon={icon} size={36} />
+      <div class="flex items-center gap-3 mb-8">
+        <Icon icon={icon} size={28} />
         <div>
-          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-            {toolName}
-          </h1>
-          <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-            {description}
-          </p>
+          <h1 class="text-xl font-semibold text-foreground">{toolName}</h1>
+          <p class="text-muted-foreground text-xs mt-0.5">{description}</p>
         </div>
-      </div>
-
-      <!-- Privacy Badge -->
-      <div
-        class="flex items-center gap-2 text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-900 rounded-lg px-3 py-2 mb-6 w-fit"
-      >
-        <Lock className="size-4 shrink-0" />
-        Your files never leave this device — 100% processed in your browser
       </div>
 
       <!-- Tool Content -->
       <slot />
     </div>
   </main>
-  <Footer />
 </BaseLayout>

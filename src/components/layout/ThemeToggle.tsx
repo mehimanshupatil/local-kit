@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sun, Moon } from '@phosphor-icons/react';
+import { SunIcon, MoonIcon } from '@phosphor-icons/react';
 
 export default function ThemeToggle() {
   const [dark, setDark] = useState(true);
@@ -22,9 +22,9 @@ export default function ThemeToggle() {
       variant="ghost"
       size="icon"
       aria-label="Toggle theme"
-      className="size-7 text-[--muted-foreground] hover:text-[--foreground] hover:bg-[--secondary]"
+      className="size-7 text-muted-foreground hover:text-foreground hover:bg-secondary"
     >
-      {dark ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+      {dark ? <SunIcon className="size-3.5" /> : <MoonIcon className="size-3.5" />}
     </Button>
   );
 }

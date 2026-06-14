@@ -75,14 +75,14 @@ export default function ImageConvertTool() {
       <DropZone onFiles={addFiles} accept="image/*" label="Drop images to convert" />
 
       {files.length > 0 && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {files.map(f => (
-              <div key={f.id} className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 relative group">
+              <div key={f.id} className="rounded-xl overflow-hidden border border-border relative group">
                 <img src={f.preview} alt={f.file.name} className="w-full h-20 object-cover" />
                 <div className="px-2 py-1">
-                  <p className="text-xs truncate text-gray-600 dark:text-gray-400">{f.file.name}</p>
-                  <p className="text-xs text-gray-400">{formatFileSize(f.file.size)}</p>
+                  <p className="text-xs truncate text-muted-foreground">{f.file.name}</p>
+                  <p className="text-xs text-muted-foreground">{formatFileSize(f.file.size)}</p>
                 </div>
               </div>
             ))}
@@ -96,7 +96,7 @@ export default function ImageConvertTool() {
                   key={f.mime}
                   variant="outline"
                   onClick={() => setTargetMime(f.mime)}
-                  className={`transition-all ${targetMime === f.mime ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400'}`}
+                  className={`transition-all ${targetMime === f.mime ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'text-muted-foreground'}`}
                 >
                   {f.label}
                 </Button>
@@ -107,12 +107,12 @@ export default function ImageConvertTool() {
           {targetMime !== 'image/png' && (
             <div>
               <Label>Quality: {quality}%</Label>
-              <Slider min={10} max={100} step={1} value={[quality]} onValueChange={([v]) => setQuality(v)} />
+              <Slider min={10} max={100} step={1} value={quality} onValueChange={(v) => setQuality(Array.isArray(v) ? v[0] : v)} />
             </div>
           )}
 
           {status === 'processing' && <ProgressBar progress={progress} label="Converting..." />}
-          {status === 'error' && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>}
+          {status === 'error' && <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">{error}</p>}
 
           <div className="flex gap-3">
             <Button onClick={convert} disabled={status === 'processing'} >
@@ -120,7 +120,7 @@ export default function ImageConvertTool() {
             </Button>
             <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} >Reset</Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

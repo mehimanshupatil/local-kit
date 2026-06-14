@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
-import { CircleNotch } from '@phosphor-icons/react';
+import { CircleNotchIcon } from '@phosphor-icons/react';
 
 interface Props {
   pdf: PDFDocumentProxy;
@@ -44,13 +44,13 @@ export default function PDFPageThumbnail({ pdf, pageNumber, width = 100, rotatio
 
   return (
     <div
-      className={`relative overflow-hidden rounded shadow-sm border border-gray-200 dark:border-gray-700 bg-white ${className}`}
+      className={`relative overflow-hidden rounded shadow-sm border border-border bg-white ${className}`}
       style={{ width, height: Math.round(width * aspect) }}
     >
       <canvas ref={canvasRef} className="block w-full h-full" style={{ transform: `rotate(${rotation}deg)`, transition: 'transform 0.25s ease' }} />
       {!loaded && (
-        <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 animate-pulse flex items-center justify-center">
-          <CircleNotch className="size-5 text-gray-300 animate-spin" />
+        <div className="absolute inset-0 bg-secondary animate-pulse flex items-center justify-center">
+          <CircleNotchIcon className="size-5 text-gray-300 animate-spin" />
         </div>
       )}
     </div>

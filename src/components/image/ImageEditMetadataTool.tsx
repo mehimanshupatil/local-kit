@@ -1,4 +1,6 @@
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
@@ -106,24 +108,24 @@ export default function ImageEditMetadataTool() {
       />
 
       {file && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900 dark:text-white text-sm truncate max-w-xs">{file.name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{formatFileSize(file.size)}</p>
+              <p className="font-medium text-foreground text-sm truncate max-w-xs">{file.name}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{formatFileSize(file.size)}</p>
             </div>
             <Button variant="secondary" onClick={reset} className="text-xs">Clear</Button>
           </div>
 
           <div className="space-y-4">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">EXIF Fields (all optional)</h3>
+            <h3 className="text-sm font-semibold text-foreground">EXIF Fields (all optional)</h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label htmlFor="description">Description</Label>
-                <input
+                <Input
                   id="description"
-                  className="input w-full"
+                  className="w-full"
                   type="text"
                   placeholder="Photo description"
                   value={form.description}
@@ -133,9 +135,9 @@ export default function ImageEditMetadataTool() {
 
               <div className="space-y-1">
                 <Label htmlFor="artist">Artist / Author</Label>
-                <input
+                <Input
                   id="artist"
-                  className="input w-full"
+                  className="w-full"
                   type="text"
                   placeholder="Photographer name"
                   value={form.artist}
@@ -145,9 +147,9 @@ export default function ImageEditMetadataTool() {
 
               <div className="space-y-1">
                 <Label htmlFor="copyright">Copyright</Label>
-                <input
+                <Input
                   id="copyright"
-                  className="input w-full"
+                  className="w-full"
                   type="text"
                   placeholder="© 2024 Your Name"
                   value={form.copyright}
@@ -157,9 +159,9 @@ export default function ImageEditMetadataTool() {
 
               <div className="space-y-1">
                 <Label htmlFor="software">Software</Label>
-                <input
+                <Input
                   id="software"
-                  className="input w-full"
+                  className="w-full"
                   type="text"
                   placeholder="e.g. Adobe Lightroom"
                   value={form.software}
@@ -169,9 +171,9 @@ export default function ImageEditMetadataTool() {
 
               <div className="space-y-1 sm:col-span-2">
                 <Label htmlFor="dateTime">Date / Time</Label>
-                <input
+                <Input
                   id="dateTime"
-                  className="input w-full"
+                  className="w-full"
                   type="datetime-local"
                   value={form.dateTime}
                   onChange={set('dateTime')}
@@ -180,13 +182,13 @@ export default function ImageEditMetadataTool() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">GPS Coordinates</h3>
+              <h3 className="text-sm font-semibold text-foreground">GPS Coordinates</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <Label htmlFor="lat">Latitude</Label>
-                  <input
+                  <Input
                     id="lat"
-                    className="input w-full"
+                    className="w-full"
                     type="number"
                     min={-90}
                     max={90}
@@ -198,9 +200,9 @@ export default function ImageEditMetadataTool() {
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="lng">Longitude</Label>
-                  <input
+                  <Input
                     id="lng"
-                    className="input w-full"
+                    className="w-full"
                     type="number"
                     min={-180}
                     max={180}
@@ -211,7 +213,7 @@ export default function ImageEditMetadataTool() {
                   />
                 </div>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Tip: right-click any location in Google Maps to copy coordinates
               </p>
             </div>
@@ -219,7 +221,7 @@ export default function ImageEditMetadataTool() {
 
           {status === 'processing' && <ProgressBar progress={progress} label="Embedding metadata…" />}
           {status === 'error' && (
-            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>
+            <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">{error}</p>
           )}
 
           <div className="flex gap-3">
@@ -228,7 +230,7 @@ export default function ImageEditMetadataTool() {
             </Button>
             <Button variant="secondary" onClick={reset}>Reset</Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
@@ -75,16 +76,16 @@ export default function ImageCompressTool() {
       <DropZone onFiles={addFiles} accept="image/*" label="Drop images here" sublabel="JPEG, PNG, WebP, GIF supported" />
 
       {files.length > 0 && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {files.map(f => (
-              <div key={f.id} className="relative group rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
+              <div key={f.id} className="relative group rounded-xl overflow-hidden border border-border">
                 <img src={f.preview} alt={f.file.name} className="w-full h-24 object-cover" />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                   <Button onClick={() => remove(f.id)} className="bg-red-500 text-white rounded-full size-7 flex items-center justify-center text-lg leading-none">×</Button>
                 </div>
-                <div className="px-2 py-1 bg-white dark:bg-gray-900">
-                  <p className="text-xs text-gray-500 truncate">{formatFileSize(f.file.size)}</p>
+                <div className="px-2 py-1 bg-card">
+                  <p className="text-xs text-muted-foreground truncate">{formatFileSize(f.file.size)}</p>
                 </div>
               </div>
             ))}
@@ -93,16 +94,16 @@ export default function ImageCompressTool() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Max size (MB)</Label>
-              <input type="number" min={0.1} max={50} step={0.1} value={maxSizeMB} onChange={e => setMaxSizeMB(parseFloat(e.target.value))}  />
+              <Input type="number" min={0.1} max={50} step={0.1} value={maxSizeMB} onChange={e => setMaxSizeMB(parseFloat(e.target.value))} className="w-24" />
             </div>
             <div>
               <Label>Quality: {quality}%</Label>
-              <Slider min={10} max={100} step={1} value={[quality]} onValueChange={([v]) => setQuality(v)} />
+              <Slider min={10} max={100} step={1} value={quality} onValueChange={(v) => setQuality(Array.isArray(v) ? v[0] : v)} />
             </div>
           </div>
 
           {status === 'processing' && <ProgressBar progress={progress} label="Compressing images..." />}
-          {status === 'error' && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>}
+          {status === 'error' && <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">{error}</p>}
 
           <div className="flex gap-3">
             <Button onClick={compress} disabled={status === 'processing'} >
@@ -110,7 +111,7 @@ export default function ImageCompressTool() {
             </Button>
             <Button variant="secondary" onClick={() => { files.forEach(f => URL.revokeObjectURL(f.preview)); updateFiles(() => []); updateOp(() => ({ ...IDLE_OP })); clearSession(); }} >Reset</Button>
           </div>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

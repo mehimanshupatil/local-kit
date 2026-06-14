@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, MagicWand, ArrowCounterClockwise } from '@phosphor-icons/react';
+import { Textarea } from '@/components/ui/textarea';
+import { CopyIcon, CheckIcon, MagicWandIcon, ArrowCounterClockwiseIcon } from '@phosphor-icons/react';
 
 // ─── Conversion helpers ─────────────────────────────────────────────────────
 
@@ -1270,7 +1271,7 @@ export default function CSSToTailwindTool() {
         <CardContent className="pt-5 pb-4">
           <div className="flex flex-wrap items-end gap-4">
             <div className="flex-1 min-w-[200px]">
-              <Label htmlFor="prefix">Class prefix <span className="text-xs text-gray-400 font-normal">(e.g. <code>tw-</code> for Tailwind's <code>prefix</code> config)</span></Label>
+              <Label htmlFor="prefix">Class prefix <span className="text-xs text-muted-foreground font-normal">(e.g. <code>tw-</code> for Tailwind's <code>prefix</code> config)</span></Label>
               <Input
                 id="prefix"
                 value={state.prefix}
@@ -1281,10 +1282,10 @@ export default function CSSToTailwindTool() {
             </div>
             <div className="flex gap-2 pb-0.5">
               <Button onClick={handleConvert} className="gap-2">
-                <MagicWand className="size-4" /> Convert
+                <MagicWandIcon className="size-4" /> Convert
               </Button>
               <Button variant="secondary" onClick={handleReset} className="gap-2">
-                <ArrowCounterClockwise className="size-4" /> Reset
+                <ArrowCounterClockwiseIcon className="size-4" /> Reset
               </Button>
             </div>
           </div>
@@ -1295,12 +1296,12 @@ export default function CSSToTailwindTool() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Input */}
         <div className="space-y-2">
-          <Label className="text-xs uppercase tracking-wide text-gray-500">CSS Input</Label>
-          <textarea
+          <Label className="text-xs uppercase tracking-wide text-muted-foreground">CSS Input</Label>
+          <Textarea
             value={state.input}
             onChange={e => update(d => { d.input = e.target.value; d.converted = false; })}
             spellCheck={false}
-            className="w-full h-96 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm font-mono text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:border-transparent resize-none transition-all"
+            className="h-96 font-mono resize-none"
             placeholder="Paste your CSS here…&#10;&#10;.button {&#10;  padding: 12px 24px;&#10;  background-color: #3b82f6;&#10;}"
           />
         </div>
@@ -1308,20 +1309,20 @@ export default function CSSToTailwindTool() {
         {/* Output */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label className="text-xs uppercase tracking-wide text-gray-500">Tailwind Classes</Label>
+            <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tailwind Classes</Label>
             {state.converted && outputText && (
               <Button variant="ghost" size="sm" onClick={handleCopy} className="gap-1.5 h-7 px-2 text-xs">
-                {state.copied ? <><Check className="size-3 text-green-500" /> Copied</> : <><Copy className="size-3" /> Copy</>}
+                {state.copied ? <><CheckIcon className="size-3 text-green-500" /> Copied</> : <><CopyIcon className="size-3" /> Copy</>}
               </Button>
             )}
           </div>
-          <div className="relative w-full h-96 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 overflow-auto">
+          <div className="relative w-full h-96 rounded-xl border border-border bg-card/60 overflow-auto">
             {!state.converted ? (
-              <p className="absolute inset-0 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 select-none">
+              <p className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground select-none">
                 Click Convert to see results
               </p>
             ) : !outputText ? (
-              <p className="absolute inset-0 flex items-center justify-center text-sm text-gray-400 dark:text-gray-500 select-none">
+              <p className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground select-none">
                 No output — check your CSS input
               </p>
             ) : (
@@ -1329,17 +1330,17 @@ export default function CSSToTailwindTool() {
                 {state.results.map((result, i) => (
                   <div key={i} className="space-y-1.5">
                     {multipleSelectors && result.selector && (
-                      <p className="text-xs text-brand-600 dark:text-brand-400 font-mono font-semibold">{result.selector}</p>
+                      <p className="text-xs text-brand-500 font-mono font-semibold">{result.selector}</p>
                     )}
                     {result.entries.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {result.entries.map((entry, j) => {
                           const badgeClass =
                             entry.kind === 'var-token'
-                              ? 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800'
+                              ? 'bg-purple-500/10 text-purple-400 border-purple-500/30'
                               : entry.kind === 'typography-token'
-                              ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                              : 'bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border-brand-200 dark:border-brand-800';
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                              : 'bg-brand-500/10 text-brand-400 border-brand-500/30';
                           return (
                             <span key={j} className={`inline-block border rounded px-1.5 py-0.5 text-xs font-mono ${badgeClass}`}>
                               {entry.cls}
@@ -1349,10 +1350,10 @@ export default function CSSToTailwindTool() {
                       </div>
                     )}
                     {result.unrecognized.length > 0 && (
-                      <div className="mt-1 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800">
-                        <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-1">No Tailwind equivalent found:</p>
+                      <div className="mt-1 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                        <p className="text-xs font-semibold text-amber-500 mb-1">No Tailwind equivalent found:</p>
                         {result.unrecognized.map((u, j) => (
-                          <p key={j} className="text-xs font-mono text-amber-600 dark:text-amber-400">/* {u}; */</p>
+                          <p key={j} className="text-xs font-mono text-amber-500">/* {u}; */</p>
                         ))}
                       </div>
                     )}
@@ -1366,7 +1367,7 @@ export default function CSSToTailwindTool() {
 
       {/* Stats bar */}
       {state.converted && state.results.length > 0 && (
-        <div className="flex flex-wrap gap-3 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="inline-block size-2 rounded-full bg-brand-400"></span>
             {state.results.reduce((s, r) => s + r.entries.filter(e => e.kind === 'tailwind').length, 0)} Tailwind classes
@@ -1395,7 +1396,7 @@ export default function CSSToTailwindTool() {
           )}
           {multipleSelectors && (
             <span className="flex items-center gap-1.5">
-              <span className="inline-block size-2 rounded-full bg-gray-400"></span>
+              <span className="inline-block size-2 rounded-full bg-[--muted-foreground]"></span>
               {state.results.length} selectors
             </span>
           )}

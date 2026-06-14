@@ -2,11 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { useClipboard } from '@mantine/hooks';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
 import { generateQRDataURL, generateQRSVG } from '@/lib/dev/qrCode';
 import type { QROptions, ErrorCorrectionLevel } from '@/lib/dev/qrCode';
-import { Copy, Check, DownloadSimple } from '@phosphor-icons/react';
+import { CopyIcon, CheckIcon, DownloadSimpleIcon } from '@phosphor-icons/react';
 
 const EC_LEVELS: { value: ErrorCorrectionLevel; label: string; desc: string }[] = [
   { value: 'L', label: 'L', desc: '7% recovery' },
@@ -102,13 +104,13 @@ export default function QRCodeTool() {
       <Card>
         <CardContent className="pt-5 pb-4 space-y-3">
           <Label htmlFor="qr-input">Text or URL</Label>
-          <textarea
+          <Textarea
             id="qr-input"
             rows={3}
             value={text}
             onChange={e => setText(e.target.value)}
             placeholder="Enter text or URL…"
-            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:border-transparent resize-none transition-all"
+            className="resize-none"
           />
         </CardContent>
       </Card>
@@ -117,25 +119,26 @@ export default function QRCodeTool() {
         {/* Options */}
         <Card>
           <CardContent className="pt-5 pb-4 space-y-5">
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Options</p>
+            <p className="text-sm font-semibold text-foreground">Options</p>
 
             {/* Error Correction */}
             <div className="space-y-2">
               <Label>Error Correction</Label>
               <div className="flex gap-2 flex-wrap">
                 {EC_LEVELS.map(ec => (
-                  <button
+                  <Button
                     key={ec.value}
+                    variant="ghost"
                     onClick={() => updateOpt('errorCorrection', ec.value)}
-                    className={`flex flex-col items-center px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
+                    className={`flex flex-col items-center h-auto px-3 py-2 rounded-lg border text-xs font-medium transition-all ${
                       opts.errorCorrection === ec.value
-                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300'
-                        : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'
+                        ? 'border-brand-500 bg-brand-500/10 text-brand-400'
+                        : 'border-border text-muted-foreground hover:border-[--foreground]'
                     }`}
                   >
                     <span className="text-sm font-bold">{ec.label}</span>
-                    <span className="text-gray-400 dark:text-gray-500 font-normal">{ec.desc}</span>
-                  </button>
+                    <span className="text-muted-foreground font-normal">{ec.desc}</span>
+                  </Button>
                 ))}
               </div>
             </div>
@@ -147,10 +150,10 @@ export default function QRCodeTool() {
                 min={128}
                 max={1024}
                 step={32}
-                value={[opts.size]}
-                onValueChange={([v]) => updateOpt('size', v)}
+                value={opts.size}
+                onValueChange={(v) => updateOpt('size', Array.isArray(v) ? v[0] : v)}
               />
-              <div className="flex justify-between text-xs text-gray-400">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>128px</span>
                 <span>1024px</span>
               </div>
@@ -159,14 +162,14 @@ export default function QRCodeTool() {
             {/* Margin */}
             <div className="space-y-2">
               <Label htmlFor="qr-margin">Margin (modules)</Label>
-              <input
+              <Input
                 id="qr-margin"
                 type="number"
                 min={0}
                 max={10}
                 value={opts.margin}
                 onChange={e => updateOpt('margin', Math.min(10, Math.max(0, parseInt(e.target.value) || 0)))}
-                className="input w-24"
+                className="w-24"
               />
             </div>
 
@@ -180,9 +183,9 @@ export default function QRCodeTool() {
                     type="color"
                     value={opts.darkColor}
                     onChange={e => updateOpt('darkColor', e.target.value)}
-                    className="h-9 w-12 rounded cursor-pointer border border-gray-200 dark:border-gray-700 p-0.5 bg-white dark:bg-gray-900"
+                    className="h-9 w-12 rounded cursor-pointer border border-border p-0.5 bg-card"
                   />
-                  <span className="text-xs font-mono text-gray-500">{opts.darkColor}</span>
+                  <span className="text-xs font-mono text-muted-foreground">{opts.darkColor}</span>
                 </div>
               </div>
               <div className="space-y-2">
@@ -193,9 +196,9 @@ export default function QRCodeTool() {
                     type="color"
                     value={opts.lightColor}
                     onChange={e => updateOpt('lightColor', e.target.value)}
-                    className="h-9 w-12 rounded cursor-pointer border border-gray-200 dark:border-gray-700 p-0.5 bg-white dark:bg-gray-900"
+                    className="h-9 w-12 rounded cursor-pointer border border-border p-0.5 bg-card"
                   />
-                  <span className="text-xs font-mono text-gray-500">{opts.lightColor}</span>
+                  <span className="text-xs font-mono text-muted-foreground">{opts.lightColor}</span>
                 </div>
               </div>
             </div>
@@ -205,11 +208,11 @@ export default function QRCodeTool() {
         {/* Preview */}
         <Card>
           <CardContent className="pt-5 pb-4 space-y-4">
-            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Preview</p>
+            <p className="text-sm font-semibold text-foreground">Preview</p>
 
-            <div className="flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 min-h-64 p-4">
+            <div className="flex items-center justify-center rounded-xl border border-border bg-card/60 min-h-64 p-4">
               {error ? (
-                <p className="text-sm text-red-600 dark:text-red-400 text-center px-4">{error}</p>
+                <p className="text-sm text-red-500 text-center px-4">{error}</p>
               ) : dataUrl ? (
                 <img
                   src={dataUrl}
@@ -218,7 +221,7 @@ export default function QRCodeTool() {
                   style={{ imageRendering: 'pixelated' }}
                 />
               ) : (
-                <p className="text-sm text-gray-400 dark:text-gray-500 select-none">
+                <p className="text-sm text-muted-foreground select-none">
                   Enter text to generate a QR code
                 </p>
               )}
@@ -227,15 +230,15 @@ export default function QRCodeTool() {
             {dataUrl && (
               <div className="flex flex-wrap gap-2">
                 <Button onClick={downloadPng} className="gap-2">
-                  <DownloadSimple className="size-4" /> Download PNG
+                  <DownloadSimpleIcon className="size-4" /> Download PNG
                 </Button>
                 <Button variant="secondary" onClick={downloadSvg} className="gap-2">
-                  <DownloadSimple className="size-4" /> Download SVG
+                  <DownloadSimpleIcon className="size-4" /> Download SVG
                 </Button>
                 <Button variant="ghost" onClick={copyPng} className="gap-2">
                   {clipboard.copied
-                    ? <><Check className="size-4 text-green-500" /> Copied</>
-                    : <><Copy className="size-4" /> Copy PNG</>
+                    ? <><CheckIcon className="size-4 text-green-500" /> Copied</>
+                    : <><CopyIcon className="size-4" /> Copy PNG</>
                   }
                 </Button>
               </div>

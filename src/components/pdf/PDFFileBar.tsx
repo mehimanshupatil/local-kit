@@ -1,5 +1,6 @@
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Eye, EyeSlash } from '@phosphor-icons/react';
+import { EyeIcon, EyeSlashIcon } from '@phosphor-icons/react';
 import { FcDocument } from 'react-icons/fc';
 import { useEffect, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
@@ -23,28 +24,28 @@ export default function PDFFileBar({ file, total, onClear }: Props) {
   }, [file.buffer]);
 
   return (
-    <div className="card rounded-xl border overflow-hidden">
+    <Card className="rounded-xl border overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3">
         <FcDocument size={28} />
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-          <p className="text-xs text-gray-500">
+          <p className="font-medium text-foreground truncate">{file.name}</p>
+          <p className="text-xs text-muted-foreground">
             {total != null ? `${total} pages · ` : ''}{formatFileSize(file.size)}
           </p>
         </div>
         <Button variant="ghost" size="icon" onClick={toggle} title={opened ? 'Hide preview' : 'Preview PDF'}>
-          {opened ? <EyeSlash className="size-4" /> : <Eye className="size-4" />}
+          {opened ? <EyeSlashIcon className="size-4" /> : <EyeIcon className="size-4" />}
         </Button>
         <Button variant="secondary" size="sm" onClick={onClear}>Change</Button>
       </div>
       {opened && url && (
         <iframe
           src={url}
-          className="w-full border-t border-gray-200 dark:border-gray-700"
+          className="w-full border-t border-border"
           style={{ height: 600 }}
           title="PDF preview"
         />
       )}
-    </div>
+    </Card>
   );
 }

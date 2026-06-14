@@ -1,3 +1,4 @@
+import { Card } from '@/components/ui/card';
 import { useState, useRef, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
@@ -49,10 +50,10 @@ export default function VideoTrimTool() {
           label="Drop a video file" sublabel="MP4, WebM, MOV, AVI supported" />
       ) : (
         <>
-          <div className="card overflow-hidden rounded-2xl bg-black">
+          <Card className="overflow-hidden rounded-xl bg-black">
             <video ref={videoRef} src={videoURL}
               className="w-full max-h-[400px] object-contain" preload="metadata" />
-          </div>
+          </Card>
           <MediaTrimmer
             mediaRef={videoRef} mediaURL={videoURL}
             status={status} progress={progress} error={error}

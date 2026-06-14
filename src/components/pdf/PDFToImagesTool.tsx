@@ -1,5 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
@@ -56,12 +58,19 @@ export default function PDFToImagesTool() {
       )}
 
       {file && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
           <div>
-            <label className="label">Output resolution</label>
-            <select value={scale} onChange={e => setScale(parseFloat(e.target.value))} className="input">
-              {resolutions.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-            </select>
+            <Label>Output resolution</Label>
+            <Select value={String(scale)} onValueChange={v => { if (v !== null) setScale(parseFloat(v)); }}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {resolutions.map(r => (
+                  <SelectItem key={r.value} value={String(r.value)}>{r.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {status === 'processing' && <ProgressBar progress={progress} label="Converting pages..." />}
@@ -70,7 +79,7 @@ export default function PDFToImagesTool() {
           <Button onClick={convert} disabled={status === 'processing'} >
             {status === 'processing' ? 'Converting...' : 'Convert to Images'}
           </Button>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

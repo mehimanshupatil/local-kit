@@ -1,7 +1,12 @@
+import { Card } from '@/components/ui/card';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
 import { useClipboard } from '@mantine/hooks';
-import { Copy, Check, CircleNotch, FileText, Image, Stack } from '@phosphor-icons/react';
+import { CopyIcon, CheckIcon, CircleNotchIcon, FileTextIcon, ImageIcon, StackIcon } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import { runOCR, type OCRResult } from '@/lib/ocr/ocr';
@@ -85,37 +90,37 @@ export default function OCRTool() {
           sublabel="JPG, PNG, WebP, PDF — text extracted using Scribe OCR"
         />
       ) : (
-        <div className="card p-4 flex items-center gap-3">
+        <Card className="p-4 flex items-center gap-3">
           {isPDF ? (
-            <div className="w-14 h-14 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0">
-              <FileText className="w-7 h-7 text-gray-400" />
+            <div className="w-14 h-14 rounded-lg border border-border bg-secondary flex items-center justify-center shrink-0">
+              <FileTextIcon className="w-7 h-7 text-muted-foreground" />
             </div>
           ) : (
-            <img src={preview} alt={file.name} className="w-14 h-14 rounded-lg object-cover border border-gray-200 dark:border-gray-700 shrink-0" />
+            <img src={preview} alt={file.name} className="w-14 h-14 rounded-lg object-cover border border-border shrink-0" />
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{file.name}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{formatFileSize(file.size)}</p>
+            <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+            <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>
           </div>
           <Button variant="secondary" size="sm" onClick={reset}>Change</Button>
-        </div>
+        </Card>
       )}
 
       {file && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
           <div>
-            <label className="label">Language</label>
-            <select
-              value={lang}
-              onChange={e => setLang(e.target.value)}
-              className="input"
-              disabled={status === 'processing'}
-            >
-              {LANGUAGES.map(l => (
-                <option key={l.code} value={l.code}>{l.label}</option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-400 mt-1">First run downloads engine assets. Cached after that.</p>
+            <Label>Language</Label>
+            <Select value={lang} onValueChange={v => { if (v !== null) setLang(v); }} disabled={status === 'processing'}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {LANGUAGES.map(l => (
+                  <SelectItem key={l.code} value={l.code}>{l.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground mt-1">First run downloads engine assets. Cached after that.</p>
           </div>
 
           {status === 'processing' && <ProgressBar progress={progress} label="Recognizing text…" />}
@@ -125,77 +130,64 @@ export default function OCRTool() {
 
           <Button onClick={run} disabled={status === 'processing'}>
             {status === 'processing'
-              ? <><CircleNotch className="size-4 animate-spin" /> Recognizing…</>
-              : <><Image className="size-4" /> Extract Text</>
+              ? <><CircleNotchIcon className="size-4 animate-spin" /> Recognizing…</>
+              : <><ImageIcon className="size-4" /> Extract Text</>
             }
           </Button>
-        </div>
+        </Card>
       )}
 
       {status === 'done' && result && (
-        <div className="card p-5 space-y-4">
-          {/* Tab bar */}
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <div className="flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden text-sm">
-              <button
-                onClick={() => setResultTab('overlay')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors ${
-                  resultTab === 'overlay'
-                    ? 'bg-brand-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <Stack className="w-3.5 h-3.5" />
-                Overlay
-              </button>
-              <button
-                onClick={() => setResultTab('text')}
-                className={`flex items-center gap-1.5 px-3 py-1.5 transition-colors border-l border-gray-200 dark:border-gray-700 ${
-                  resultTab === 'text'
-                    ? 'bg-brand-600 text-white'
-                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5" />
-                Text
-              </button>
+        <Card className="p-5 space-y-4">
+          <Tabs value={resultTab} onValueChange={v => setResultTab(v as ResultTab)}>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <TabsList>
+                <TabsTrigger value="overlay" className="flex items-center gap-1.5">
+                  <StackIcon className="w-3.5 h-3.5" />
+                  Overlay
+                </TabsTrigger>
+                <TabsTrigger value="text" className="flex items-center gap-1.5">
+                  <FileTextIcon className="w-3.5 h-3.5" />
+                  Text
+                </TabsTrigger>
+              </TabsList>
+
+              <div className="flex items-center gap-2">
+                {result.pages > 1 && (
+                  <span className="text-xs text-muted-foreground">{result.pages} pages</span>
+                )}
+                <Button size="sm" variant="secondary" onClick={() => clipboard.copy(result.text)}>
+                  {clipboard.copied
+                    ? <><CheckIcon className="size-3.5 text-green-500" /> Copied!</>
+                    : <><CopyIcon className="size-3.5" /> Copy all</>
+                  }
+                </Button>
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {result.pages > 1 && (
-                <span className="text-xs text-gray-500 dark:text-gray-400">{result.pages} pages</span>
+            <TabsContent value="overlay">
+              {file && (
+                <OCROverlay
+                  file={file}
+                  pageData={result.pageData}
+                />
               )}
-              <Button size="sm" variant="secondary" onClick={() => clipboard.copy(result.text)}>
-                {clipboard.copied
-                  ? <><Check className="size-3.5 text-green-500" /> Copied!</>
-                  : <><Copy className="size-3.5" /> Copy all</>
-                }
-              </Button>
-            </div>
-          </div>
+            </TabsContent>
 
-          {/* Overlay tab */}
-          {resultTab === 'overlay' && file && (
-            <OCROverlay
-              file={file}
-              pageData={result.pageData}
-            />
-          )}
-
-          {/* Text tab */}
-          {resultTab === 'text' && (
-            result.text ? (
-              <textarea
-                readOnly
-                value={result.text}
-                rows={14}
-                className="input w-full font-mono text-sm resize-y"
-              />
-            ) : (
-              <p className="text-sm text-gray-500 dark:text-gray-400 italic">No text detected.</p>
-            )
-          )}
-        </div>
+            <TabsContent value="text">
+              {result.text ? (
+                <Textarea
+                  readOnly
+                  value={result.text}
+                  rows={14}
+                  className="w-full font-mono text-sm resize-y"
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground italic">No text detected.</p>
+              )}
+            </TabsContent>
+          </Tabs>
+        </Card>
       )}
     </div>
   );

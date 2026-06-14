@@ -2,7 +2,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Copy, Check, DownloadSimple, WarningCircle } from '@phosphor-icons/react';
+import { Textarea } from '@/components/ui/textarea';
+import { CopyIcon, CheckIcon, DownloadSimpleIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import imageType from 'image-type';
 
@@ -69,18 +70,18 @@ export default function Base64ImageTool() {
       <Card>
         <CardContent className="pt-5 pb-4 space-y-3">
           <Label htmlFor="b64-input">Base64 string or data URL</Label>
-          <textarea
+          <Textarea
             id="b64-input"
             rows={5}
             value={input}
             onChange={e => setInput(e.target.value)}
             placeholder="Paste raw base64 or data:image/png;base64,… here"
             spellCheck={false}
-            className="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 text-sm font-mono text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:border-transparent resize-none transition-all"
+            className="font-mono resize-none"
           />
           {error && (
-            <p className="flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400">
-              <WarningCircle className="size-4 shrink-0" /> {error}
+            <p className="flex items-center gap-1.5 text-sm text-red-500">
+              <WarningCircleIcon className="size-4 shrink-0" /> {error}
             </p>
           )}
         </CardContent>
@@ -90,14 +91,14 @@ export default function Base64ImageTool() {
         <Card>
           <CardContent className="pt-5 pb-4 space-y-4">
             <div className="flex items-center justify-between">
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Preview</p>
-              <div className="flex gap-3 text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-sm font-semibold text-foreground">Preview</p>
+              <div className="flex gap-3 text-xs text-muted-foreground">
                 <span className="font-mono uppercase">{parsed.mimeType}</span>
                 <span>{formatBytes(rawBase64)}</span>
               </div>
             </div>
 
-            <div className="flex items-center justify-center rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/60 min-h-64 p-4">
+            <div className="flex items-center justify-center rounded-xl border border-border bg-card/60 min-h-64 p-4">
               <img
                 src={parsed.dataUrl}
                 alt="Decoded"
@@ -107,12 +108,12 @@ export default function Base64ImageTool() {
 
             <div className="flex flex-wrap gap-2">
               <Button onClick={download} className="gap-2">
-                <DownloadSimple className="size-4" /> Download
+                <DownloadSimpleIcon className="size-4" /> Download
               </Button>
               <Button variant="ghost" onClick={() => clipboard.copy(parsed.dataUrl)} className="gap-2">
                 {clipboard.copied
-                  ? <><Check className="size-4 text-green-500" /> Copied</>
-                  : <><Copy className="size-4" /> Copy data URL</>
+                  ? <><CheckIcon className="size-4 text-green-500" /> Copied</>
+                  : <><CopyIcon className="size-4" /> Copy data URL</>
                 }
               </Button>
             </div>

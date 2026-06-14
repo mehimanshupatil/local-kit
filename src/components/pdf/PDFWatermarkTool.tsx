@@ -137,8 +137,8 @@ export default function PDFWatermarkTool() {
                 min={20}
                 max={120}
                 step={1}
-                value={[fontSize]}
-                onValueChange={([v]) => setFontSize(v)}
+                value={fontSize}
+                onValueChange={(v) => setFontSize(Array.isArray(v) ? v[0] : v)}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>20pt</span>
@@ -156,8 +156,8 @@ export default function PDFWatermarkTool() {
                 min={5}
                 max={80}
                 step={1}
-                value={[opacity]}
-                onValueChange={([v]) => setOpacity(v)}
+                value={opacity}
+                onValueChange={(v) => setOpacity(Array.isArray(v) ? v[0] : v)}
               />
               <div className="flex justify-between text-xs text-muted-foreground">
                 <span>5%</span>
@@ -177,8 +177,8 @@ export default function PDFWatermarkTool() {
                     className={cn(
                       'flex-1 transition-all',
                       rotation === preset.key
-                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300'
-                        : 'text-gray-600 dark:text-gray-400'
+                        ? 'border-brand-500 bg-brand-500/10 text-brand-400'
+                        : 'text-muted-foreground'
                     )}
                   >
                     {preset.label}
@@ -200,8 +200,8 @@ export default function PDFWatermarkTool() {
                     className={cn(
                       'flex-1 transition-all',
                       color === key
-                        ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300'
-                        : 'text-gray-600 dark:text-gray-400'
+                        ? 'border-brand-500 bg-brand-500/10 text-brand-400'
+                        : 'text-muted-foreground'
                     )}
                   >
                     <span className={cn('size-3 rounded-full shrink-0', COLOR_SWATCHES[key])} />

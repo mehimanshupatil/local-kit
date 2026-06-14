@@ -1,8 +1,10 @@
+import { Card } from '@/components/ui/card';
 import { useState, useRef, useEffect, type RefObject } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
-import { Play, Pause, SkipBack, SkipForward, Scissors } from '@phosphor-icons/react';
+import { Input } from '@/components/ui/input';
+import { PlayIcon, PauseIcon, SkipBackIcon, SkipForwardIcon, ScissorsIcon } from '@phosphor-icons/react';
 import ProgressBar from '@/components/shared/ProgressBar';
 import { fmtTime } from '@/lib/utils/timeFormat';
 import type { ToolStatus } from '@/lib/utils/toolState';
@@ -71,7 +73,7 @@ export default function MediaTrimmer({
     }
   };
 
-  const onRangeChange = (vals: number[]) => {
+  const onRangeChange = (vals: number|readonly number[]) => {
     const [s, e] = vals as [number, number];
     setRange([s, e]);
     seekTo(s);
@@ -80,12 +82,12 @@ export default function MediaTrimmer({
   if (duration === 0) return null;
 
   return (
-    <div className="card p-5 space-y-5">
+    <Card className="p-5 space-y-5">
       {/* Timeline */}
       <div className="space-y-3">
-        <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 font-mono">
+        <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
           <span>{fmtTime(start)}</span>
-          <span className="text-brand-600 dark:text-brand-400 font-semibold">
+          <span className="text-brand-500 font-semibold">
             ✂ {fmtTime(trimmedDuration)} selected
           </span>
           <span>{fmtTime(end)}</span>
@@ -96,7 +98,7 @@ export default function MediaTrimmer({
             min={0} max={duration} step={0.05}
             value={[start, end]}
             onValueChange={onRangeChange}
-            minStepsBetweenThumbs={Math.ceil(0.5 / 0.05)}
+            minStepsBetweenValues={Math.ceil(0.5 / 0.05)}
             className="**:data-[slot=slider-thumb]:h-7 **:data-[slot=slider-thumb]:w-4 **:data-[slot=slider-thumb]:rounded-sm **:data-[slot=slider-track]:h-2"
           />
           <div
@@ -110,7 +112,7 @@ export default function MediaTrimmer({
         <div className="relative h-4 px-2">
           {Array.from({ length: 9 }, (_, i) => i + 1).map(i => (
             <span key={i}
-              className="absolute text-[10px] text-gray-500 dark:text-gray-600 -translate-x-1/2"
+              className="absolute text-[10px] text-muted-foreground -translate-x-1/2"
               style={{ left: `${(i / 10) * 100}%` }}>
               {fmtTime((i / 10) * duration).split('.')[0]}
             </span>
@@ -121,44 +123,44 @@ export default function MediaTrimmer({
       {/* Playback controls */}
       <div className="flex items-center gap-3">
         <Button variant="secondary" size="icon" onClick={() => seekTo(start)} title="Jump to start">
-          <SkipBack className="size-4" />
+          <SkipBackIcon className="size-4" />
         </Button>
         <Button onClick={togglePlay}>
-          {playing ? <Pause className="size-5" /> : <Play className="size-5" />}
+          {playing ? <PauseIcon className="size-5" /> : <PlayIcon className="size-5" />}
         </Button>
         <Button variant="secondary" size="icon" onClick={() => seekTo(end)} title="Jump to end">
-          <SkipForward className="size-4" />
+          <SkipForwardIcon className="size-4" />
         </Button>
-        <span className="flex-1 text-center font-mono text-sm text-gray-600 dark:text-gray-400">
+        <span className="flex-1 text-center font-mono text-sm text-muted-foreground">
           {fmtTime(currentTime)} / {fmtTime(duration)}
         </span>
         <div className="flex items-center gap-2 text-xs">
           <div className="text-center">
-            <p className="text-gray-400 mb-0.5">Start (s)</p>
-            <input type="number" step={0.1} min={0} max={end - 0.5}
+            <p className="text-muted-foreground mb-0.5">Start (s)</p>
+            <Input type="number" step={0.1} min={0} max={end - 0.5}
               value={start.toFixed(1)}
               onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) { setRange([Math.min(v, end - 0.5), end]); seekTo(v); } }}
-              className="w-20 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-xs" />
+              className="w-20 font-mono text-xs" />
           </div>
           <div className="text-center">
-            <p className="text-gray-400 mb-0.5">End (s)</p>
-            <input type="number" step={0.1} min={start + 0.5} max={duration}
+            <p className="text-muted-foreground mb-0.5">End (s)</p>
+            <Input type="number" step={0.1} min={start + 0.5} max={duration}
               value={end.toFixed(1)}
               onChange={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setRange([start, Math.max(v, start + 0.5)]); }}
-              className="w-20 px-2 py-1 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-xs" />
+              className="w-20 font-mono text-xs" />
           </div>
         </div>
       </div>
 
       {/* Duration info */}
       <div className="flex gap-3 text-sm">
-        <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-gray-50 dark:bg-gray-800">
-          <span className="text-gray-400">Original</span>
-          <span className="font-medium text-gray-900 dark:text-white">{fmtTime(duration)}</span>
+        <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-secondary">
+          <span className="text-muted-foreground">Original</span>
+          <span className="font-medium text-foreground">{fmtTime(duration)}</span>
         </div>
-        <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-brand-50 dark:bg-brand-950/30 border border-brand-200 dark:border-brand-900">
-          <span className="text-brand-600 dark:text-brand-400">After trim</span>
-          <span className="font-medium text-brand-700 dark:text-brand-300">{fmtTime(trimmedDuration)}</span>
+        <div className="flex-1 flex items-center gap-2 px-3 py-2 rounded-xl bg-brand-500/10 border border-brand-500/20">
+          <span className="text-brand-500">After trim</span>
+          <span className="font-medium text-brand-400">{fmtTime(trimmedDuration)}</span>
           <span className="ml-auto text-xs text-brand-500">
             -{Math.round((1 - trimmedDuration / duration) * 100)}%
           </span>
@@ -172,11 +174,11 @@ export default function MediaTrimmer({
 
       <div className="flex gap-3">
         <Button onClick={() => onTrim(start, end)} disabled={status === 'processing'} size="lg" className="flex-1">
-          <Scissors className="size-4" />
+          <ScissorsIcon className="size-4" />
           {status === 'processing' ? 'Trimming…' : `Trim: ${fmtTime(start)} → ${fmtTime(end)}`}
         </Button>
         <Button variant="secondary" onClick={onClear}>Change</Button>
       </div>
-    </div>
+    </Card>
   );
 }

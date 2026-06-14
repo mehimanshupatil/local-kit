@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect, Text, Group } from 'react-konva';
 import { useClipboard } from '@mantine/hooks';
-import { Copy, Check } from '@phosphor-icons/react';
+import { CopyIcon, CheckIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import type { KonvaEventObject } from 'konva/lib/Node';
 import type { OcrPageResult, OcrWordResult } from '@/lib/ocr/ocr';
 
@@ -166,22 +168,22 @@ export default function OCROverlay({ file, pageData }: Props) {
       {/* Controls */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 cursor-pointer select-none">
-            <input type="checkbox" checked={showOverlay} onChange={e => setShowOverlay(e.target.checked)} className="size-4 accent-brand-600" />
-            Show text overlay
-          </label>
+          <div className="flex items-center gap-2">
+            <Checkbox id="overlay-toggle" checked={showOverlay} onCheckedChange={setShowOverlay} />
+            <Label htmlFor="overlay-toggle">Show text overlay</Label>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {selectedKeys.size > 0 && (
             <Button size="sm" variant="secondary" onClick={() => clipboard.copy(selectedText)}>
               {clipboard.copied
-                ? <><Check className="size-3.5 text-green-500" /> Copied!</>
-                : <><Copy className="size-3.5" /> Copy {selectedKeys.size} word{selectedKeys.size > 1 ? 's' : ''}</>
+                ? <><CheckIcon className="size-3.5 text-green-500" /> Copied!</>
+                : <><CopyIcon className="size-3.5" /> Copy {selectedKeys.size} word{selectedKeys.size > 1 ? 's' : ''}</>
               }
             </Button>
           )}
           {pageData.length > 1 && (
-            <span className="text-xs text-gray-500 dark:text-gray-400">{pageData.length} pages</span>
+            <span className="text-xs text-muted-foreground">{pageData.length} pages</span>
           )}
         </div>
       </div>
@@ -189,12 +191,12 @@ export default function OCROverlay({ file, pageData }: Props) {
       {/* Canvas */}
       <div
         ref={containerRef}
-        className="rounded-xl overflow-auto border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900"
+        className="rounded-xl overflow-auto border border-border bg-card"
         style={{ width: '100%', maxHeight: 680, cursor: showOverlay ? 'crosshair' : 'default' }}
       >
         {containerWidth > 0 && (
           !loaded ? (
-            <div className="flex items-center justify-center h-24 text-sm text-gray-400">
+            <div className="flex items-center justify-center h-24 text-sm text-muted-foreground">
               {imgs.length === 0 ? 'Rendering pages…' : `Loading ${imgs.length} / ${pageData.length}…`}
             </div>
           ) : (
@@ -303,7 +305,7 @@ export default function OCROverlay({ file, pageData }: Props) {
       </div>
 
       {/* Legend */}
-      <div className="flex gap-3 text-xs text-gray-500 dark:text-gray-400">
+      <div className="flex gap-3 text-xs text-muted-foreground">
         <span className="flex items-center gap-1">
           <span className="inline-block size-3 rounded-sm bg-brand-200 dark:bg-brand-800 border border-brand-400" />
           High confidence

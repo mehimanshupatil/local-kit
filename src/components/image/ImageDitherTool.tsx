@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
@@ -134,22 +135,22 @@ export default function ImageDitherTool() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Card>
               <CardContent className="pt-4 pb-3 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Original</p>
-                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-48">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Original</p>
+                <div className="rounded-lg overflow-hidden border border-border bg-secondary flex items-center justify-center min-h-48">
                   <img src={previewUrl} alt="Original" className="max-w-full max-h-64 object-contain" />
                 </div>
                 {dimensions && (
-                  <p className="text-xs text-gray-400">{dimensions.w} × {dimensions.h}px — {formatFileSize(file.size)}</p>
+                  <p className="text-xs text-muted-foreground">{dimensions.w} × {dimensions.h}px — {formatFileSize(file.size)}</p>
                 )}
               </CardContent>
             </Card>
 
             <Card>
               <CardContent className="pt-4 pb-3 space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Dithered preview</p>
-                <div className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 flex items-center justify-center min-h-48">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Dithered preview</p>
+                <div className="rounded-lg overflow-hidden border border-border bg-secondary flex items-center justify-center min-h-48">
                   {status === 'processing' ? (
-                    <p className="text-xs text-gray-400">Processing…</p>
+                    <p className="text-xs text-muted-foreground">Processing…</p>
                   ) : output.length > 0 ? (
                     <img
                       src={URL.createObjectURL(output[0].blob)}
@@ -158,11 +159,11 @@ export default function ImageDitherTool() {
                       style={{ imageRendering: 'pixelated' }}
                     />
                   ) : (
-                    <p className="text-xs text-gray-400 select-none">Preview will appear here</p>
+                    <p className="text-xs text-muted-foreground select-none">Preview will appear here</p>
                   )}
                 </div>
                 {outW && outH && (
-                  <p className="text-xs text-gray-400">{outW} × {outH}px output</p>
+                  <p className="text-xs text-muted-foreground">{outW} × {outH}px output</p>
                 )}
               </CardContent>
             </Card>
@@ -171,37 +172,37 @@ export default function ImageDitherTool() {
           {/* Options */}
           <Card>
             <CardContent className="pt-5 pb-4 space-y-5">
-              <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">Options</p>
+              <p className="text-sm font-semibold text-foreground">Options</p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 {/* Algorithm */}
                 <div className="space-y-2">
                   <Label htmlFor="dither-algo">Algorithm</Label>
-                  <select
-                    id="dither-algo"
-                    value={opts.algorithm}
-                    onChange={e => updateOpt('algorithm', e.target.value as DitherAlgorithm)}
-                    className="input w-full"
-                  >
-                    {ALGORITHM_OPTIONS.map(o => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Select value={opts.algorithm} onValueChange={v => updateOpt('algorithm', v as DitherAlgorithm)}>
+                    <SelectTrigger id="dither-algo">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ALGORITHM_OPTIONS.map(o => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Palette */}
                 <div className="space-y-2">
                   <Label htmlFor="dither-palette">Palette</Label>
-                  <select
-                    id="dither-palette"
-                    value={opts.palette}
-                    onChange={e => updateOpt('palette', e.target.value as PaletteMode)}
-                    className="input w-full"
-                  >
-                    {PALETTE_OPTIONS.map(o => (
-                      <option key={o.value} value={o.value}>{o.label}</option>
-                    ))}
-                  </select>
+                  <Select value={opts.palette} onValueChange={v => updateOpt('palette', v as PaletteMode)}>
+                    <SelectTrigger id="dither-palette">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PALETTE_OPTIONS.map(o => (
+                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Threshold — only shown for threshold/ordered algorithms */}
@@ -212,10 +213,10 @@ export default function ImageDitherTool() {
                       min={0}
                       max={255}
                       step={1}
-                      value={[opts.threshold]}
-                      onValueChange={([v]) => updateOpt('threshold', v)}
+                      value={opts.threshold}
+                      onValueChange={(v) => updateOpt('threshold', Array.isArray(v) ? v[0] : v)}
                     />
-                    <div className="flex justify-between text-xs text-gray-400">
+                    <div className="flex justify-between text-xs text-muted-foreground">
                       <span>0</span><span>255</span>
                     </div>
                   </div>
@@ -228,10 +229,10 @@ export default function ImageDitherTool() {
                     min={0.25}
                     max={2.0}
                     step={0.25}
-                    value={[opts.scale]}
-                    onValueChange={([v]) => updateOpt('scale', v)}
+                    value={opts.scale}
+                    onValueChange={(v) => updateOpt('scale', Array.isArray(v) ? v[0] : v)}
                   />
-                  <div className="flex justify-between text-xs text-gray-400">
+                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>0.25×</span><span>2×</span>
                   </div>
                 </div>
@@ -243,7 +244,7 @@ export default function ImageDitherTool() {
             <ProgressBar progress={progress} label="Applying dithering…" />
           )}
           {status === 'error' && (
-            <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">
+            <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">
               {error}
             </p>
           )}

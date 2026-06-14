@@ -2,8 +2,15 @@ import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToolVisit } from '@/stores/toolVisit';
-import { CircleNotch, FileText } from '@phosphor-icons/react';
+import { CircleNotchIcon, FileTextIcon } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';
@@ -101,10 +108,10 @@ export default function PDFFormFillTool() {
 
       {/* Loading spinner while reading fields */}
       {status === 'loading' && (
-        <div className="card p-6 flex items-center justify-center gap-3 text-muted-foreground">
-          <CircleNotch className="size-5 animate-spin text-brand-500" />
+        <Card className="p-6 flex items-center justify-center gap-3 text-muted-foreground">
+          <CircleNotchIcon className="size-5 animate-spin text-brand-500" />
           <span className="text-sm">Reading form fields…</span>
-        </div>
+        </Card>
       )}
 
       {/* Error state */}
@@ -116,15 +123,15 @@ export default function PDFFormFillTool() {
 
       {/* No fields found */}
       {file && status === 'idle' && fields.length === 0 && (
-        <div className="card p-6 flex flex-col items-center gap-3 text-center">
-          <FileText className="size-10 text-gray-300 dark:text-gray-600" />
+        <Card className="p-6 flex flex-col items-center gap-3 text-center">
+          <FileTextIcon className="size-10 text-muted-foreground" />
           <div>
-            <p className="font-medium text-gray-700 dark:text-gray-300">No form fields found</p>
+            <p className="font-medium text-foreground">No form fields found</p>
             <p className="text-sm text-muted-foreground mt-1">
               This PDF does not contain any interactive AcroForm fields.
             </p>
           </div>
-        </div>
+        </Card>
       )}
 
       {/* Form fields */}
@@ -148,46 +155,47 @@ export default function PDFFormFillTool() {
 
             {/* Read-only fields (collapsed, informational) */}
             {readOnlyFields.length > 0 && (
-              <details className="group">
-                <summary className="cursor-pointer text-sm text-muted-foreground hover:text-gray-700 dark:hover:text-gray-300 transition-colors select-none list-none flex items-center gap-1.5">
-                  <span className="group-open:rotate-90 transition-transform inline-block">▶</span>
-                  {readOnlyFields.length} read-only field{readOnlyFields.length !== 1 ? 's' : ''} (view only)
-                </summary>
-                <div className="mt-3 space-y-3 pl-4 border-l-2 border-gray-200 dark:border-gray-700">
-                  {readOnlyFields.map(field => (
-                    <FieldInput
-                      key={field.name}
-                      field={field}
-                      value={values[field.name] ?? field.value}
-                      onChange={() => {}}
-                      disabled
-                    />
-                  ))}
-                </div>
-              </details>
+              <Accordion>
+                <AccordionItem value="read-only">
+                  <AccordionTrigger className="py-2 text-sm text-muted-foreground hover:text-foreground hover:no-underline">
+                    {readOnlyFields.length} read-only field{readOnlyFields.length !== 1 ? 's' : ''} (view only)
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-3 pl-4 border-l-2 border-border">
+                      {readOnlyFields.map(field => (
+                        <FieldInput
+                          key={field.name}
+                          field={field}
+                          value={values[field.name] ?? field.value}
+                          onChange={() => {}}
+                          disabled
+                        />
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             )}
 
             {/* Flatten toggle */}
-            <label className="flex items-center gap-3 cursor-pointer select-none group">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-3 cursor-pointer select-none">
+              <Checkbox
                 checked={flatten}
-                onChange={e => setFlatten(e.target.checked)}
-                className="size-4 rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500 cursor-pointer"
+                onCheckedChange={(checked) => setFlatten(checked === true)}
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-medium text-foreground">
                 Flatten form
                 <span className="ml-1.5 font-normal text-muted-foreground">
                   (bakes fields into the PDF so they cannot be edited further)
                 </span>
               </span>
-            </label>
+            </div>
 
             {status === 'processing' && <ProgressBar progress={progress} label="Filling PDF…" />}
 
             <Button
               onClick={download}
-              disabled={status === 'processing' || status === 'loading'}
+              disabled={status === 'processing'  }
               className="w-full"
             >
               {status === 'processing' ? 'Processing…' : 'Download Filled PDF'}
@@ -215,7 +223,7 @@ function FieldInput({ field, value, onChange, disabled = false }: FieldInputProp
 
   return (
     <div className="space-y-1">
-      <label className="label flex items-baseline gap-1">
+      <Label className="flex items-baseline gap-1">
         <span>{labelText}</span>
         {field.required && (
           <span className="text-red-500 text-xs" title="Required">*</span>
@@ -223,11 +231,11 @@ function FieldInput({ field, value, onChange, disabled = false }: FieldInputProp
         {disabled && (
           <span className="ml-auto text-xs font-normal text-muted-foreground italic">read-only</span>
         )}
-      </label>
+      </Label>
 
       {field.type === 'text' && field.multiline && (
-        <textarea
-          className={cn('input resize-y min-h-[80px]')}
+        <Textarea
+          className={cn('resize-y min-h-[80px]')}
           value={typeof value === 'string' ? value : ''}
           onChange={e => onChange(e.target.value)}
           disabled={disabled || field.readOnly}
@@ -237,9 +245,8 @@ function FieldInput({ field, value, onChange, disabled = false }: FieldInputProp
       )}
 
       {field.type === 'text' && !field.multiline && (
-        <input
+        <Input
           type="text"
-          className="input"
           value={typeof value === 'string' ? value : ''}
           onChange={e => onChange(e.target.value)}
           disabled={disabled || field.readOnly}
@@ -248,71 +255,65 @@ function FieldInput({ field, value, onChange, disabled = false }: FieldInputProp
       )}
 
       {field.type === 'checkbox' && (
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input
-            type="checkbox"
+        <div className="flex items-center gap-3 cursor-pointer">
+          <Checkbox
             checked={typeof value === 'boolean' ? value : value === 'true'}
-            onChange={e => onChange(e.target.checked)}
+            onCheckedChange={(checked) => onChange(checked === true)}
             disabled={disabled || field.readOnly}
-            className="size-4 rounded border-gray-300 dark:border-gray-600 text-brand-600 focus:ring-brand-500 cursor-pointer disabled:cursor-not-allowed"
           />
-          <span className="text-sm text-gray-700 dark:text-gray-300">
+          <span className="text-sm text-foreground">
             {typeof value === 'boolean' ? (value ? 'Checked' : 'Unchecked') : (value === 'true' ? 'Checked' : 'Unchecked')}
           </span>
-        </label>
+        </div>
       )}
 
       {field.type === 'dropdown' && (
-        <select
-          className="input"
+        <Select
           value={typeof value === 'string' ? value : ''}
-          onChange={e => onChange(e.target.value)}
+          onValueChange={(v) => { if (v !== null) onChange(v); }}
           disabled={disabled || field.readOnly}
         >
-          <option value="">— Select —</option>
-          {field.options?.map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="— Select —" />
+          </SelectTrigger>
+          <SelectContent>
+            {field.options?.map(opt => (
+              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       )}
 
       {field.type === 'radio' && (
-        <div className="flex flex-wrap gap-3">
+        <RadioGroup
+          value={typeof value === 'string' ? value : ''}
+          onValueChange={(v) => { if (v !== null) onChange(v); }}
+          name={field.name}
+          disabled={disabled || field.readOnly}
+          readOnly={disabled || field.readOnly}
+          className="flex flex-wrap gap-3"
+        >
           {field.options?.map(opt => (
-            <label
+            <div
               key={opt}
               className={cn(
                 'flex items-center gap-2 cursor-pointer px-3 py-2 rounded-xl border text-sm transition-all',
                 (disabled || field.readOnly) && 'cursor-not-allowed opacity-60',
                 value === opt
-                  ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300'
-                  : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  ? 'border-brand-500 bg-brand-500/10 text-brand-400'
+                  : 'border-border text-foreground hover:border-border'
               )}
             >
-              <input
-                type="radio"
-                name={field.name}
-                value={opt}
-                checked={value === opt}
-                onChange={() => onChange(opt)}
-                disabled={disabled || field.readOnly}
-                className="sr-only"
-              />
-              <span className={cn(
-                'size-3.5 rounded-full border-2 flex items-center justify-center',
-                value === opt ? 'border-brand-500' : 'border-gray-300 dark:border-gray-600'
-              )}>
-                {value === opt && <span className="size-2 rounded-full bg-brand-500" />}
-              </span>
+              <RadioGroupItem value={opt} />
               {opt}
-            </label>
+            </div>
           ))}
-        </div>
+        </RadioGroup>
       )}
 
       {field.type === 'optionlist' && (
         <select
-          className="input"
+          className="w-full rounded-xl border border-border bg-card px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 disabled:opacity-50"
           value={typeof value === 'string' ? value : ''}
           onChange={e => onChange(e.target.value)}
           disabled={disabled || field.readOnly}
@@ -325,9 +326,9 @@ function FieldInput({ field, value, onChange, disabled = false }: FieldInputProp
       )}
 
       {field.type === 'unknown' && (
-        <input
+        <Input
           type="text"
-          className="input opacity-60"
+          className="opacity-60"
           value={typeof value === 'string' ? value : ''}
           disabled
           placeholder="Unknown field type"

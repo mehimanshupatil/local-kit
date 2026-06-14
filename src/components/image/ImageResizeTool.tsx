@@ -1,9 +1,11 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
-import { Lock, LockOpen } from '@phosphor-icons/react';
+import { LockIcon, LockOpenIcon } from '@phosphor-icons/react';
 import { Resizable } from 're-resizable';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -135,12 +137,12 @@ export default function ImageResizeTool() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
 
           {/* ════ LEFT: Interactive Preview ════ */}
-          <div className="card p-4 space-y-3">
+          <Card className="p-4 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Preview <span className="text-xs font-normal text-gray-400 ml-1">drag handles to resize</span>
+              <h3 className="text-sm font-semibold text-foreground">
+                Preview <span className="text-xs font-normal text-muted-foreground ml-1">drag handles to resize</span>
               </h3>
-              <Button variant="ghost" size="sm" onClick={reset} className="text-gray-400 hover:text-red-500">Clear all</Button>
+              <Button variant="ghost" size="sm" onClick={reset} className="text-muted-foreground hover:text-red-500">Clear all</Button>
             </div>
 
             {/* Canvas area */}
@@ -216,7 +218,7 @@ export default function ImageResizeTool() {
 
             {/* Overflow indicator */}
             {active && (rawBoxW > PREVIEW_W || rawBoxH > PREVIEW_H) && (
-              <p className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <p className="text-xs text-amber-500 flex items-center gap-1">
                 ⚠ Output ({width}×{height}) larger than source — box is clipped in preview
               </p>
             )}
@@ -225,12 +227,12 @@ export default function ImageResizeTool() {
             {files.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1">
                 {files.map((f, i) => (
-                  <button key={f.id} type="button" onClick={() => setActiveIdx(i)}
-                    className={`shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer ${activeIdx === i ? 'border-brand-500' : 'border-transparent opacity-60 hover:opacity-100'}`}>
+                  <Button key={f.id} type="button" variant="ghost" onClick={() => setActiveIdx(i)}
+                    className={`shrink-0 rounded-lg overflow-hidden border-2 transition-all cursor-pointer p-0 ${activeIdx === i ? 'border-brand-500' : 'border-transparent opacity-60 hover:opacity-100'}`}>
                     <img src={f.preview} className="w-14 h-10 object-cover" />
-                  </button>
+                  </Button>
                 ))}
-                <label className="shrink-0 w-14 h-10 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-400 hover:border-brand-400 transition-colors text-lg cursor-pointer">
+                <label className="shrink-0 w-14 h-10 rounded-lg border-2 border-dashed border-border flex items-center justify-center text-muted-foreground hover:border-brand-400 transition-colors text-lg cursor-pointer">
                   +
                   <input type="file" accept="image/*" multiple className="hidden"
                     onChange={e => e.target.files && addFiles(Array.from(e.target.files))} />
@@ -239,24 +241,24 @@ export default function ImageResizeTool() {
             )}
 
             {active && (
-              <p className="text-xs text-gray-500 dark:text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Original: {active.w}×{active.h}px · {formatFileSize(active.file.size)}
                 {files.length > 1 && <span className="ml-2">{files.length} files total</span>}
               </p>
             )}
-          </div>
+          </Card>
 
           {/* ════ RIGHT: Controls ════ */}
           <div className="space-y-4">
 
             {/* Dimensions */}
-            <div className="card p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Output Dimensions</h3>
+            <Card className="p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Output Dimensions</h3>
               <div className="flex items-end gap-2">
                 <div className="flex-1">
-                  <label className="label">Width (px)</label>
-                  <input type="number" min={1} max={9999} value={width}
-                    onChange={e => handleWidth(parseInt(e.target.value) || 1)} className="input" />
+                  <Label>Width (px)</Label>
+                  <Input type="number" min={1} max={9999} value={width}
+                    onChange={e => handleWidth(parseInt(e.target.value) || 1)} />
                 </div>
 
                 <Button
@@ -264,58 +266,58 @@ export default function ImageResizeTool() {
                   size="icon"
                   onClick={toggleLocked}
                   title={locked ? 'Unlock aspect ratio' : 'Lock aspect ratio'}
-                  className={`mb-0.5 transition-all ${locked ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-600 dark:text-brand-400' : 'text-gray-400'}`}
+                  className={`mb-0.5 transition-all ${locked ? 'border-brand-500 bg-brand-500/10 text-brand-500' : 'text-muted-foreground'}`}
                 >
-                  {locked ? <Lock className="size-4" /> : <LockOpen className="size-4" />}
+                  {locked ? <LockIcon className="size-4" /> : <LockOpenIcon className="size-4" />}
                 </Button>
 
                 <div className="flex-1">
-                  <label className="label">Height (px)</label>
-                  <input type="number" min={1} max={9999} value={height}
-                    onChange={e => handleHeight(parseInt(e.target.value) || 1)} className="input" />
+                  <Label>Height (px)</Label>
+                  <Input type="number" min={1} max={9999} value={height}
+                    onChange={e => handleHeight(parseInt(e.target.value) || 1)} />
                 </div>
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-muted-foreground">
                 Ratio: {(width / Math.max(height, 1)).toFixed(2)}:1
-                {locked && <span className="ml-2 text-brand-500 dark:text-brand-400">🔒 aspect ratio locked</span>}
+                {locked && <span className="ml-2 text-brand-500">🔒 aspect ratio locked</span>}
               </p>
-            </div>
+            </Card>
 
             {/* Presets */}
-            <div className="card p-4 space-y-3">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Quick Presets</h3>
+            <Card className="p-4 space-y-3">
+              <h3 className="text-sm font-semibold text-foreground">Quick Presets</h3>
               <div className="grid grid-cols-4 gap-1.5">
                 {PRESETS.map(p => (
                   <Button key={p.label} variant="outline" onClick={() => applyPreset(p.w, p.h)}
-                    className={`h-auto flex-col py-1.5 px-1 text-xs transition-all ${width === p.w && height === p.h ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 text-brand-700 dark:text-brand-300' : 'text-gray-600 dark:text-gray-400'}`}>
+                    className={`h-auto flex-col py-1.5 px-1 text-xs transition-all ${width === p.w && height === p.h ? 'border-brand-500 bg-brand-500/10 text-brand-400' : 'text-muted-foreground'}`}>
                     <div className="font-semibold">{p.label}</div>
                     <div className="opacity-60">{p.w}×{p.h}</div>
                   </Button>
                 ))}
               </div>
-            </div>
+            </Card>
 
             {/* Mode */}
-            <div className="card p-4 space-y-2">
-              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Resize Mode</h3>
+            <Card className="p-4 space-y-2">
+              <h3 className="text-sm font-semibold text-foreground">Resize Mode</h3>
               {([
                 { m: 'fit'   as ResizeMode, icon: '↔', label: 'Fit',   desc: 'Scale to fit, keep aspect ratio' },
                 { m: 'fill'  as ResizeMode, icon: '⊡', label: 'Fill',  desc: 'Crop to fill exact dimensions' },
                 { m: 'exact' as ResizeMode, icon: '⇲', label: 'Exact', desc: 'Stretch to exact size' },
               ]).map(({ m, icon, label, desc }) => (
                 <Button key={m} variant="outline" onClick={() => setMode(m)}
-                  className={`w-full h-auto justify-start gap-3 px-3 py-2.5 text-left transition-all ${mode === m ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30' : ''}`}>
+                  className={`w-full h-auto justify-start gap-3 px-3 py-2.5 text-left transition-all ${mode === m ? 'border-brand-500 bg-brand-500/10' : ''}`}>
                   <span className="text-xl w-6 text-center">{icon}</span>
                   <div>
-                    <p className={`text-sm font-medium ${mode === m ? 'text-brand-700 dark:text-brand-300' : 'text-gray-800 dark:text-gray-200'}`}>{label}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{desc}</p>
+                    <p className={`text-sm font-medium ${mode === m ? 'text-brand-400' : 'text-foreground'}`}>{label}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
                   </div>
                 </Button>
               ))}
-            </div>
+            </Card>
 
             {status === 'processing' && <ProgressBar progress={progress} label="Resizing images..." />}
-            {status === 'error' && <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 px-4 py-3 rounded-xl">{error}</p>}
+            {status === 'error' && <p className="text-sm text-red-500 bg-red-500/10 px-4 py-3 rounded-xl">{error}</p>}
 
             <Button onClick={resize} disabled={status === 'processing'} size="lg" className="w-full">
               {status === 'processing' ? 'Resizing...' : `Resize ${files.length > 1 ? `${files.length} images` : 'image'} → ${width}×${height}`}

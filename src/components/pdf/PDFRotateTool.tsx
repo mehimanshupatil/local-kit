@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
-import { Check, ArrowCounterClockwise, ArrowClockwise, X } from '@phosphor-icons/react';
+import { CheckIcon, ArrowCounterClockwiseIcon, ArrowClockwiseIcon, XIcon } from '@phosphor-icons/react';
 import { useToolVisit } from '@/stores/toolVisit';
 
 enableMapSet();
@@ -110,7 +110,7 @@ export default function PDFRotateTool() {
       )}
 
       {pdf && total > 0 && (
-        <div className="card p-5 space-y-5">
+        <Card className="p-5 space-y-5">
 
           {/* Toolbar */}
           <div className="flex flex-wrap items-center gap-2">
@@ -119,9 +119,9 @@ export default function PDFRotateTool() {
               <Button onClick={selectNone} variant="secondary" size="sm" disabled={selected.size === 0}>Deselect</Button>
             </div>
 
-            <div className="h-5 w-px bg-gray-200 dark:bg-gray-700 mx-1" />
+            <div className="h-5 w-px bg-[--border-color] mx-1" />
 
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-muted-foreground">
               {selected.size > 0 ? `${selected.size} selected` : 'Click pages to select'}
             </span>
 
@@ -156,14 +156,14 @@ export default function PDFRotateTool() {
                   className={`
                     relative flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 cursor-pointer transition-all select-none
                     ${isSel
-                      ? 'border-brand-500 bg-brand-50 dark:bg-brand-950/30 shadow-md scale-[1.03]'
-                      : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 bg-white dark:bg-gray-900'}
+                      ? 'border-brand-500 bg-brand-500/10 shadow-md scale-[1.03]'
+                      : 'border-border hover:border-border bg-card'}
                   `}
                 >
                   {/* Selected checkmark */}
                   {isSel && (
                     <div className="absolute top-1.5 right-1.5 z-10 size-4 bg-brand-500 rounded-full flex items-center justify-center">
-                      <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />
+                      <CheckIcon className="w-2.5 h-2.5 text-white" strokeWidth={3} />
                     </div>
                   )}
 
@@ -186,25 +186,25 @@ export default function PDFRotateTool() {
 
                   {/* Page number + per-page controls */}
                   <div className="flex items-center gap-1 w-full justify-between">
-                    <span className="text-[10px] font-mono text-gray-400">{i + 1}</span>
+                    <span className="text-[10px] font-mono text-muted-foreground">{i + 1}</span>
                     <div className="flex gap-0.5">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={e => { e.stopPropagation(); rotatePage(i, -90); }}
-                        className="size-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                        className="size-6 text-muted-foreground hover:text-foreground"
                         title="Rotate 90° CCW"
                       >
-                        <ArrowCounterClockwise className="size-3.5" />
+                        <ArrowCounterClockwiseIcon className="size-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={e => { e.stopPropagation(); rotatePage(i, 90); }}
-                        className="size-6 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                        className="size-6 text-muted-foreground hover:text-foreground"
                         title="Rotate 90° CW"
                       >
-                        <ArrowClockwise className="size-3.5" />
+                        <ArrowClockwiseIcon className="size-3.5" />
                       </Button>
                       {rot !== 0 && (
                         <Button
@@ -214,7 +214,7 @@ export default function PDFRotateTool() {
                           className="size-6 text-amber-400 hover:text-red-500"
                           title="Reset rotation"
                         >
-                          <X className="size-3" />
+                          <XIcon className="size-3" />
                         </Button>
                       )}
                     </div>
@@ -237,7 +237,7 @@ export default function PDFRotateTool() {
           <Button onClick={apply} disabled={!hasRotations || status === 'processing'} >
             {status === 'processing' ? 'Saving...' : `Apply Rotations${rotatedCount > 0 ? ` (${rotatedCount} page${rotatedCount > 1 ? 's' : ''})` : ''}`}
           </Button>
-        </div>
+        </Card>
       )}
 
       {output.length > 0 && <OutputFiles files={output} />}

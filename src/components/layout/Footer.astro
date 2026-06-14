@@ -2,33 +2,28 @@
 import { categories } from "../../data/tools";
 import { FcFlashOn } from "react-icons/fc";
 import Icon from "../ui/Icon";
-import { Shield } from '@phosphor-icons/react';
+import { ShieldIcon } from "@phosphor-icons/react";
 ---
 
-<footer
-  class="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-16"
->
+<footer class="bg-card border-t border-border mt-16">
   <!-- Main footer grid -->
   <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12">
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-8">
       <!-- Brand column -->
       <div class="col-span-2 sm:col-span-1 space-y-4">
-        <a
-          href="/"
-          class="flex items-center gap-2 font-bold text-gray-900 dark:text-white"
-        >
+        <a href="/" class="flex items-center gap-2 font-bold text-foreground">
           <img src="/icon.svg" alt="LocalKit" class="size-7 rounded-lg" />
           LocalKit
         </a>
-        <p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">
+        <p class="text-sm text-muted-foreground leading-relaxed">
           Free, privacy-first file tools. Everything runs in your browser — no
           uploads, no servers.
         </p>
         <div class="flex flex-wrap gap-2">
           <span
-            class="inline-flex items-center gap-1 text-xs text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/40 px-2.5 py-1 rounded-full border border-green-200 dark:border-green-900"
+            class="inline-flex items-center gap-1 text-xs text-brand-500 bg-brand-500/10/40 px-2.5 py-1 rounded-full border border-brand-500/20"
           >
-            <Shield className="size-3" />
+            <ShieldIcon className="size-3" />
             100% Private
           </span>
           <span
@@ -45,7 +40,7 @@ import { Shield } from '@phosphor-icons/react';
       {
         categories.map((cat) => (
           <div class="space-y-3">
-            <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               {cat.title}
             </h3>
             <ul class="space-y-2">
@@ -53,7 +48,7 @@ import { Shield } from '@phosphor-icons/react';
                 <li>
                   <a
                     href={tool.href}
-                    class="text-sm text-gray-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+                    class="text-sm text-muted-foreground hover:text-brand-500 transition-colors"
                   >
                     {tool.name}
                   </a>
@@ -67,28 +62,22 @@ import { Shield } from '@phosphor-icons/react';
   </div>
 
   <!-- Bottom bar -->
-  <div class="border-t border-gray-200 dark:border-gray-800">
+  <div class="border-t border-border">
     <div
-      class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-400 dark:text-gray-500"
+      class="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground"
     >
       <p>
         © {new Date().getFullYear()} LocalKit — Open source, privacy-first browser
         utilities
       </p>
       <div class="flex items-center gap-4">
-        <a
-          href="/faq"
-          class="hover:text-brand-500 dark:hover:text-brand-400 transition-colors"
-          >FAQ</a
-        >
-        <a
-          href="/privacy"
-          class="hover:text-brand-500 dark:hover:text-brand-400 transition-colors"
+        <a href="/faq" class="hover:text-brand-500 transition-colors">FAQ</a>
+        <a href="/privacy" class="hover:text-brand-500 transition-colors"
           >Privacy</a
         >
         <a
           href="https://github.com/mehimanshupatil/local-kit"
-          class="hover:text-brand-500 dark:hover:text-brand-400 transition-colors flex items-center gap-1"
+          class="hover:text-brand-500 transition-colors flex items-center gap-1"
         >
           <svg
             class="size-4"

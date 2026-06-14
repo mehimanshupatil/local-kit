@@ -1,9 +1,9 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
-import Header from "../components/layout/Header.astro";
 import Footer from "../components/layout/Footer.astro";
 import { categories } from "../data/tools";
 import Icon from "../components/ui/Icon";
+import { Card } from "../components/ui/card";
 import { FcPrivacy, FcFlashOn, FcGlobe } from "react-icons/fc";
 import RecentTools from "../components/shared/RecentTools";
 ---
@@ -13,35 +13,28 @@ import RecentTools from "../components/shared/RecentTools";
   description="Free, privacy-first file tools that run 100% in your browser. PDF manipulation, image compression, video conversion and more — no uploads, no servers."
   canonicalURL="/"
 >
-  <Header />
   <main>
     <!-- Hero -->
-    <section
-      class="bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900 pt-20 pb-16 px-4"
-    >
+    <section class="bg-linear-to-b from-background to-secondary pt-20 pb-16 px-4">
       <div class="max-w-4xl mx-auto text-center">
         <div
-          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400 text-sm font-medium mb-6"
+          class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 text-brand-500 text-sm font-medium mb-6"
         >
           🔒 100% Private — Files never leave your device
         </div>
         <h1
-          class="text-5xl sm:text-6xl font-bold text-gray-900 dark:text-white mb-6 tracking-tight"
+          class="text-5xl sm:text-6xl font-bold text-foreground mb-6 tracking-tight"
         >
-          Powerful browser<br /><span class="text-brand-600 dark:text-brand-400"
-            >file tools</span
-          >
+          Powerful browser<br /><span class="text-brand-500">file tools</span>
         </h1>
-        <p
-          class="text-xl text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-10"
-        >
+        <p class="text-xl text-muted-foreground max-w-2xl mx-auto mb-10">
           PDF, image, and video tools powered by WebAssembly. Everything runs
           locally in your browser — no uploads, no servers, no privacy concerns.
         </p>
         <div class="flex flex-wrap justify-center gap-3">
           {
             categories.map((c) => (
-              <a href={c.href} class="btn-primary text-base py-3 px-6">
+              <a href={c.href} class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-black font-medium text-base rounded-sm hover:bg-brand-400 transition-all duration-100">
                 <Icon icon={c.icon} size={18} /> {c.title}
               </a>
             ))
@@ -53,9 +46,7 @@ import RecentTools from "../components/shared/RecentTools";
     <RecentTools client:load />
 
     <!-- Features -->
-    <section
-      class="py-12 px-4 bg-white dark:bg-gray-950 border-y border-gray-200 dark:border-gray-800"
-    >
+    <section class="py-12 px-4 bg-background border-y border-border">
       <div
         class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center"
       >
@@ -81,10 +72,8 @@ import RecentTools from "../components/shared/RecentTools";
               <div class="mb-3">
                 <Icon icon={f.icon} size={36} className="m-auto" />
               </div>
-              <h3 class="font-semibold text-gray-900 dark:text-white mb-2">
-                {f.title}
-              </h3>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{f.desc}</p>
+              <h3 class="font-semibold text-foreground mb-2">{f.title}</h3>
+              <p class="text-sm text-muted-foreground">{f.desc}</p>
             </div>
           ))
         }
@@ -99,26 +88,26 @@ import RecentTools from "../components/shared/RecentTools";
             <div>
               <div class="flex items-center gap-3 mb-6">
                 <Icon icon={cat.icon} size={28} />
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
-                  {cat.title}
-                </h2>
+                <h2 class="text-2xl font-bold text-foreground">{cat.title}</h2>
                 <a
                   href={cat.href}
-                  class="ml-auto text-sm text-brand-600 dark:text-brand-400 hover:underline"
+                  class="ml-auto text-sm text-brand-500 hover:underline"
                 >
                   View all →
                 </a>
               </div>
               <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
                 {cat.tools.map((tool) => (
-                  <a
-                    href={tool.href}
-                    class="card p-5 flex flex-col gap-3 hover:border-brand-400 dark:hover:border-brand-600 hover:shadow-md transition-all group"
-                  >
-                    <Icon icon={tool.icon} size={28} />
-                    <span class="font-medium text-gray-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">
-                      {tool.name}
-                    </span>
+                  <a href={tool.href} class="group block">
+                    <Card
+                      size="sm"
+                      className="h-full p-4 flex flex-col gap-3 cursor-pointer transition-all duration-150 group-hover:ring-brand-500/40 group-hover:bg-secondary"
+                    >
+                      <Icon icon={tool.icon} size={28} />
+                      <span class="font-medium text-sm text-card-foreground group-hover:text-brand-500 transition-colors">
+                        {tool.name}
+                      </span>
+                    </Card>
                   </a>
                 ))}
               </div>
