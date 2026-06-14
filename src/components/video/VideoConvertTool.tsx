@@ -9,8 +9,8 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { convertVideo, type VideoFormat } from '@/lib/video/videoConvert';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools, useToolPrefs } from '@/stores/prefsStore';
+import { useToolPrefs } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 
 const FORMATS: { label: string; value: VideoFormat; desc: string }[] = [
   { label: 'MP4', value: 'mp4', desc: 'Universal compatibility' },
@@ -21,8 +21,6 @@ const FORMATS: { label: string; value: VideoFormat; desc: string }[] = [
 ];
 
 export default function VideoConvertTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/video/convert'); }, []);
 
   const [prefs, updatePrefs] = useToolPrefs('/video/convert', { format: 'mp4' as VideoFormat });
   const { format } = prefs;
@@ -31,7 +29,7 @@ export default function VideoConvertTool() {
   const [file, setFile] = useState<File | null>(null);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('video');
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('video', '/video/convert');
 
   useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
 

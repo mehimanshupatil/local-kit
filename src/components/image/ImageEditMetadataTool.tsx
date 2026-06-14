@@ -7,8 +7,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { embedMetadata } from '@/lib/image/imageEditMetadata';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 interface FormState {
@@ -32,13 +31,11 @@ const EMPTY_FORM: FormState = {
 };
 
 export default function ImageEditMetadataTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/image/edit-metadata'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('image', '/image/edit-metadata');
   const [file, setFile] = useState<File | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (incoming: File[]) => {
     const f = incoming[0];

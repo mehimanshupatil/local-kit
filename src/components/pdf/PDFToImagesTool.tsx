@@ -7,14 +7,11 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';
 import { pdfToImages } from '@/lib/pdf/pdfToImages';
 import PDFFileBar from './PDFFileBar';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function PDFToImagesTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/to-images'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/to-images');
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [scale, setScale] = useState(1.5);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });

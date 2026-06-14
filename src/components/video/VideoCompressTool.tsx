@@ -9,12 +9,10 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { compressVideo, type VideoQuality } from '@/lib/video/videoCompress';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools, useToolPrefs } from '@/stores/prefsStore';
+import { useToolPrefs } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 
 export default function VideoCompressTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/video/compress'); }, []);
 
   const [prefs, updatePrefs] = useToolPrefs('/video/compress', { quality: 'medium' as VideoQuality });
   const { quality } = prefs;
@@ -24,7 +22,7 @@ export default function VideoCompressTool() {
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
   const [log, setLog] = useState('');
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('video');
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('video', '/video/compress');
 
   useEffect(() => { if (sessionFiles.length > 0 && !file) { addFile([sessionFiles[0]]); } }, []);
 

@@ -9,8 +9,8 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { convertImage } from '@/lib/image/imageConvert';
 import { formatFileSize, generateId } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useToolPrefs, useRecentTools } from '@/stores/prefsStore';
+import { useToolPrefs } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 interface FileEntry { id: string; file: File; preview: string }
@@ -23,8 +23,6 @@ const FORMATS = [
 ];
 
 export default function ImageConvertTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/image/convert'); }, []);
   const [files, updateFiles] = useImmer<FileEntry[]>([]);
   const [prefs, updatePrefs] = useToolPrefs('/image/convert', { targetMime: 'image/webp', quality: 90 });
   const { targetMime, quality } = prefs;
@@ -32,7 +30,7 @@ export default function ImageConvertTool() {
   const setQuality = (v: number) => updatePrefs({ quality: v });
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('image', '/image/convert');
 
   const addFiles = (incoming: File[]) => {
     const entries = incoming.filter(f => f.type.startsWith('image/')).map(f => ({

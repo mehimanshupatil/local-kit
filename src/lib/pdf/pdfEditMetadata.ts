@@ -80,5 +80,5 @@ export async function editPDFMetadata(
   }
 
   const bytes = await doc.save();
-  return new Blob([bytes], { type: 'application/pdf' });
+  return new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
 }

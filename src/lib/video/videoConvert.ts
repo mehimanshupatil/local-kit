@@ -37,6 +37,6 @@ export async function convertVideo(
     mov: 'video/quicktime', gif: 'image/gif',
   };
 
-  const blob = new Blob([data], { type: mimeMap[targetFormat] });
+  const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: mimeMap[targetFormat] });
   return { name: `${stripExtension(file.name)}.${targetFormat}`, blob };
 }

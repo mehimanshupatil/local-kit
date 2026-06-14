@@ -36,7 +36,7 @@ async function renderAllPDFPages(file: File, totalPages: number): Promise<string
       const vp = pg.getViewport({ scale: 2 });
       const canvas = document.createElement('canvas');
       canvas.width = vp.width; canvas.height = vp.height;
-      await pg.render({ canvasContext: canvas.getContext('2d')!, viewport: vp }).promise;
+      await pg.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport: vp }).promise;
       return canvas.toDataURL('image/png');
     })
   );

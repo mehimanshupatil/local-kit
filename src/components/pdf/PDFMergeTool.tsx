@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -102,9 +101,7 @@ function SortableRow({ file, index, onRemove }: { file: FileEntry; index: number
 
 // ── Main tool ─────────────────────────────────────────────────────
 export default function PDFMergeTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/merge'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/merge');
   const [files, updateFiles]    = useImmer<FileEntry[]>([]);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;

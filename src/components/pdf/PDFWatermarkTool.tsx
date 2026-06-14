@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useFileSession } from '@/stores/fileStore';
-import { useToolPrefs, useRecentTools } from '@/stores/prefsStore';
+import { useToolPrefs } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -47,9 +47,7 @@ const ROTATION_PRESETS: { key: RotationPreset; label: string; degrees: number }[
 ];
 
 export default function PDFWatermarkTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/watermark'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/watermark');
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [prefs, updatePrefs] = useToolPrefs('/pdf/watermark', {
     text: 'CONFIDENTIAL' as string,

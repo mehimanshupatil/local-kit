@@ -2,8 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import DropZone from '@/components/shared/DropZone';
 import FileList from '@/components/shared/FileList';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -15,9 +14,7 @@ import { generateId } from '@/lib/utils/fileUtils';
 interface FileEntry { id: string; name: string; size: number; buffer: ArrayBuffer; type: string; preview: string; rawFile: File }
 
 export default function PDFFromImagesTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/from-images'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/from-images');
   const [files, updateFiles] = useImmer<FileEntry[]>([]);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;

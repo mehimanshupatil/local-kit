@@ -10,8 +10,8 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { resizeImage, type ResizeMode } from '@/lib/image/imageResize';
 import { formatFileSize, generateId } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useToolPrefs, useRecentTools } from '@/stores/prefsStore';
+import { useToolPrefs } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 interface FileEntry { id: string; file: File; preview: string; w: number; h: number }
@@ -38,8 +38,6 @@ const PREVIEW_W = 400;
 const PREVIEW_H = 280;
 
 export default function ImageResizeTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/image/resize'); }, []);
   const [files, updateFiles]  = useImmer<FileEntry[]>([]);
   const [activeIdx, setActiveIdx] = useState(0);
   const [prefs, updatePrefs] = useToolPrefs('/image/resize', { width: 1920, height: 1080, mode: 'fit' as ResizeMode });
@@ -51,7 +49,7 @@ export default function ImageResizeTool() {
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
   const active = files[activeIdx] ?? null;
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('image', '/image/resize');
 
   // Scale factor: how many display-px = 1 source-px
   const previewScale = active

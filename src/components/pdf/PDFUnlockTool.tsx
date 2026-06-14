@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { useDisclosure } from '@mantine/hooks';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { Lock, LockOpen, Eye, EyeOff } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -15,9 +14,7 @@ import PDFFileBar from './PDFFileBar';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function PDFUnlockTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/unlock'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/unlock');
   const [file, setFile]         = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [isLocked, setIsLocked] = useState<boolean | null>(null);
   const [password, setPassword] = useState('');

@@ -6,8 +6,7 @@ import DropZone from '@/components/shared/DropZone';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { removeImageBackground } from '@/lib/image/imageBackgroundRemoval';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 const checkerboardStyle: React.CSSProperties = {
@@ -29,8 +28,7 @@ function formatStage(key: string): string {
 }
 
 export default function ImageBackgroundRemovalTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/image/background-remover'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('image', '/image/background-remover');
   const [file, setFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState('');
   const [resultURL, setResultURL] = useState('');
@@ -38,7 +36,6 @@ export default function ImageBackgroundRemovalTool() {
   const [stage, setStage] = useState('');
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (files: File[]) => {
     const f = files[0];

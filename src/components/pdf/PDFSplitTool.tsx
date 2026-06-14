@@ -3,8 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 
 enableMapSet();
 import { Scissors, X } from 'lucide-react';
@@ -32,9 +31,7 @@ const SECTION_COLORS = [
 const SECTION_DOTS = ['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-amber-500', 'bg-rose-500', 'bg-cyan-500'];
 
 export default function PDFSplitTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/split'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/split');
   const [file, setFile]    = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [pdf,  setPdf]     = useState<PDFDocumentProxy | null>(null);
   const [total, setTotal]  = useState(0);
@@ -101,7 +98,7 @@ export default function PDFSplitTool() {
         const pages = await doc.copyPages(src, sections[s]);
         pages.forEach(p => doc.addPage(p));
         const bytes = await doc.save();
-        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const blob = new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
         results.push({ name: `${base}_part${s + 1}.pdf`, blob, size: blob.size });
         updateOp(d => { d.progress = Math.round(((s + 1) / sections.length) * 100); });
       }

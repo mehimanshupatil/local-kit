@@ -35,6 +35,6 @@ export async function extractAudio(
   await ff.deleteFile(input);
   await ff.deleteFile(output);
 
-  const blob = new Blob([data], { type: MIME[format] });
+  const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: MIME[format] });
   return { name: `${stripExtension(file.name)}_audio.${format}`, blob };
 }

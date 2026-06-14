@@ -10,8 +10,7 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { ditherImage } from '@/lib/image/imageDither';
 import type { DitherAlgorithm, DitherOptions, PaletteMode } from '@/lib/image/imageDither';
 import { formatFileSize, stripExtension, generateId } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 const ALGORITHM_OPTIONS: { value: DitherAlgorithm; label: string }[] = [
@@ -43,8 +42,7 @@ function showThreshold(algo: DitherAlgorithm): boolean {
 }
 
 export default function ImageDitherTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/image/dither'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('image', '/image/dither');
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [dimensions, setDimensions] = useState<{ w: number; h: number } | null>(null);
@@ -53,7 +51,6 @@ export default function ImageDitherTool() {
   const { status, progress, output, error } = op;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevFileRef = useRef<File | null>(null);
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   function onFiles(files: File[]) {
     const f = files[0];

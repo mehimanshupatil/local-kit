@@ -77,5 +77,5 @@ export async function fillAndFlattenForm(
   onProgress?.(90);
   const bytes = await pdfDoc.save();
   onProgress?.(100);
-  return new Blob([bytes], { type: 'application/pdf' });
+  return new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
 }

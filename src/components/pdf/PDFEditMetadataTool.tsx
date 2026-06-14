@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import DropZone from '@/components/shared/DropZone';
@@ -31,9 +30,7 @@ const FIELDS: { key: keyof PDFMetadata; label: string; placeholder: string; type
 ];
 
 export default function PDFEditMetadataTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/edit-metadata'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/edit-metadata');
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [meta,     setMeta]     = useState<PDFMetadata>(BLANK);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });

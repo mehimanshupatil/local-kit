@@ -13,5 +13,5 @@ export async function deletePages(
   pages.forEach(p => out.addPage(p));
   onProgress?.(100);
   const bytes = await out.save();
-  return new Blob([bytes], { type: 'application/pdf' });
+  return new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
 }

@@ -30,7 +30,8 @@ _Avoid_: workspace, project, upload session
 **Processing**: The act of transforming a user-supplied file using browser APIs. Processing runs on the main thread or in a Web Worker (FFmpeg), never on a server.
 _Avoid_: upload, server-side processing, backend operation
 
-**PDF Renderer**: The library used to display PDF page thumbnails and previews to the user. Currently `pdfjs-dist`.
-_Note_: The split between render (`pdfjs-dist`) and mutate (`@cantoo/pdf-lib`) is open to consolidation.
+**PDF Renderer**: The library used to display PDF page thumbnails, render pages to images, and feed OCR. Always `pdfjs-dist` — the only MIT-licensed browser library that renders PDF pages to canvas.
+_Avoid_: pdf-lib for rendering
 
-**PDF Mutator**: The library used to read and write PDF structure (merge, split, rotate, watermark). Currently `@cantoo/pdf-lib` (a fork of `pdf-lib`). Under consideration for change.
+**PDF Mutator**: The library used to read and write PDF structure (merge, split, rotate, watermark, metadata, forms). Always `@cantoo/pdf-lib` — the only actively maintained MIT fork of `pdf-lib` with real `ignoreEncryption` support for owner-locked PDFs. Original `pdf-lib` unmaintained since 2021; `mupdf` is AGPL-licensed.
+_Avoid_: original pdf-lib, mupdf

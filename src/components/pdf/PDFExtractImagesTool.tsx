@@ -3,8 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Images, Download } from 'lucide-react';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 // @ts-ignore
 import JSZip from 'jszip';
 import DropZone from '@/components/shared/DropZone';
@@ -24,9 +23,7 @@ function downloadBlob(blob: Blob, name: string) {
 }
 
 export default function PDFExtractImagesTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/extract-images'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/extract-images');
   const [file, setFile]       = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, error } = op;

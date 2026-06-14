@@ -29,6 +29,6 @@ export async function compressVideo(
   await ff.deleteFile('input.mp4');
   await ff.deleteFile('output.mp4');
 
-  const blob = new Blob([data], { type: 'video/mp4' });
+  const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: 'video/mp4' });
   return { name: `${stripExtension(file.name)}_compressed.mp4`, blob };
 }

@@ -15,7 +15,7 @@ export async function compressPDF(
   const bytes = await doc.save({ useObjectStreams: true, addDefaultPage: false });
   onProgress?.(100);
 
-  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const blob = new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
   return {
     name: `${stripExtension(filename)}_compressed.pdf`,
     blob,

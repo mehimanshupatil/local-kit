@@ -8,14 +8,11 @@ import OutputFiles from '@/components/shared/OutputFiles';
 import { compressPDF } from '@/lib/pdf/pdfCompress';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import PDFFileBar from './PDFFileBar';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function PDFCompressTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/compress'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/compress');
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;

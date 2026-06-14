@@ -10,13 +10,10 @@ import DropZone from '@/components/shared/DropZone';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { applyTransform } from '@/lib/image/imageCropRotateFlip';
 import { formatFileSize, stripExtension, getExtension } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function ImageCropRotateFlipTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/image/crop-rotate-flip'); }, []);
   const [file, setFile] = useState<File | null>(null);
   const [previewURL, setPreviewURL] = useState<string>('');
   const [crop, setCrop] = useState<Crop | undefined>(undefined);
@@ -27,7 +24,7 @@ export default function ImageCropRotateFlipTool() {
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
   const imgRef = useRef<HTMLImageElement>(null);
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('image', '/image/crop-rotate-flip');
 
   const handleFiles = (files: File[]) => {
     const img = files.find(f => f.type.startsWith('image/'));

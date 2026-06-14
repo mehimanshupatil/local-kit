@@ -23,6 +23,6 @@ export async function rotatePDF(
   onProgress?.(100);
   return {
     name: `${stripExtension(filename)}_rotated.pdf`,
-    blob: new Blob([bytes], { type: 'application/pdf' }),
+    blob: new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' }),
   };
 }

@@ -40,7 +40,7 @@ export async function extractImagesFromPDF(
       return origDrawImage(src, ...args);
     };
 
-    await page.render({ canvasContext: ctx as any, viewport }).promise;
+    await page.render({ canvas, canvasContext: ctx as any, viewport }).promise;
 
     // Deduplicate by dimensions
     const seen = new Set<string>();

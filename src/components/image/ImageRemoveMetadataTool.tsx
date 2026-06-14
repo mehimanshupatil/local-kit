@@ -6,19 +6,16 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { readMetadata, removeMetadata, type MetadataSummary } from '@/lib/image/imageRemoveMetadata';
 import { formatFileSize, stripExtension, getExtension } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function ImageRemoveMetadataTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/image/remove-metadata'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('image', '/image/remove-metadata');
   const [file, setFile] = useState<File | null>(null);
   const [summary, setSummary] = useState<MetadataSummary | null>(null);
   const [reading, setReading] = useState(false);
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('image');
 
   const handleFiles = (incoming: File[]) => {
     const f = incoming[0];

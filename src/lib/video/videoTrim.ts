@@ -30,6 +30,6 @@ export async function trimVideo(
   await ff.deleteFile(input);
   await ff.deleteFile(output);
 
-  const blob = new Blob([data], { type: file.type });
+  const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: file.type });
   return { name: `${stripExtension(file.name)}_trimmed.${ext}`, blob };
 }

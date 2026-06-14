@@ -15,5 +15,5 @@ export async function mergePDFs(
 
   const bytes = await merged.save();
   onProgress?.(100);
-  return new Blob([bytes], { type: 'application/pdf' });
+  return new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
 }

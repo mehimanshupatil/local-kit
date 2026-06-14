@@ -9,8 +9,7 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { extractAudio, type AudioFormat } from '@/lib/video/videoExtractAudio';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 
 const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
   { label: 'MP3', value: 'mp3', desc: 'Universal' },
@@ -20,15 +19,13 @@ const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
 ];
 
 export default function VideoExtractAudioTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/video/extract-audio'); }, []);
 
   const [file, setFile] = useState<File | null>(null);
   const [format, setFormat] = useState<AudioFormat>('mp3');
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('video');
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('video', '/video/extract-audio');
 
   useEffect(() => {
     return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };

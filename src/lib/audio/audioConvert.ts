@@ -40,6 +40,6 @@ export async function convertAudio(
   await ff.deleteFile(input);
   await ff.deleteFile(output);
 
-  const blob = new Blob([data], { type: MIME[targetFormat] });
+  const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: MIME[targetFormat] });
   return { name: `${stripExtension(file.name)}.${targetFormat}`, blob };
 }

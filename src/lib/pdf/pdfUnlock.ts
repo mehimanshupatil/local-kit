@@ -14,5 +14,5 @@ export async function isEncrypted(buffer: ArrayBuffer): Promise<boolean> {
 export async function unlockPDF(buffer: ArrayBuffer, password: string): Promise<Blob> {
   const doc = await PDFDocument.load(buffer, { password });
   const bytes = await doc.save();
-  return new Blob([bytes], { type: 'application/pdf' });
+  return new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
 }

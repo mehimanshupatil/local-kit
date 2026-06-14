@@ -41,7 +41,7 @@ export async function splitPDF(
     const bytes = await doc.save();
     results.push({
       name: groups.length === 1 ? `${base}_split.pdf` : `${base}_part${g + 1}.pdf`,
-      blob: new Blob([bytes], { type: 'application/pdf' }),
+      blob: new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' }),
     });
     onProgress?.(Math.round(((g + 1) / groups.length) * 100));
   }

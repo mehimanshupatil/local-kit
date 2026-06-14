@@ -4,8 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Check, RotateCcw, RotateCw, X } from 'lucide-react';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 
 enableMapSet();
 import DropZone from '@/components/shared/DropZone';
@@ -20,9 +19,7 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import PDFFileBar from './PDFFileBar';
 
 export default function PDFRotateTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/rotate'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/rotate');
   const [file,  setFile]  = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [pdf,   setPdf]   = useState<PDFDocumentProxy | null>(null);
   const [total, setTotal] = useState(0);
@@ -93,7 +90,7 @@ export default function PDFRotateTool() {
       updateOp(d => { d.progress = 80; });
       const bytes = await doc.save();
       updateOp(d => { d.progress = 100; });
-      const blob = new Blob([bytes], { type: 'application/pdf' });
+      const blob = new Blob([bytes as Uint8Array<ArrayBuffer>], { type: 'application/pdf' });
       updateOp(d => { d.output = [{ name: `${stripExtension(file.name)}_rotated.pdf`, blob, size: blob.size }]; d.status = 'done'; });
     } catch (e) {
       updateOp(d => { d.error = e instanceof Error ? e.message : 'Rotation failed'; d.status = 'error'; });

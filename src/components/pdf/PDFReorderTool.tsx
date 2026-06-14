@@ -2,8 +2,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -69,9 +68,7 @@ function SortablePage({
 
 // ── Main tool ──────────────────────────────────────────────────────
 export default function PDFReorderTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/reorder'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/reorder');
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer; pageCount: number } | null>(null);
   const [pdf,      setPdf]      = useState<PDFDocumentProxy | null>(null);
   const [pageOrder, updatePageOrder] = useImmer<number[]>([]);

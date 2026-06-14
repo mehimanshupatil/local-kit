@@ -8,8 +8,8 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { convertAudio, type AudioFormat } from '@/lib/audio/audioConvert';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools, useToolPrefs } from '@/stores/prefsStore';
+import { useToolPrefs } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 
 const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
   { label: 'MP3',  value: 'mp3',  desc: 'Universal' },
@@ -20,8 +20,6 @@ const FORMATS: { label: string; value: AudioFormat; desc: string }[] = [
 ];
 
 export default function AudioConvertTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/audio/convert'); }, []);
 
   const [prefs, updatePrefs] = useToolPrefs('/audio/convert', { format: 'mp3' as AudioFormat });
   const { format } = prefs;
@@ -31,7 +29,7 @@ export default function AudioConvertTool() {
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('audio');
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('audio', '/audio/convert');
 
   useEffect(() => {
     return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };

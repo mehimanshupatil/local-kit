@@ -2,8 +2,7 @@ import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import { Loader2, FileText } from 'lucide-react';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
@@ -15,9 +14,7 @@ import PDFFileBar from './PDFFileBar';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 
 export default function PDFFormFillTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/fill-form'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/fill-form');
   const [file, setFile] = useState<{ name: string; size: number; buffer: ArrayBuffer } | null>(null);
   const [fields, setFields] = useState<FormField[]>([]);
   const [values, setValues] = useState<Record<string, string | boolean>>({});

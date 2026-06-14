@@ -8,8 +8,8 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { compressAudio, type AudioBitrate } from '@/lib/audio/audioCompress';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize } from '@/lib/utils/fileUtils';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools, useToolPrefs } from '@/stores/prefsStore';
+import { useToolPrefs } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 
 const BITRATES: { value: AudioBitrate; label: string; note: string }[] = [
   { value: '320k', label: '320k', note: 'Best quality' },
@@ -21,8 +21,6 @@ const BITRATES: { value: AudioBitrate; label: string; note: string }[] = [
 ];
 
 export default function AudioCompressTool() {
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/audio/compress'); }, []);
 
   const [prefs, updatePrefs] = useToolPrefs('/audio/compress', { bitrate: '128k' as AudioBitrate });
   const { bitrate } = prefs;
@@ -32,7 +30,7 @@ export default function AudioCompressTool() {
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('audio');
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('audio', '/audio/compress');
 
   useEffect(() => {
     return () => { if (audioUrl) URL.revokeObjectURL(audioUrl); };

@@ -2,8 +2,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
-import { useFileSession } from '@/stores/fileStore';
-import { useRecentTools } from '@/stores/prefsStore';
+import { useToolVisit } from '@/stores/toolVisit';
 import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
@@ -15,9 +14,7 @@ import { stripExtension } from '@/lib/utils/fileUtils';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 
 export default function PDFDeletePagesTool() {
-  const { sessionFiles, setSessionFiles, clearSession } = useFileSession('pdf');
-  const { recordVisit } = useRecentTools();
-  useEffect(() => { recordVisit('/pdf/delete-pages'); }, []);
+  const { sessionFiles, setSessionFiles, clearSession } = useToolVisit('pdf', '/pdf/delete-pages');
   const [file,     setFile]     = useState<{ name: string; size: number; buffer: ArrayBuffer; pageCount: number } | null>(null);
   const [pdf,      setPdf]      = useState<PDFDocumentProxy | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());

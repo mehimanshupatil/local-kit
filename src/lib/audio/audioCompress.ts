@@ -48,6 +48,6 @@ export async function compressAudio(
     aac: 'audio/aac',
     m4a: 'audio/mp4',
   };
-  const blob = new Blob([data], { type: mimeMap[outputExt] ?? 'audio/mpeg' });
+  const blob = new Blob([data as Uint8Array<ArrayBuffer>], { type: mimeMap[outputExt] ?? 'audio/mpeg' });
   return { name: `${stripExtension(file.name)}_compressed.${outputExt}`, blob };
 }
