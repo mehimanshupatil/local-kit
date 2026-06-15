@@ -4,7 +4,7 @@ import {
   FcLock, FcUnlock, FcGallery, FcCamera, FcPicture, FcRuler, FcFlashOn,
   FcVideoFile, FcMusic, FcSettings, FcTemplate, FcAudioFile, FcDeleteDatabase,
   FcReading, FcEditImage, FcPrivacy, FcGlobe, FcPortraitMode, FcInspection,
-  FcFilm, FcSpeaker, FcFile, FcOpenedFolder, FcWorkflow,
+  FcFilm, FcSpeaker, FcFile, FcOpenedFolder,
   FcBinoculars, FcKey, FcDataSheet, FcMultipleInputs,
 } from 'react-icons/fc';
 
