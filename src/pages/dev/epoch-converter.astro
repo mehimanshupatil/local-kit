@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import EpochConverterTool from '../../components/dev/EpochConverterTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/epoch-converter');
+---
+<ToolLayout {...meta}>
+  <EpochConverterTool client:load />
+</ToolLayout>

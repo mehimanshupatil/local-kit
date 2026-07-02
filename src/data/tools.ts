@@ -5,7 +5,7 @@ import {
   FcVideoFile, FcMusic, FcSettings, FcTemplate, FcAudioFile, FcDeleteDatabase,
   FcReading, FcEditImage, FcPrivacy, FcGlobe, FcPortraitMode, FcInspection,
   FcFilm, FcSpeaker, FcFile, FcOpenedFolder,
-  FcBinoculars, FcKey, FcDataSheet, FcMultipleInputs,
+  FcBinoculars, FcKey, FcDataSheet, FcMultipleInputs, FcClock,
 } from 'react-icons/fc';
 
 export interface Tool {
@@ -393,6 +393,12 @@ export const categories: Category[] = [
         desc: 'Preview Markdown — paste, upload, or fetch a URL',
         pageTitle: 'Markdown Preview — LocalKit',
         pageDesc: 'Preview Markdown files in your browser. Paste text, upload a .md file, or fetch from a URL. No uploads.',
+      },
+      {
+        name: 'Epoch Converter', href: '/dev/epoch-converter', icon: FcClock,
+        desc: 'Convert Unix timestamps to dates and back',
+        pageTitle: 'Epoch / Unix Timestamp Converter — LocalKit',
+        pageDesc: 'Convert Unix epoch timestamps to human-readable dates (UTC, local, any timezone) and back. Auto-detects seconds, ms, µs, ns. 100% in your browser.',
       },
     ],
   },
