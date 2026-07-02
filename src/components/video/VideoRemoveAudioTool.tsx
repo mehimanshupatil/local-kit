@@ -1,6 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FcVideoFile } from 'react-icons/fc';
+import { FilmSlateIcon } from '@phosphor-icons/react';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
@@ -44,7 +44,7 @@ export default function VideoRemoveAudioTool() {
         <DropZone onFiles={addFile} accept="video/*" multiple={false} label="Drop a video file" sublabel="MP4, WebM, MOV, AVI and more" />
       ) : (
         <Card className="flex items-center gap-3 px-4 py-3 rounded-xl border">
-          <FcVideoFile size={28} />
+          <FilmSlateIcon size={28} />
           <div className="flex-1">
             <p className="font-medium text-foreground">{file.name}</p>
             <p className="text-xs text-muted-foreground">{formatFileSize(file.size)}</p>

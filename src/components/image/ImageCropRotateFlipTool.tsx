@@ -7,7 +7,7 @@ import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop';
 import 'react-image-crop/dist/ReactCrop.css';
 import { ArrowCounterClockwiseIcon, ArrowClockwiseIcon } from '@phosphor-icons/react';
 import DropZone from '@/components/shared/DropZone';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { applyTransform } from '@/lib/image/imageCropRotateFlip';
 import { formatFileSize, stripExtension, getExtension } from '@/lib/utils/fileUtils';
 import { useToolVisit } from '@/stores/toolVisit';

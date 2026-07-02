@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import PDFFileBar from './PDFFileBar';
 import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';

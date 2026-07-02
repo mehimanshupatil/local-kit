@@ -2,10 +2,27 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Footer from "../components/layout/Footer.astro";
 import { categories } from "../data/tools";
-import Icon from "../components/ui/Icon";
 import { Card } from "../components/ui/card";
-import { FcPrivacy, FcFlashOn, FcGlobe } from "react-icons/fc";
+import { ShieldIcon, LightningIcon, GlobeIcon } from "@phosphor-icons/react";
 import RecentTools from "../components/shared/RecentTools";
+
+const features = [
+  {
+    Icon: ShieldIcon,
+    title: "Completely Private",
+    desc: "All processing happens in your browser. Files never touch any server.",
+  },
+  {
+    Icon: LightningIcon,
+    title: "WASM Powered",
+    desc: "FFmpeg, PDF.js, and native canvas APIs for fast, high-quality output.",
+  },
+  {
+    Icon: GlobeIcon,
+    title: "Works Offline",
+    desc: "Once loaded, tools work without an internet connection.",
+  },
+];
 ---
 
 <BaseLayout
@@ -16,7 +33,9 @@ import RecentTools from "../components/shared/RecentTools";
 >
   <main>
     <!-- Hero -->
-    <section class="bg-linear-to-b from-background to-secondary pt-20 pb-16 px-4">
+    <section
+      class="bg-linear-to-b from-background to-secondary pt-20 pb-16 px-4"
+    >
       <div class="max-w-4xl mx-auto text-center">
         <div
           class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 text-brand-500 text-sm font-medium mb-6"
@@ -34,11 +53,17 @@ import RecentTools from "../components/shared/RecentTools";
         </p>
         <div class="flex flex-wrap justify-center gap-3">
           {
-            categories.map((c) => (
-              <a href={c.href} class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-black font-medium text-base rounded-sm hover:bg-brand-400 transition-all duration-100">
-                <Icon icon={c.icon} size={18} /> {c.title}
-              </a>
-            ))
+            categories.map((c) => {
+              const CIcon = c.icon;
+              return (
+                <a
+                  href={c.href}
+                  class="inline-flex items-center gap-2 px-6 py-3 bg-brand-500 text-black font-medium text-base rounded-sm hover:bg-brand-400 transition-all duration-100"
+                >
+                  <CIcon size={18} /> {c.title}
+                </a>
+              );
+            })
           }
         </div>
       </div>
@@ -52,29 +77,13 @@ import RecentTools from "../components/shared/RecentTools";
         class="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center"
       >
         {
-          [
-            {
-              icon: FcPrivacy,
-              title: "Completely Private",
-              desc: "All processing happens in your browser. Files never touch any server.",
-            },
-            {
-              icon: FcFlashOn,
-              title: "WASM Powered",
-              desc: "FFmpeg, PDF.js, and native canvas APIs for fast, high-quality output.",
-            },
-            {
-              icon: FcGlobe,
-              title: "Works Offline",
-              desc: "Once loaded, tools work without an internet connection.",
-            },
-          ].map((f) => (
+          features.map(({ Icon, title, desc }) => (
             <div class="p-6">
               <div class="mb-3">
-                <Icon icon={f.icon} size={36} className="m-auto" />
+                <Icon size={36} className="m-auto" />
               </div>
-              <h3 class="font-semibold text-foreground mb-2">{f.title}</h3>
-              <p class="text-sm text-muted-foreground">{f.desc}</p>
+              <h3 class="font-semibold text-foreground mb-2">{title}</h3>
+              <p class="text-sm text-muted-foreground">{desc}</p>
             </div>
           ))
         }
@@ -85,35 +94,46 @@ import RecentTools from "../components/shared/RecentTools";
     <section class="py-16 px-4">
       <div class="max-w-6xl mx-auto space-y-12">
         {
-          categories.map((cat) => (
-            <div>
-              <div class="flex items-center gap-3 mb-6">
-                <Icon icon={cat.icon} size={28} />
-                <h2 class="text-2xl font-bold text-foreground">{cat.title}</h2>
-                <a
-                  href={cat.href}
-                  class="ml-auto text-sm text-brand-500 hover:underline"
-                >
-                  View all →
-                </a>
-              </div>
-              <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                {cat.tools.map((tool) => (
-                  <a href={tool.href} class="group block">
-                    <Card
-                      size="sm"
-                      className="h-full p-4 flex flex-col gap-3 cursor-pointer transition-all duration-150 group-hover:ring-brand-500/40 group-hover:bg-secondary"
-                    >
-                      <Icon icon={tool.icon} size={28} />
-                      <span class="font-medium text-sm text-card-foreground group-hover:text-brand-500 transition-colors">
-                        {tool.name}
-                      </span>
-                    </Card>
+          categories.map((cat) => {
+            const CatIcon = cat.icon;
+            return (
+              <div>
+                <div class="flex items-center gap-3 mb-6">
+                  <CatIcon size={28} />
+                  <h2 class="text-2xl font-bold text-foreground">
+                    {cat.title}
+                  </h2>
+                  <a
+                    href={cat.href}
+                    class="ml-auto text-sm text-brand-500 hover:underline"
+                  >
+                    View all →
                   </a>
-                ))}
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {cat.tools.map((tool) => {
+                    const TIcon = tool.icon;
+                    return (
+                      <a href={tool.href} class="group block">
+                        <Card
+                          size="sm"
+                          className="h-full p-4 flex flex-col gap-3 cursor-pointer transition-all duration-150 group-hover:ring-brand-500/40 group-hover:bg-secondary"
+                        >
+                          <TIcon
+                            size={28}
+                            className="group-hover:text-brand-500"
+                          />
+                          <span class="font-medium text-sm text-card-foreground group-hover:text-brand-500 transition-colors">
+                            {tool.name}
+                          </span>
+                        </Card>
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         }
       </div>
     </section>

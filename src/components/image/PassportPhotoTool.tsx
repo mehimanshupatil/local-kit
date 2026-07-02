@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import DropZone from '@/components/shared/DropZone';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import ProgressBar from '@/components/shared/ProgressBar';
 import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';

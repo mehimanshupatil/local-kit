@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { readMetadata, removeMetadata, type MetadataSummary } from '@/lib/image/imageRemoveMetadata';
 import { formatFileSize, stripExtension, getExtension } from '@/lib/utils/fileUtils';
 import { useToolVisit } from '@/stores/toolVisit';

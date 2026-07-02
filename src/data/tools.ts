@@ -1,17 +1,19 @@
-import type { IconType } from 'react-icons';
+import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
 import {
-  FcDocument, FcLink, FcRules, FcPackage, FcSynchronize, FcTreeStructure,
-  FcLock, FcUnlock, FcGallery, FcCamera, FcPicture, FcRuler, FcFlashOn,
-  FcVideoFile, FcMusic, FcSettings, FcTemplate, FcAudioFile, FcDeleteDatabase,
-  FcReading, FcEditImage, FcPrivacy, FcGlobe, FcPortraitMode, FcInspection,
-  FcFilm, FcSpeaker, FcFile, FcOpenedFolder,
-  FcBinoculars, FcKey, FcDataSheet, FcMultipleInputs, FcClock,
-} from 'react-icons/fc';
+  FilePdfIcon, LinkSimpleIcon, ScissorsIcon, PackageIcon, ArrowsClockwiseIcon,
+  TreeStructureIcon, StampIcon, LockOpenIcon, ImagesIcon, CameraIcon, FileImageIcon,
+  ImageIcon, RulerIcon, LightningIcon, ClipboardTextIcon, PencilSimpleIcon,
+  FilmSlateIcon, MusicNotesIcon, GearIcon, SquaresFourIcon, FileAudioIcon,
+  TrashIcon, ScanIcon, ShieldIcon, GlobeIcon, UserIcon, FilmStripIcon,
+  SpeakerSlashIcon, FileIcon, FolderOpenIcon, BinocularsIcon, KeyIcon,
+  TableIcon, PaletteIcon, ClockIcon, QrCodeIcon, BookOpenTextIcon,
+  FileTextIcon,
+} from '@phosphor-icons/react';
 
 export interface Tool {
   name: string;
   href: string;
-  icon: IconType;
+  icon: PhosphorIcon;
   desc: string;
   /** <title> tag for the tool page */
   pageTitle: string;
@@ -22,7 +24,7 @@ export interface Tool {
 export interface Category {
   id: string;
   title: string;
-  icon: IconType;
+  icon: PhosphorIcon;
   href: string;
   color: string;
   /** <title> tag for the category index page */
@@ -42,7 +44,7 @@ export const categories: Category[] = [
   {
     id: 'pdf',
     title: 'PDF Tools',
-    icon: FcDocument,
+    icon: FilePdfIcon,
     href: '/pdf',
     color: 'red',
     pageTitle: 'PDF Tools — Free Online PDF Editor | LocalKit',
@@ -51,97 +53,97 @@ export const categories: Category[] = [
     subheading: 'All PDF tools run locally in your browser. No uploads, no servers — your files stay private.',
     tools: [
       {
-        name: 'Merge PDFs', href: '/pdf/merge', icon: FcLink,
+        name: 'Merge PDFs', href: '/pdf/merge', icon: LinkSimpleIcon,
         desc: 'Combine multiple PDFs into one',
         pageTitle: 'Merge PDFs Online — Free, No Upload | LocalKit',
         pageDesc: 'Combine multiple PDF files into one. Drag, drop, reorder and merge — 100% in your browser.',
       },
       {
-        name: 'Split PDF', href: '/pdf/split', icon: FcRules,
+        name: 'Split PDF', href: '/pdf/split', icon: ScissorsIcon,
         desc: 'Extract pages or split into parts',
         pageTitle: 'Split PDF Online — Free, No Upload | LocalKit',
         pageDesc: 'Split a PDF into individual pages or custom page ranges. Runs entirely in your browser.',
       },
       {
-        name: 'Compress PDF', href: '/pdf/compress', icon: FcPackage,
+        name: 'Compress PDF', href: '/pdf/compress', icon: PackageIcon,
         desc: 'Reduce PDF file size',
         pageTitle: 'Compress PDF Online — Reduce PDF Size | LocalKit',
         pageDesc: 'Reduce PDF file size without quality loss. Uses pdf-lib to optimize object streams in your browser.',
       },
       {
-        name: 'Rotate PDF', href: '/pdf/rotate', icon: FcSynchronize,
+        name: 'Rotate PDF', href: '/pdf/rotate', icon: ArrowsClockwiseIcon,
         desc: 'Rotate pages in a PDF',
         pageTitle: 'Rotate PDF Pages Online | LocalKit',
         pageDesc: 'Rotate all or specific pages in a PDF. Choose 90°, 180°, or 270° rotation. 100% browser-based.',
       },
       {
-        name: 'Reorder Pages', href: '/pdf/reorder', icon: FcTreeStructure,
+        name: 'Reorder Pages', href: '/pdf/reorder', icon: TreeStructureIcon,
         desc: 'Drag pages into any order',
         pageTitle: 'Reorder PDF Pages — Free, No Upload | LocalKit',
         pageDesc: 'Drag and drop pages to rearrange them in any order. Save your reordered PDF instantly — 100% in your browser.',
       },
       {
-        name: 'Delete Pages', href: '/pdf/delete-pages', icon: FcDeleteDatabase,
+        name: 'Delete Pages', href: '/pdf/delete-pages', icon: TrashIcon,
         desc: 'Remove specific pages from a PDF',
         pageTitle: 'Delete PDF Pages — Free, No Upload | LocalKit',
         pageDesc: 'Select and remove specific pages from a PDF. Preview thumbnails, click to mark, save instantly — 100% in your browser.',
       },
       {
-        name: 'Add Watermark', href: '/pdf/watermark', icon: FcLock,
+        name: 'Add Watermark', href: '/pdf/watermark', icon: StampIcon,
         desc: 'Stamp text on every page',
         pageTitle: 'Add Watermark to PDF — Free, No Upload | LocalKit',
         pageDesc: 'Stamp text watermarks on every page of your PDF. Choose text, opacity, color and angle — 100% in your browser.',
       },
       {
-        name: 'Unlock PDF', href: '/pdf/unlock', icon: FcUnlock,
+        name: 'Unlock PDF', href: '/pdf/unlock', icon: LockOpenIcon,
         desc: 'Remove password protection',
         pageTitle: 'Unlock PDF — Remove Password Protection | LocalKit',
         pageDesc: 'Remove the password from a protected PDF. Enter the password once and download the unlocked file — 100% in your browser.',
       },
       {
-        name: 'Extract Images', href: '/pdf/extract-images', icon: FcGallery,
+        name: 'Extract Images', href: '/pdf/extract-images', icon: ImagesIcon,
         desc: 'Pull embedded images out',
         pageTitle: 'Extract Images from PDF — Free, No Upload | LocalKit',
         pageDesc: 'Pull out all embedded images from any PDF file. Download individually or as a ZIP — 100% in your browser.',
       },
       {
-        name: 'PDF to Images', href: '/pdf/to-images', icon: FcCamera,
+        name: 'PDF to Images', href: '/pdf/to-images', icon: CameraIcon,
         desc: 'Export each page as PNG',
         pageTitle: 'PDF to Images — Export PDF Pages as PNG | LocalKit',
         pageDesc: 'Convert each page of a PDF to a high-quality PNG image. Powered by PDF.js, runs in your browser.',
       },
       {
-        name: 'Images to PDF', href: '/pdf/from-images', icon: FcCamera,
+        name: 'Images to PDF', href: '/pdf/from-images', icon: FileImageIcon,
         desc: 'Create PDF from images',
         pageTitle: 'Images to PDF — Create PDF from Photos | LocalKit',
         pageDesc: 'Combine JPG, PNG images into a single PDF document. All processing in your browser.',
       },
       {
-        name: 'Fill Form', href: '/pdf/fill-form', icon: FcEditImage,
+        name: 'Fill Form', href: '/pdf/fill-form', icon: ClipboardTextIcon,
         desc: 'Fill PDF form fields and download',
         pageTitle: 'Fill PDF Form Online — Free, No Upload | LocalKit',
         pageDesc: 'Fill interactive PDF form fields (text, checkboxes, dropdowns) and download the completed PDF — 100% in your browser.',
       },
       {
-        name: 'Edit Metadata', href: '/pdf/edit-metadata', icon: FcInspection,
+        name: 'Edit Metadata', href: '/pdf/edit-metadata', icon: PencilSimpleIcon,
         desc: 'Edit title, author, keywords and more',
         pageTitle: 'Edit PDF Metadata — Title, Author, Keywords | LocalKit',
         pageDesc: 'View and edit PDF metadata: title, author, subject, keywords, creator, producer and dates — 100% in your browser.',
       },
       {
-        name: 'Annotate PDF', href: '/pdf/annotate', icon: FcEditImage,
+        name: 'Annotate PDF', href: '/pdf/annotate', icon: PencilSimpleIcon,
         desc: 'Draw, add images and text on PDF pages',
         pageTitle: 'Annotate PDF — Draw & Add Images | LocalKit',
         pageDesc: 'Draw on PDF pages, insert images and add text overlays — freehand annotation tool, 100% in your browser.',
       },
       {
-        name: 'Sign PDF', href: '/pdf/sign', icon: FcInspection,
+        name: 'Sign PDF', href: '/pdf/sign', icon: StampIcon,
         desc: 'Place your signature on any PDF page',
         pageTitle: 'Sign PDF — Free, No Upload | LocalKit',
         pageDesc: 'Draw, type or upload your signature and place it on any PDF page. 100% private, runs in your browser.',
       },
       {
-        name: 'Word → PDF', href: '/pdf/word-to-pdf', icon: FcDocument,
+        name: 'Word → PDF', href: '/pdf/word-to-pdf', icon: FileTextIcon,
         desc: 'Convert .docx Word files to PDF',
         pageTitle: 'Word to PDF — Free, No Upload | LocalKit',
         pageDesc: 'Convert Microsoft Word .docx files to PDF entirely in your browser. No uploads, no servers.',
@@ -151,7 +153,7 @@ export const categories: Category[] = [
   {
     id: 'image',
     title: 'Image Tools',
-    icon: FcPicture,
+    icon: ImageIcon,
     href: '/image',
     color: 'blue',
     pageTitle: 'Image Tools — Free Online Image Editor | LocalKit',
@@ -160,61 +162,61 @@ export const categories: Category[] = [
     subheading: 'Compress, resize, and convert images using the Canvas API — entirely in your browser.',
     tools: [
       {
-        name: 'Compress Image', href: '/image/compress', icon: FcPackage,
+        name: 'Compress Image', href: '/image/compress', icon: PackageIcon,
         desc: 'Reduce image file size',
         pageTitle: 'Compress Images Online — Free, No Upload | LocalKit',
         pageDesc: 'Compress JPEG, PNG, and WebP images without quality loss. Runs 100% in your browser.',
       },
       {
-        name: 'Resize Image', href: '/image/resize', icon: FcRuler,
+        name: 'Resize Image', href: '/image/resize', icon: RulerIcon,
         desc: 'Change image dimensions',
         pageTitle: 'Resize Images Online — Free, No Upload | LocalKit',
         pageDesc: 'Resize images to exact dimensions, fit, or fill. Batch resize multiple images in your browser.',
       },
       {
-        name: 'Convert Format', href: '/image/convert', icon: FcSynchronize,
+        name: 'Convert Format', href: '/image/convert', icon: ArrowsClockwiseIcon,
         desc: 'Convert between JPG, PNG, WebP, AVIF',
         pageTitle: 'Convert Image Format — JPG, PNG, WebP, AVIF | LocalKit',
         pageDesc: 'Convert images between JPEG, PNG, WebP, and AVIF formats. Fast, free, and private.',
       },
       {
-        name: 'Crop / Rotate / Flip', href: '/image/crop-rotate-flip', icon: FcRules,
+        name: 'Crop / Rotate / Flip', href: '/image/crop-rotate-flip', icon: ScissorsIcon,
         desc: 'Crop, rotate and flip images',
         pageTitle: 'Crop, Rotate & Flip Images — Free, No Upload | LocalKit',
         pageDesc: 'Crop, rotate and flip any image in your browser. No uploads, no servers — instant download.',
       },
       {
-        name: 'Background Remover', href: '/image/background-remover', icon: FcFlashOn,
+        name: 'Background Remover', href: '/image/background-remover', icon: LightningIcon,
         desc: 'Remove background with AI',
         pageTitle: 'Remove Image Background — Free, No Upload | LocalKit',
         pageDesc: 'Remove the background from any photo using AI — runs entirely in your browser. No uploads, no servers.',
       },
       {
-        name: 'Remove Metadata', href: '/image/remove-metadata', icon: FcPrivacy,
+        name: 'Remove Metadata', href: '/image/remove-metadata', icon: ShieldIcon,
         desc: 'Strip EXIF, GPS and all hidden metadata',
         pageTitle: 'Remove Image Metadata — Strip EXIF & GPS | LocalKit',
         pageDesc: 'Strip all EXIF data, GPS coordinates and hidden metadata from images. Runs 100% in your browser — nothing uploaded.',
       },
       {
-        name: 'Edit Metadata', href: '/image/edit-metadata', icon: FcGlobe,
+        name: 'Edit Metadata', href: '/image/edit-metadata', icon: GlobeIcon,
         desc: 'Add GPS, author, copyright to JPEG',
         pageTitle: 'Edit Image Metadata — Add GPS & EXIF | LocalKit',
         pageDesc: 'Embed GPS coordinates, author, copyright and date into JPEG images. All processing in your browser.',
       },
       {
-        name: 'Dither Image', href: '/image/dither', icon: FcInspection,
+        name: 'Dither Image', href: '/image/dither', icon: SquaresFourIcon,
         desc: 'Convert images with dithering algorithms',
         pageTitle: 'Image Dithering — Floyd-Steinberg, Atkinson, Bayer | LocalKit',
         pageDesc: 'Apply dithering algorithms to images: Floyd-Steinberg, Atkinson, Bayer ordered, and more. Runs 100% in your browser.',
       },
       {
-        name: 'Passport Photo', href: '/image/passport-photo', icon: FcPortraitMode,
+        name: 'Passport Photo', href: '/image/passport-photo', icon: UserIcon,
         desc: 'Crop any photo to passport size with face guide',
         pageTitle: 'Passport Photo Maker — Free, No Upload | LocalKit',
         pageDesc: 'Crop any photo to the correct passport size for 6 countries (ICAO, US, India, UK, Canada, China). Choose DPI, optional background removal — 100% in your browser.',
       },
       {
-        name: 'Image Watermark', href: '/image/watermark', icon: FcEditImage,
+        name: 'Image Watermark', href: '/image/watermark', icon: StampIcon,
         desc: 'Add text or image overlay to photos',
         pageTitle: 'Add Watermark to Images — Free, No Upload | LocalKit',
         pageDesc: 'Add text or image watermarks to your photos. Control position, opacity and style — 100% in your browser.',
@@ -224,7 +226,7 @@ export const categories: Category[] = [
   {
     id: 'video',
     title: 'Video Tools',
-    icon: FcVideoFile,
+    icon: FilmSlateIcon,
     href: '/video',
     color: 'purple',
     pageTitle: 'Video Tools — Free Online Video Editor | LocalKit',
@@ -234,37 +236,37 @@ export const categories: Category[] = [
     note: '⚠️ First load downloads ~30MB FFmpeg WASM core',
     tools: [
       {
-        name: 'Compress Video', href: '/video/compress', icon: FcPackage,
+        name: 'Compress Video', href: '/video/compress', icon: PackageIcon,
         desc: 'Reduce video file size with H.264',
         pageTitle: 'Compress Video Online — FFmpeg WASM | LocalKit',
         pageDesc: 'Compress MP4 and other video files using FFmpeg H.264 encoding. Runs in your browser — no upload.',
       },
       {
-        name: 'Convert Video', href: '/video/convert', icon: FcSynchronize,
+        name: 'Convert Video', href: '/video/convert', icon: ArrowsClockwiseIcon,
         desc: 'MP4, WebM, AVI, MOV, GIF',
         pageTitle: 'Convert Video Format Online — MP4, WebM, GIF | LocalKit',
         pageDesc: 'Convert videos between MP4, WebM, AVI, MOV, and GIF. Powered by FFmpeg WASM in your browser.',
       },
       {
-        name: 'Trim Video', href: '/video/trim', icon: FcRules,
+        name: 'Trim Video', href: '/video/trim', icon: ScissorsIcon,
         desc: 'Cut start/end of a video',
         pageTitle: 'Trim Video Online — Cut Start & End | LocalKit',
         pageDesc: 'Trim a video by setting start and end points. Uses FFmpeg WASM for lossless stream copy.',
       },
       {
-        name: 'Extract Audio', href: '/video/extract-audio', icon: FcAudioFile,
+        name: 'Extract Audio', href: '/video/extract-audio', icon: FileAudioIcon,
         desc: 'Save audio as MP3, AAC, WAV',
         pageTitle: 'Extract Audio from Video — MP3, AAC, WAV | LocalKit',
         pageDesc: 'Extract the audio track from any video file as MP3, AAC, WAV or OGG. Powered by FFmpeg WASM.',
       },
       {
-        name: 'Video → GIF', href: '/video/to-gif', icon: FcFilm,
+        name: 'Video → GIF', href: '/video/to-gif', icon: FilmStripIcon,
         desc: 'Convert a video clip to an animated GIF',
         pageTitle: 'Convert Video to GIF — Free, No Upload | LocalKit',
         pageDesc: 'Convert any video clip to an animated GIF. Control FPS and size — powered by FFmpeg WASM.',
       },
       {
-        name: 'Remove Audio', href: '/video/remove-audio', icon: FcSpeaker,
+        name: 'Remove Audio', href: '/video/remove-audio', icon: SpeakerSlashIcon,
         desc: 'Strip audio track from a video',
         pageTitle: 'Remove Audio from Video — Mute Video | LocalKit',
         pageDesc: 'Remove the audio track from any video file. Produces a silent video — powered by FFmpeg WASM.',
@@ -274,7 +276,7 @@ export const categories: Category[] = [
   {
     id: 'audio',
     title: 'Audio Tools',
-    icon: FcMusic,
+    icon: MusicNotesIcon,
     href: '/audio',
     color: 'green',
     pageTitle: 'Audio Tools — Free Online Audio Editor | LocalKit',
@@ -284,25 +286,25 @@ export const categories: Category[] = [
     note: '⚠️ First load downloads ~30MB FFmpeg WASM core',
     tools: [
       {
-        name: 'Convert Audio', href: '/audio/convert', icon: FcSynchronize,
+        name: 'Convert Audio', href: '/audio/convert', icon: ArrowsClockwiseIcon,
         desc: 'Convert between MP3, AAC, WAV, OGG, FLAC',
         pageTitle: 'Convert Audio Format — MP3, AAC, WAV, OGG, FLAC | LocalKit',
         pageDesc: 'Convert audio files between MP3, AAC, WAV, OGG, and FLAC formats. Powered by FFmpeg WASM in your browser.',
       },
       {
-        name: 'Trim Audio', href: '/audio/trim', icon: FcRules,
+        name: 'Trim Audio', href: '/audio/trim', icon: ScissorsIcon,
         desc: 'Cut start/end of an audio file',
         pageTitle: 'Trim Audio Online — Cut Start & End | LocalKit',
         pageDesc: 'Trim an audio file by setting start and end points. Uses FFmpeg WASM for lossless stream copy.',
       },
       {
-        name: 'Compress Audio', href: '/audio/compress', icon: FcPackage,
+        name: 'Compress Audio', href: '/audio/compress', icon: PackageIcon,
         desc: 'Reduce audio file size with bitrate control',
         pageTitle: 'Compress Audio Online — Reduce File Size | LocalKit',
         pageDesc: 'Compress audio files by adjusting bitrate. Powered by FFmpeg WASM — runs entirely in your browser.',
       },
       {
-        name: 'Merge Audio', href: '/audio/merge', icon: FcLink,
+        name: 'Merge Audio', href: '/audio/merge', icon: LinkSimpleIcon,
         desc: 'Concatenate multiple audio files',
         pageTitle: 'Merge Audio Files — Free, No Upload | LocalKit',
         pageDesc: 'Concatenate multiple audio files into one. Reorder tracks — powered by FFmpeg WASM.',
@@ -312,7 +314,7 @@ export const categories: Category[] = [
   {
     id: 'ocr',
     title: 'OCR Tools',
-    icon: FcReading,
+    icon: ScanIcon,
     href: '/ocr',
     color: 'yellow',
     pageTitle: 'OCR Tools — Extract Text from Images & PDFs | LocalKit',
@@ -322,7 +324,7 @@ export const categories: Category[] = [
     note: '⚠️ First use downloads the language model (~10 MB). Cached after that.',
     tools: [
       {
-        name: 'Extract Text', href: '/ocr/extract', icon: FcReading,
+        name: 'Extract Text', href: '/ocr/extract', icon: BookOpenTextIcon,
         desc: 'Extract text from images or PDFs',
         pageTitle: 'OCR — Extract Text from Images & PDFs | LocalKit',
         pageDesc: 'Extract text from any image or PDF using Tesseract OCR. Supports 12+ languages — runs 100% in your browser.',
@@ -332,7 +334,7 @@ export const categories: Category[] = [
   {
     id: 'dev',
     title: 'Developer Tools',
-    icon: FcSettings,
+    icon: GearIcon,
     href: '/dev',
     color: 'green',
     pageTitle: 'Developer Tools — LocalKit',
@@ -341,61 +343,61 @@ export const categories: Category[] = [
     subheading: 'Handy dev utilities that run entirely in your browser — no installs, no uploads.',
     tools: [
       {
-        name: 'CSS → Tailwind', href: '/dev/css-to-tailwind', icon: FcTemplate,
+        name: 'CSS → Tailwind', href: '/dev/css-to-tailwind', icon: SquaresFourIcon,
         desc: 'Convert CSS properties to Tailwind utility classes',
         pageTitle: 'CSS to Tailwind Converter — LocalKit',
         pageDesc: 'Paste any CSS and instantly get the equivalent Tailwind utility classes. Supports prefix config.',
       },
       {
-        name: 'QR Code Generator', href: '/dev/qr-code', icon: FcPortraitMode,
+        name: 'QR Code Generator', href: '/dev/qr-code', icon: QrCodeIcon,
         desc: 'Generate QR codes for text or URLs',
         pageTitle: 'QR Code Generator — Free, No Upload | LocalKit',
         pageDesc: 'Generate QR codes for any text or URL. Choose size, colors and error correction — 100% in your browser.',
       },
       {
-        name: 'Base64 → Image', href: '/dev/base64-image', icon: FcPicture,
+        name: 'Base64 → Image', href: '/dev/base64-image', icon: FileImageIcon,
         desc: 'Decode a base64 string or data URL and preview the image',
         pageTitle: 'Base64 to Image Decoder — LocalKit',
         pageDesc: 'Paste a base64 string or data URL and instantly preview the decoded image. Download or copy — 100% in your browser.',
       },
       {
-        name: 'JSON Formatter', href: '/dev/json-formatter', icon: FcDataSheet,
+        name: 'JSON Formatter', href: '/dev/json-formatter', icon: TableIcon,
         desc: 'Format, validate and minify JSON',
         pageTitle: 'JSON Formatter & Validator — LocalKit',
         pageDesc: 'Format, validate, and minify JSON in your browser. Syntax highlighting, error detection — no uploads.',
       },
       {
-        name: 'Hash Generator', href: '/dev/hash-generator', icon: FcKey,
+        name: 'Hash Generator', href: '/dev/hash-generator', icon: KeyIcon,
         desc: 'Generate SHA-256, SHA-512, MD5 hashes',
         pageTitle: 'Hash Generator — SHA-256, SHA-512 | LocalKit',
         pageDesc: 'Generate cryptographic hashes (SHA-256, SHA-512) from text or files. Uses the native Web Crypto API.',
       },
       {
-        name: 'URL Encoder', href: '/dev/url-encoder', icon: FcLink,
+        name: 'URL Encoder', href: '/dev/url-encoder', icon: LinkSimpleIcon,
         desc: 'Encode and decode URLs and query strings',
         pageTitle: 'URL Encoder / Decoder — LocalKit',
         pageDesc: 'Encode and decode URLs and query string components. Supports percent-encoding and form encoding.',
       },
       {
-        name: 'JWT Decoder', href: '/dev/jwt-decoder', icon: FcBinoculars,
+        name: 'JWT Decoder', href: '/dev/jwt-decoder', icon: BinocularsIcon,
         desc: 'Decode and inspect JWT tokens',
         pageTitle: 'JWT Decoder — Inspect JSON Web Tokens | LocalKit',
         pageDesc: 'Decode JWT tokens and inspect header, payload and signature. Works entirely in your browser — tokens never leave your device.',
       },
       {
-        name: 'Color Converter', href: '/dev/color-converter', icon: FcMultipleInputs,
+        name: 'Color Converter', href: '/dev/color-converter', icon: PaletteIcon,
         desc: 'Convert between HEX, RGB, HSL, and OKLCH',
         pageTitle: 'Color Converter — HEX RGB HSL | LocalKit',
         pageDesc: 'Convert colors between HEX, RGB, HSL, and OKLCH formats instantly in your browser.',
       },
       {
-        name: 'Markdown Preview', href: '/dev/markdown-preview', icon: FcReading,
+        name: 'Markdown Preview', href: '/dev/markdown-preview', icon: BookOpenTextIcon,
         desc: 'Preview Markdown — paste, upload, or fetch a URL',
         pageTitle: 'Markdown Preview — LocalKit',
         pageDesc: 'Preview Markdown files in your browser. Paste text, upload a .md file, or fetch from a URL. No uploads.',
       },
       {
-        name: 'Epoch Converter', href: '/dev/epoch-converter', icon: FcClock,
+        name: 'Epoch Converter', href: '/dev/epoch-converter', icon: ClockIcon,
         desc: 'Convert Unix timestamps to dates and back',
         pageTitle: 'Epoch / Unix Timestamp Converter — LocalKit',
         pageDesc: 'Convert Unix epoch timestamps to human-readable dates (UTC, local, any timezone) and back. Auto-detects seconds, ms, µs, ns. 100% in your browser.',
@@ -405,7 +407,7 @@ export const categories: Category[] = [
   {
     id: 'archive',
     title: 'Archive Tools',
-    icon: FcOpenedFolder,
+    icon: FolderOpenIcon,
     href: '/archive',
     color: 'yellow',
     pageTitle: 'Archive Tools — ZIP Files | LocalKit',
@@ -414,13 +416,13 @@ export const categories: Category[] = [
     subheading: 'Create, inspect and extract ZIP archives — all processed locally in your browser.',
     tools: [
       {
-        name: 'Create ZIP', href: '/archive/create', icon: FcPackage,
+        name: 'Create ZIP', href: '/archive/create', icon: PackageIcon,
         desc: 'Compress files into a ZIP archive',
         pageTitle: 'Create ZIP Archive — Free, No Upload | LocalKit',
         pageDesc: 'Select multiple files and compress them into a ZIP archive. 100% in your browser using JSZip.',
       },
       {
-        name: 'Extract ZIP', href: '/archive/extract', icon: FcFile,
+        name: 'Extract ZIP', href: '/archive/extract', icon: FileIcon,
         desc: 'Extract files from a ZIP archive',
         pageTitle: 'Extract ZIP Archive — Free, No Upload | LocalKit',
         pageDesc: 'Extract files from any ZIP archive and download them individually or all at once.',

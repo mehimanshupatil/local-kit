@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EyeIcon, EyeSlashIcon } from '@phosphor-icons/react';
-import { FcDocument } from 'react-icons/fc';
+import { FilePdfIcon } from '@phosphor-icons/react';
 import { useEffect, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { formatFileSize } from '@/lib/utils/fileUtils';
@@ -26,7 +26,7 @@ export default function PDFFileBar({ file, total, onClear }: Props) {
   return (
     <Card className="rounded-xl border overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3">
-        <FcDocument size={28} />
+        <FilePdfIcon size={28} />
         <div className="flex-1 min-w-0">
           <p className="font-medium text-foreground truncate">{file.name}</p>
           <p className="text-xs text-muted-foreground">

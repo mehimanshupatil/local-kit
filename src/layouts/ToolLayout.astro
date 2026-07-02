@@ -1,7 +1,6 @@
 ---
 import BaseLayout from "./BaseLayout.astro";
-import Icon from "../components/ui/Icon";
-import type { IconType } from "react-icons";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react";
 
 interface Props {
   title: string;
@@ -10,7 +9,7 @@ interface Props {
   category: string;
   categoryHref: string;
   toolName: string;
-  icon: IconType;
+  icon: PhosphorIcon;
   wide?: boolean;
 }
 
@@ -21,7 +20,7 @@ const {
   category,
   categoryHref,
   toolName,
-  icon,
+  icon: ToolIcon,
   wide = false,
 } = Astro.props;
 ---
@@ -54,7 +53,7 @@ const {
 
       <!-- Tool Header -->
       <div class="flex items-center gap-3 mb-8">
-        <Icon icon={icon} size={28} />
+        <ToolIcon size={28} />
         <div>
           <h1 class="text-xl font-semibold text-foreground">{toolName}</h1>
           <p class="text-muted-foreground text-xs mt-0.5">{description}</p>

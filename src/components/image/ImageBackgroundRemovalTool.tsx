@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles  from '@/components/shared/OutputFiles';
 import { removeImageBackground } from '@/lib/image/imageBackgroundRemoval';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
 import { useToolVisit } from '@/stores/toolVisit';

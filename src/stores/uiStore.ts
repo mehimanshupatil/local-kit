@@ -11,6 +11,8 @@ interface UIStore {
   toasts: Toast[];
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
+  commandOpen: boolean;
+  setCommandOpen: (open: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -21,4 +23,6 @@ export const useUIStore = create<UIStore>((set) => ({
     setTimeout(() => set((s) => ({ toasts: s.toasts.filter(t => t.id !== id) })), 4000);
   },
   removeToast: (id) => set((s) => ({ toasts: s.toasts.filter(t => t.id !== id) })),
+  commandOpen: false,
+  setCommandOpen: (open) => set({ commandOpen: open }),
 }));

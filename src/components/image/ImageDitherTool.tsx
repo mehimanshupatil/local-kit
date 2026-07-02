@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import DropZone from '@/components/shared/DropZone';
 import ProgressBar from '@/components/shared/ProgressBar';
-import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
+import OutputFiles from '@/components/shared/OutputFiles';
 import { ditherImage } from '@/lib/image/imageDither';
 import type { DitherAlgorithm, DitherOptions, PaletteMode } from '@/lib/image/imageDither';
 import { formatFileSize, stripExtension, generateId } from '@/lib/utils/fileUtils';
