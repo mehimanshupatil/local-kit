@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import FaviconGeneratorTool from '../../components/dev/FaviconGeneratorTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/favicon-generator');
+---
+<ToolLayout {...meta}>
+  <FaviconGeneratorTool client:load />
+</ToolLayout>

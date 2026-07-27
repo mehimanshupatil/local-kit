@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import EmiCalculatorTool from '../../components/calculators/EmiCalculatorTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/calculators/emi-calculator');
+---
+<ToolLayout {...meta}>
+  <EmiCalculatorTool client:load />
+</ToolLayout>

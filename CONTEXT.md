@@ -2,17 +2,17 @@
 
 A collection of file-processing utilities that run entirely in the user's browser. No files are uploaded to any server; all processing happens client-side using browser APIs, WebAssembly, and the Canvas API. Deployed as a static site to GitHub Pages — no paid infrastructure, ever.
 
-**Hard constraint**: Any tool is in scope as long as it processes files locally. Any feature that requires a server or external API is permanently out of scope — no exceptions.
+**Hard constraint**: Any tool is in scope as long as it runs entirely client-side — file-processing or pure computation. Any feature that requires a server or external API is permanently out of scope — no exceptions.
 
 ## Language
 
 **Privacy-first**: Files never leave the user's device. No uploads, no runtime network requests after page load, no telemetry. The app is PWA-installable and fully functional air-gap (offline) after first visit.
 _Avoid_: "client-side", "serverless", "secure"
 
-**Tool**: A single file-processing function exposed to the user as a page (e.g. Merge PDFs, Compress Image). Each tool is self-contained — it owns its UI state and calls one or more lib functions.
+**Tool**: A single client-side function exposed to the user as a page — file-processing (e.g. Merge PDFs, Compress Image) or pure computation (e.g. EMI Calculator, Epoch Converter). Each tool is self-contained — it owns its UI state and calls one or more lib functions.
 _Avoid_: feature, utility, widget
 
-**Category**: A group of related tools sharing a route prefix and index page (e.g. `/pdf`, `/image`, `/video`, `/audio`, `/dev`).
+**Category**: A group of related tools sharing a route prefix, index page, and target audience (e.g. `/pdf`, `/image`, `/video`, `/audio`, `/dev` for developer-audience tools, `/calculators` for general-audience computation tools).
 _Avoid_: section, module, namespace
 
 **Tool Registry**: The single source of truth for all tool and category metadata (name, route, description, SEO fields). Lives in `src/data/tools.ts`. Used both at build-time (Astro pages pull SEO tags) and at runtime (Header/Footer nav). No tool metadata is hardcoded outside this file.

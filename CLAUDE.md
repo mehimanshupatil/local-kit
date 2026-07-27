@@ -1,6 +1,6 @@
 # CLAUDE.md — LocalKit
 
-Privacy-first browser-based file utilities. 100% client-side — no uploads, no servers.
+Privacy-first browser-based utilities. 100% client-side — no uploads, no servers.
 
 ## Stack
 
@@ -32,7 +32,7 @@ No env vars needed — fully client-side.
 
 ```
 src/
-  pages/          # Astro routes (index, pdf/*, image/*, video/*, audio/*, dev/*)
+  pages/          # Astro routes (index, pdf/*, image/*, video/*, audio/*, dev/*, calculators/*)
   layouts/        # BaseLayout.astro, ToolLayout.astro
   components/
     ui/           # shadcn/ui primitives
@@ -43,6 +43,7 @@ src/
     video/        # 4 video tool components
     audio/        # 3 audio tool components
     dev/          # developer tool components
+    calculators/  # general-audience computation tool components
   lib/            # Pure processing functions (no React) per category
   data/tools.ts   # Tool registry — single source of truth for metadata/SEO
   stores/

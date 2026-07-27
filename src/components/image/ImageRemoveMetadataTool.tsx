@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
 import DropZone from '@/components/shared/DropZone';
@@ -106,22 +107,22 @@ export default function ImageRemoveMetadataTool() {
                     </span>
                   </div>
                   <div className="overflow-auto max-h-64 rounded-xl border border-border">
-                    <table className="w-full text-xs">
-                      <thead className="bg-secondary sticky top-0">
-                        <tr>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground w-1/3">Field</th>
-                          <th className="text-left px-3 py-2 font-medium text-muted-foreground">Value</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[--border-color]">
+                    <Table className="text-xs">
+                      <TableHeader className="bg-secondary sticky top-0">
+                        <TableRow>
+                          <TableHead className="w-1/3 text-muted-foreground">Field</TableHead>
+                          <TableHead className="text-muted-foreground">Value</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
                         {summary.fields.map(({ key, value }) => (
-                          <tr key={key} className="hover:bg-secondary">
-                            <td className="px-3 py-1.5 text-muted-foreground font-mono break-all">{key}</td>
-                            <td className="px-3 py-1.5 text-foreground break-all">{value}</td>
-                          </tr>
+                          <TableRow key={key}>
+                            <TableCell className="text-muted-foreground font-mono break-all whitespace-normal">{key}</TableCell>
+                            <TableCell className="text-foreground break-all whitespace-normal">{value}</TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
+                      </TableBody>
+                    </Table>
                   </div>
                 </>
               ) : (

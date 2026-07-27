@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import RegexTesterTool from '../../components/dev/RegexTesterTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/regex-tester');
+---
+<ToolLayout {...meta}>
+  <RegexTesterTool client:load />
+</ToolLayout>

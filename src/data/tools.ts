@@ -7,7 +7,7 @@ import {
   TrashIcon, ScanIcon, ShieldIcon, GlobeIcon, UserIcon, FilmStripIcon,
   SpeakerSlashIcon, FileIcon, FolderOpenIcon, BinocularsIcon, KeyIcon,
   TableIcon, PaletteIcon, ClockIcon, QrCodeIcon, BookOpenTextIcon,
-  FileTextIcon,
+  FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -402,6 +402,18 @@ export const categories: Category[] = [
         pageTitle: 'Epoch / Unix Timestamp Converter — LocalKit',
         pageDesc: 'Convert Unix epoch timestamps to human-readable dates (UTC, local, any timezone) and back. Auto-detects seconds, ms, µs, ns. 100% in your browser.',
       },
+      {
+        name: 'Regex Tester', href: '/dev/regex-tester', icon: CodeIcon,
+        desc: 'Test regular expressions with live match highlighting',
+        pageTitle: 'Regex Tester — Live Regular Expression Matching | LocalKit',
+        pageDesc: 'Test regular expressions against any text with live match highlighting, flags, and capture group breakdowns. 100% in your browser.',
+      },
+      {
+        name: 'Favicon Generator', href: '/dev/favicon-generator', icon: BrowserIcon,
+        desc: 'Generate a full favicon set from one image',
+        pageTitle: 'Favicon Generator — Free, No Upload | LocalKit',
+        pageDesc: 'Generate a complete favicon set (PNG sizes, favicon.ico, apple-touch-icon) from a single image, plus a ready-to-paste HTML snippet. 100% in your browser.',
+      },
     ],
   },
   {
@@ -426,6 +438,25 @@ export const categories: Category[] = [
         desc: 'Extract files from a ZIP archive',
         pageTitle: 'Extract ZIP Archive — Free, No Upload | LocalKit',
         pageDesc: 'Extract files from any ZIP archive and download them individually or all at once.',
+      },
+    ],
+  },
+  {
+    id: 'calculators',
+    title: 'Calculators',
+    icon: CalculatorIcon,
+    href: '/calculators',
+    color: 'emerald',
+    pageTitle: 'Calculators — LocalKit',
+    pageDesc: 'Free browser-based calculators. No uploads, no servers — everything runs locally.',
+    heading: 'Calculators',
+    subheading: 'Everyday calculators that run entirely in your browser — no installs, no uploads.',
+    tools: [
+      {
+        name: 'EMI Calculator', href: '/calculators/emi-calculator', icon: BankIcon,
+        desc: 'Calculate loan EMI, total interest, and amortization schedule',
+        pageTitle: 'EMI Calculator — Loan EMI & Amortization Schedule | LocalKit',
+        pageDesc: 'Calculate your monthly loan EMI, total interest, and total payment. View the full amortization schedule and export it as CSV or PDF — 100% in your browser.',
       },
     ],
   },
