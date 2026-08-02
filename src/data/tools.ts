@@ -7,7 +7,7 @@ import {
   TrashIcon, ScanIcon, ShieldIcon, GlobeIcon, UserIcon, FilmStripIcon,
   SpeakerSlashIcon, FileIcon, FolderOpenIcon, BinocularsIcon, KeyIcon,
   TableIcon, PaletteIcon, ClockIcon, QrCodeIcon, BookOpenTextIcon,
-  FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon,
+  FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon, ChartLineUpIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -457,6 +457,12 @@ export const categories: Category[] = [
         desc: 'Calculate loan EMI, total interest, and amortization schedule',
         pageTitle: 'EMI Calculator — Loan EMI & Amortization Schedule | LocalKit',
         pageDesc: 'Calculate your monthly loan EMI, total interest, and total payment. View the full amortization schedule and export it as CSV or PDF — 100% in your browser.',
+      },
+      {
+        name: 'SIP Calculator', href: '/calculators/sip-calculator', icon: ChartLineUpIcon,
+        desc: 'Calculate SIP maturity value, wealth gained, and yearly growth',
+        pageTitle: 'SIP Calculator — Maturity Value & Growth Chart | LocalKit',
+        pageDesc: 'Calculate your SIP maturity value, total investment, and wealth gained. Supports annual step-up, year-wise growth chart and CSV/PDF export — 100% in your browser.',
       },
     ],
   },

@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import SipCalculatorTool from '../../components/calculators/SipCalculatorTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/calculators/sip-calculator');
+---
+<ToolLayout {...meta}>
+  <SipCalculatorTool client:load />
+</ToolLayout>
