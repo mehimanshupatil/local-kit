@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import UuidGeneratorTool from '../../components/dev/UuidGeneratorTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/uuid-generator');
+---
+<ToolLayout {...meta}>
+  <UuidGeneratorTool client:load />
+</ToolLayout>

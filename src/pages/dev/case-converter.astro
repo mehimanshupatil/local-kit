@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CaseConverterTool from '../../components/dev/CaseConverterTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/case-converter');
+---
+<ToolLayout {...meta}>
+  <CaseConverterTool client:load />
+</ToolLayout>

@@ -8,6 +8,7 @@ import {
   SpeakerSlashIcon, FileIcon, FolderOpenIcon, BinocularsIcon, KeyIcon,
   TableIcon, PaletteIcon, ClockIcon, QrCodeIcon, BookOpenTextIcon,
   FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon, ChartLineUpIcon,
+  FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -413,6 +414,36 @@ export const categories: Category[] = [
         desc: 'Generate a full favicon set from one image',
         pageTitle: 'Favicon Generator — Free, No Upload | LocalKit',
         pageDesc: 'Generate a complete favicon set (PNG sizes, favicon.ico, apple-touch-icon) from a single image, plus a ready-to-paste HTML snippet. 100% in your browser.',
+      },
+      {
+        name: 'UUID Generator', href: '/dev/uuid-generator', icon: FingerprintIcon,
+        desc: 'Generate v4 or v7 UUIDs in bulk',
+        pageTitle: 'UUID Generator — v4 & v7, Bulk | LocalKit',
+        pageDesc: 'Generate random (v4) or time-ordered (v7) UUIDs, one or in bulk (up to 100). Copy individually or all at once — 100% in your browser.',
+      },
+      {
+        name: 'Text Diff Checker', href: '/dev/text-diff', icon: GitDiffIcon,
+        desc: 'Compare two texts and highlight line-by-line changes',
+        pageTitle: 'Text Diff Checker — Compare Text Online | LocalKit',
+        pageDesc: 'Compare two blocks of text and see line-by-line additions and deletions highlighted. 100% in your browser, nothing uploaded.',
+      },
+      {
+        name: 'Case Converter', href: '/dev/case-converter', icon: TextAaIcon,
+        desc: 'Convert text between camelCase, snake_case, kebab-case and more',
+        pageTitle: 'Case Converter — camelCase, snake_case, kebab-case | LocalKit',
+        pageDesc: 'Convert text between camelCase, PascalCase, snake_case, kebab-case, CONSTANT_CASE, Title Case and more — instantly, 100% in your browser.',
+      },
+      {
+        name: 'Number Base Converter', href: '/dev/number-base-converter', icon: BinaryIcon,
+        desc: 'Convert between binary, octal, decimal and hexadecimal',
+        pageTitle: 'Number Base Converter — Binary, Octal, Decimal, Hex | LocalKit',
+        pageDesc: 'Convert numbers between binary, octal, decimal and hexadecimal instantly, with support for arbitrarily large integers — 100% in your browser.',
+      },
+      {
+        name: 'YAML ↔ JSON', href: '/dev/yaml-json-converter', icon: ArrowsClockwiseIcon,
+        desc: 'Convert between YAML and JSON',
+        pageTitle: 'YAML to JSON Converter — Free, No Upload | LocalKit',
+        pageDesc: 'Convert YAML to JSON or JSON to YAML instantly, with live validation. 100% in your browser, nothing uploaded.',
       },
     ],
   },

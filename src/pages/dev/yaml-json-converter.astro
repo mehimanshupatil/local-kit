@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import YamlJsonConverterTool from '../../components/dev/YamlJsonConverterTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/yaml-json-converter');
+---
+<ToolLayout {...meta}>
+  <YamlJsonConverterTool client:load />
+</ToolLayout>

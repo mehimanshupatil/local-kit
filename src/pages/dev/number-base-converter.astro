@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import NumberBaseConverterTool from '../../components/dev/NumberBaseConverterTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/number-base-converter');
+---
+<ToolLayout {...meta}>
+  <NumberBaseConverterTool client:load />
+</ToolLayout>

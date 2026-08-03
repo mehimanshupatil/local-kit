@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import TextDiffTool from '../../components/dev/TextDiffTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/text-diff');
+---
+<ToolLayout {...meta}>
+  <TextDiffTool client:load />
+</ToolLayout>
