@@ -38,3 +38,6 @@ _Avoid_: pdf-lib for rendering
 
 **PDF Mutator**: The library used to read and write PDF structure (merge, split, rotate, watermark, metadata, forms). Always `@cantoo/pdf-lib` — the only actively maintained MIT fork of `pdf-lib` with real `ignoreEncryption` support for owner-locked PDFs. Original `pdf-lib` unmaintained since 2021; `mupdf` is AGPL-licensed.
 _Avoid_: original pdf-lib, mupdf
+
+**OCR Engine**: The library used to extract text from images and PDFs. Always `scribe.js-ocr` (package `src/lib/ocr/ocr.ts` imports as `scribe`). Referred to in-app as "Scribe OCR".
+_Avoid_: Tesseract, Tesseract OCR — a prior implementation used Tesseract.js; copy referencing it is stale.

@@ -24,11 +24,11 @@ If analytics are ever added in the future, only privacy-respecting, cookieless a
   },
   {
     title: "4. Cookies and Local Storage",
-    body: `LocalKit uses localStorage only to remember your dark/light theme preference. No tracking cookies are set. No third-party cookies are loaded.`,
+    body: `LocalKit uses localStorage to remember your dark/light theme preference, per-tool settings, and your recently used tools. No file content is ever stored. No tracking cookies are set. No third-party cookies are loaded.`,
   },
   {
     title: "5. Third-Party Services",
-    body: `LocalKit loads fonts from Google Fonts and, on first use, the Background Remover tool downloads an AI model (~50 MB) from a CDN. These requests reveal your IP address to those providers (standard for any web request) but no file content is involved.
+    body: `Fonts are self-hosted — no requests are made to Google Fonts or any font CDN. On first use, some tools download additional assets from a CDN: the Background Remover downloads an AI model (~50 MB), video/audio tools download the FFmpeg WebAssembly core (~30 MB), and the OCR tool downloads its engine assets (~10 MB). These requests reveal your IP address to those providers (standard for any web request) but no file content is involved.
 
 No third-party advertising, analytics, or social media scripts are loaded.`,
   },

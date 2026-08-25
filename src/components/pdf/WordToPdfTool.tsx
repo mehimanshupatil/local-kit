@@ -64,10 +64,10 @@ export default function WordToPdfTool() {
       {!file ? (
         <DropZone
           onFiles={addFile}
-          accept=".docx,.doc,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword"
+          accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           multiple={false}
           label="Drop a Word document"
-          sublabel=".docx or .doc files"
+          sublabel=".docx files only"
         />
       ) : (
         <PDFFileBar file={file} onClear={clear} />
