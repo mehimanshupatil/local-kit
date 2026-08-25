@@ -9,19 +9,22 @@ test('converts a long .docx into a multi-page PDF', async ({ page }) => {
   const docxBuffer = await buildLongDocx(300);
 
   await page.goto('/pdf/word-to-pdf');
-  // The dropzone's file input exists in the SSR markup before the React
-  // island hydrates; setting it too early is a no-op since no listener is
-  // attached yet.
-  await page.waitForLoadState('networkidle');
-
-  await page.setInputFiles('input[type="file"]', {
-    name: 'long-document.docx',
-    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    buffer: docxBuffer,
-  });
 
   const convertButton = page.getByRole('button', { name: 'Convert to PDF' });
-  await expect(convertButton).toBeVisible({ timeout: 15_000 });
+
+  // The dropzone's file input exists in the SSR markup before the React
+  // island hydrates; setting it before the hydrated listener attaches is a
+  // silent no-op. Rather than guess a fixed delay (flaky under CI's slower,
+  // colder dev-server startup), retry the upload until it visibly took.
+  await expect(async () => {
+    await page.setInputFiles('input[type="file"]', {
+      name: 'long-document.docx',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      buffer: docxBuffer,
+    });
+    await expect(convertButton).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 30_000 });
+
   await convertButton.click();
 
   await expect(page.getByText('Output (1 file)')).toBeVisible({ timeout: 30_000 });
