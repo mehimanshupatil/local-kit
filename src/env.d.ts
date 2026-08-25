@@ -14,3 +14,5 @@ declare module 'virtual:pwa-register/react' {
         updateServiceWorker: (reloadPage?: boolean) => Promise<void>
     }
 }
+
+declare module 'scribe.js-ocr';

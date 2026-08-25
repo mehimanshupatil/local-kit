@@ -65,6 +65,44 @@ async function waitForImages(root: HTMLElement): Promise<void> {
   }));
 }
 
+// Buckets items so each chunk's total height stays under maxHeight, without
+// splitting an individual item. An item taller than maxHeight on its own still
+// gets its own chunk rather than being dropped or merged.
+export function chunkByHeight<T>(items: T[], getHeight: (item: T) => number, maxHeight: number): T[][] {
+  const chunks: T[][] = [];
+  let current: T[] = [];
+  let currentHeight = 0;
+  for (const item of items) {
+    const h = getHeight(item);
+    if (current.length && currentHeight + h > maxHeight) {
+      chunks.push(current);
+      current = [];
+      currentHeight = 0;
+    }
+    current.push(item);
+    currentHeight += h;
+  }
+  if (current.length) chunks.push(current);
+  return chunks;
+}
+
+// Caps render scale so a chunk's rasterized canvas stays within the browser's
+// practical dimension/area limits, falling back to a smaller (but never
+// upscaled) render rather than silently producing a blank canvas.
+export function computeRenderScale(
+  contentHeight: number,
+  contentWidth: number,
+  baseScale: number,
+  maxDimension: number,
+  maxArea: number,
+): number {
+  return Math.min(
+    baseScale,
+    maxDimension / contentHeight,
+    Math.sqrt(maxArea / (contentWidth * contentHeight)),
+  );
+}
+
 export async function htmlToPdfBlob(
   html: string,
   filename: string,
@@ -86,20 +124,11 @@ export async function htmlToPdfBlob(
   await waitForImages(measure);
 
   const chunkMaxHeight = MAX_CANVAS_DIMENSION / SCALE;
-  const chunks: Element[][] = [];
-  let current: Element[] = [];
-  let currentHeight = 0;
-  for (const child of Array.from(measure.children)) {
-    const h = child.getBoundingClientRect().height;
-    if (current.length && currentHeight + h > chunkMaxHeight) {
-      chunks.push(current);
-      current = [];
-      currentHeight = 0;
-    }
-    current.push(child);
-    currentHeight += h;
-  }
-  if (current.length) chunks.push(current);
+  const chunks = chunkByHeight(
+    Array.from(measure.children),
+    child => child.getBoundingClientRect().height,
+    chunkMaxHeight,
+  );
 
   document.body.removeChild(measure);
   onProgress?.(20);
@@ -130,11 +159,7 @@ export async function htmlToPdfBlob(
     // Safety net: a single oversized element (e.g. one very tall image) could
     // still exceed the limit on its own — fall back to downscaling just that chunk.
     const chunkHeight = chunk.scrollHeight;
-    const scale = Math.min(
-      SCALE,
-      MAX_CANVAS_DIMENSION / chunkHeight,
-      Math.sqrt(MAX_CANVAS_AREA / (CONTENT_WIDTH * chunkHeight)),
-    );
+    const scale = computeRenderScale(chunkHeight, CONTENT_WIDTH, SCALE, MAX_CANVAS_DIMENSION, MAX_CANVAS_AREA);
 
     const canvas = await html2canvas(chunk, {
       scale,

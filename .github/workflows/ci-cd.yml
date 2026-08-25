@@ -42,6 +42,18 @@ jobs:
         # Using npm ci is generally faster than running npm i because it caches dependencies
         run: |
           pnpm install
+      - name: Typecheck
+        run: |
+          pnpm run typecheck
+      - name: Unit tests
+        run: |
+          pnpm run test
+      - name: Install Playwright browsers
+        run: |
+          pnpm exec playwright install --with-deps chromium
+      - name: E2E tests
+        run: |
+          pnpm run test:e2e
       - name: Build the app
         run: |
           pnpm run build

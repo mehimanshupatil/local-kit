@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useImmer } from 'use-immer';
+import { castDraft } from 'immer';
 import { useToolVisit } from '@/stores/toolVisit';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -126,7 +127,7 @@ export default function PDFMergeTool() {
       const pdf = await loadPDFDocument(buffer.slice(0));
       entries.push({ id: generateId(), name: f.name, size: f.size, buffer, pageCount: pdf.numPages, pdf, rawFile: f });
     }
-    updateFiles(draft => { draft.push(...entries); });
+    updateFiles(draft => { draft.push(...entries.map(castDraft)); });
     updateOp(() => ({ ...IDLE_OP }));
   };
 
@@ -138,7 +139,7 @@ export default function PDFMergeTool() {
       const from = draft.findIndex(f => f.id === active.id);
       const to   = draft.findIndex(f => f.id === over.id);
       const moved = arrayMove(draft as FileEntry[], from, to);
-      moved.forEach((item, i) => { draft[i] = item; });
+      moved.forEach((item, i) => { draft[i] = castDraft(item); });
     });
   };
 

@@ -24,6 +24,9 @@ pnpm dev             # dev server with HMR
 pnpm build           # static output → dist/
 pnpm preview         # preview production build
 pnpm generate-og     # regenerate OG images in public/og/ — re-run when tools change
+pnpm typecheck       # tsc --noEmit over src/ (CI gate)
+pnpm test            # Vitest — unit tests for src/lib pure functions
+pnpm test:e2e        # Playwright — full upload → process → verify flow in a real browser
 ```
 
 No env vars needed — fully client-side.
@@ -82,6 +85,13 @@ src/
 
 **FFmpeg**: Lazy-load on first video/audio use (~30MB WASM, cached by service worker). Don't eagerly import.
 
+## Testing
+
+- **Unit tests** (Vitest, `src/**/*.test.ts`): pure logic only — extract algorithm-y pieces of DOM/canvas-bound lib functions (see `src/lib/pdf/wordToPdf.ts`'s `chunkByHeight`/`computeRenderScale`) so they're testable without a browser.
+- **E2E tests** (Playwright, `e2e/*.spec.ts`): drive the real upload → process → output flow in an actual browser — required for anything touching canvas, ffmpeg-wasm, or File/Blob APIs that jsdom can't fake. Assert structurally (page/frame count, valid header bytes, dimensions, non-trivial file size) rather than golden-file byte matches, which break across library version bumps.
+- No production error telemetry — 100% client-side means no server to report to, and adding any would conflict with the privacy promise. Real-world breakage surfaces via GitHub issues.
+- `pnpm typecheck`, `pnpm test`, and `pnpm test:e2e` all gate CI (`.github/workflows/ci-cd.yml`) before build/deploy.
+
 ## Deployment
 
 GitHub Pages via `.github/workflows/ci-cd.yml`. Pushes to `main` trigger build + deploy. Node 24, pnpm 10.
@@ -93,3 +103,5 @@ GitHub Pages via `.github/workflows/ci-cd.yml`. Pushes to `main` trigger build +
 3. Create `src/components/<category>/<ToolName>Tool.tsx`
 4. Add processing logic in `src/lib/<category>/`
 5. Use `DropZone` + `OutputFiles` shared components
+6. Add tests: Vitest unit tests (`*.test.ts` next to the lib file) for any pure logic in `src/lib/<category>/`; a Playwright spec in `e2e/` that drives the full upload → process → output flow in a real browser. Both run in CI and gate merges.
+7. Manually verify in Chrome, Firefox, and Safari (desktop + one mobile browser) with an empty file, a corrupt file, and an oversized file before merging.

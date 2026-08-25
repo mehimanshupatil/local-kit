@@ -7,7 +7,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 
 interface Props {
-  file: { name: string; size: number; buffer: ArrayBuffer };
+  file: { name: string; size: number; buffer?: ArrayBuffer };
   total?: number;
   onClear: () => void;
 }
@@ -15,8 +15,10 @@ interface Props {
 export default function PDFFileBar({ file, total, onClear }: Props) {
   const [opened, { toggle }] = useDisclosure(false);
   const [url, setUrl] = useState('');
+  const canPreview = file.buffer != null;
 
   useEffect(() => {
+    if (!file.buffer) return;
     const blob = new Blob([file.buffer], { type: 'application/pdf' });
     const u = URL.createObjectURL(blob);
     setUrl(u);
@@ -33,12 +35,14 @@ export default function PDFFileBar({ file, total, onClear }: Props) {
             {total != null ? `${total} pages · ` : ''}{formatFileSize(file.size)}
           </p>
         </div>
-        <Button variant="ghost" size="icon" onClick={toggle} title={opened ? 'Hide preview' : 'Preview PDF'}>
-          {opened ? <EyeSlashIcon className="size-4" /> : <EyeIcon className="size-4" />}
-        </Button>
+        {canPreview && (
+          <Button variant="ghost" size="icon" onClick={toggle} title={opened ? 'Hide preview' : 'Preview PDF'}>
+            {opened ? <EyeSlashIcon className="size-4" /> : <EyeIcon className="size-4" />}
+          </Button>
+        )}
         <Button variant="secondary" size="sm" onClick={onClear}>Change</Button>
       </div>
-      {opened && url && (
+      {canPreview && opened && url && (
         <iframe
           src={url}
           className="w-full border-t border-border"

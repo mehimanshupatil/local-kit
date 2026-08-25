@@ -7,7 +7,10 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "generate-og": "node --experimental-strip-types scripts/generate-og.ts"
+    "generate-og": "node --experimental-strip-types scripts/generate-og.ts",
+    "typecheck": "tsc --noEmit --project tsconfig.check.json",
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@astrojs/react": "^6.0.4",
@@ -71,12 +74,14 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@resvg/resvg-js": "^2.6.2",
     "@types/piexifjs": "^1.0.0",
     "@types/qrcode": "^1.5.6",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.5",
     "satori": "^0.33.3",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
   }
 }
