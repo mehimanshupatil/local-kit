@@ -8,7 +8,7 @@ import {
   SpeakerSlashIcon, FileIcon, FolderOpenIcon, BinocularsIcon, KeyIcon,
   TableIcon, PaletteIcon, ClockIcon, QrCodeIcon, BookOpenTextIcon,
   FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon, ChartLineUpIcon,
-  FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon, FileSvgIcon,
+  FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon, FileSvgIcon, PercentIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -450,6 +450,12 @@ export const categories: Category[] = [
         desc: 'Convert SVG markup into a CSS/HTML-ready data URI',
         pageTitle: 'SVG to Data URI Encoder — LocalKit',
         pageDesc: 'Paste or upload SVG markup and get a URL-encoded or base64 data URI, ready to paste into CSS background-image or an <img> tag. 100% in your browser.',
+      },
+      {
+        name: 'Percentage to Hex', href: '/dev/percentage-to-hex', icon: PercentIcon,
+        desc: 'Convert an opacity percent to its hex and decimal alpha byte',
+        pageTitle: 'Percentage to Hex Converter — Alpha/Opacity | LocalKit',
+        pageDesc: 'Convert a percent opacity value to its hex (00-FF) and decimal (0-255) alpha byte, for building RGBA or ARGB colors — 100% in your browser.',
       },
     ],
   },

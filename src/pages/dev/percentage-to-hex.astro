@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import PercentageToHexTool from '../../components/dev/PercentageToHexTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/percentage-to-hex');
+---
+<ToolLayout {...meta}>
+  <PercentageToHexTool client:load />
+</ToolLayout>
