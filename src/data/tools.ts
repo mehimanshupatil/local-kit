@@ -8,7 +8,7 @@ import {
   SpeakerSlashIcon, FileIcon, FolderOpenIcon, BinocularsIcon, KeyIcon,
   TableIcon, PaletteIcon, ClockIcon, QrCodeIcon, BookOpenTextIcon,
   FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon, ChartLineUpIcon,
-  FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon,
+  FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon, FileSvgIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -444,6 +444,12 @@ export const categories: Category[] = [
         desc: 'Convert between YAML and JSON',
         pageTitle: 'YAML to JSON Converter — Free, No Upload | LocalKit',
         pageDesc: 'Convert YAML to JSON or JSON to YAML instantly, with live validation. 100% in your browser, nothing uploaded.',
+      },
+      {
+        name: 'SVG Encoder', href: '/dev/svg-encoder', icon: FileSvgIcon,
+        desc: 'Convert SVG markup into a CSS/HTML-ready data URI',
+        pageTitle: 'SVG to Data URI Encoder — LocalKit',
+        pageDesc: 'Paste or upload SVG markup and get a URL-encoded or base64 data URI, ready to paste into CSS background-image or an <img> tag. 100% in your browser.',
       },
     ],
   },

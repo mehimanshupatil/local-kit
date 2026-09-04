@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import SvgEncoderTool from '../../components/dev/SvgEncoderTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/dev/svg-encoder');
+---
+<ToolLayout {...meta}>
+  <SvgEncoderTool client:load />
+</ToolLayout>
