@@ -84,7 +84,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2,mjs}'],
         // Don't precache the large PDF worker — handle at runtime
         globIgnores: ['**/pdf.worker.min.mjs'],
-        // Offline fallback page
+        // Pages are static HTML; query params (e.g. epoch-converter's shareable ?t=) are only read
+        // client-side, so match the precached page whatever the params. Otherwise the navigation
+        // misses the precache and navigateFallback serves the home page instead.
+        ignoreURLParametersMatching: [/.*/],
+        // Offline fallback page (pages themselves are all precached above)
         navigateFallback: '/',
         navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
@@ -118,26 +122,6 @@ export default defineConfig({
                 maxEntries: 20,
               },
               cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          // Google Fonts
-          {
-            urlPattern: /^https:\/\/fonts\.(googleapis|gstatic)\.com/,
-            handler: 'CacheFirst',
-            options: {
-              cacheName: 'google-fonts-v1',
-              expiration: { maxAgeSeconds: 365 * 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
-          // App pages — network first, fall back to cache
-          {
-            urlPattern: /^https?:\/\/[^/]+\/(?:pdf|image|video|faq|privacy)/,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'pages-v1',
-              expiration: { maxAgeSeconds: 7 * 24 * 60 * 60 },
-              networkTimeoutSeconds: 5,
             },
           },
         ],
