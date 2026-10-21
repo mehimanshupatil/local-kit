@@ -122,3 +122,25 @@ test('places text and an image, selects them, and saves', async ({ page }) => {
   await page.getByRole('button', { name: /Save Annotated PDF/ }).click();
   await expect(page.getByText('Output (1 file)')).toBeVisible({ timeout: 30_000 });
 });
+
+// Regression: on narrow screens the page rendered at its full ~900px width and was cut off.
+// It now shrinks to fit, with the drawing layer scaled to match so marks land where drawn.
+test('fits the page on a phone-width screen', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/pdf/annotate');
+  const pdfBuffer = await buildBlankPdf(1);
+
+  await expect(async () => {
+    await page.setInputFiles('input[type="file"][accept*="pdf"]', { name: 'one-page.pdf', mimeType: 'application/pdf', buffer: pdfBuffer });
+    await expect(page.locator('.konvajs-content')).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 30_000 });
+
+  const sizes = await page.evaluate(() => {
+    const stage = document.querySelector('.konvajs-content')!;
+    const pageCanvas = stage.closest('.relative')!.querySelector(':scope > canvas')!;
+    return { stage: stage.clientWidth, page: pageCanvas.clientWidth, overflow: document.documentElement.scrollWidth > innerWidth };
+  });
+  expect(sizes.overflow).toBe(false);
+  expect(sizes.page).toBeLessThanOrEqual(390);
+  expect(Math.abs(sizes.stage - sizes.page)).toBeLessThanOrEqual(1);
+});
