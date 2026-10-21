@@ -29,6 +29,11 @@ export async function renderPageToCanvas(
   };
 }
 
+/** First page whose shape list differs (by reference) between two annotation snapshots */
+export function changedPage<T>(a: Record<number, T>, b: Record<number, T>): number | undefined {
+  return Object.keys({ ...a, ...b }).map(Number).find(p => a[p] !== b[p]);
+}
+
 /** Annotation layers are rasterised at this many pixels per PDF point (3 = 216 DPI) */
 export const ANNOTATION_PX_PER_POINT = 3;
 /** Longest side of an annotation raster, so very large pages don't need a giant canvas */

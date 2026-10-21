@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { annotationPxPerPoint, ANNOTATION_PX_PER_POINT, MAX_ANNOTATION_PX } from './pdfAnnotate';
+import { annotationPxPerPoint, changedPage, ANNOTATION_PX_PER_POINT, MAX_ANNOTATION_PX } from './pdfAnnotate';
 
 describe('annotationPxPerPoint', () => {
   it('rasterises ordinary pages well above 72 DPI', () => {
@@ -14,5 +14,22 @@ describe('annotationPxPerPoint', () => {
 
   it('never drops below 1 px per point', () => {
     expect(annotationPxPerPoint({ width: 10_000, height: 14_400 })).toBe(1);
+  });
+});
+
+describe('changedPage', () => {
+  const p1 = ['a'], p2 = ['b'];
+
+  it('finds the page whose list was replaced', () => {
+    expect(changedPage({ 1: p1, 2: p2 }, { 1: p1, 2: ['b', 'c'] })).toBe(2);
+  });
+
+  it('finds pages added or removed between snapshots', () => {
+    expect(changedPage({ 1: p1 }, { 1: p1, 3: p2 })).toBe(3);
+    expect(changedPage({ 1: p1, 3: p2 }, { 1: p1 })).toBe(3);
+  });
+
+  it('returns undefined when nothing changed', () => {
+    expect(changedPage({ 1: p1 }, { 1: p1 })).toBeUndefined();
   });
 });

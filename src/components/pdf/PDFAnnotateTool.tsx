@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useHotkeys, useElementSize, useMergedRef } from '@mantine/hooks';
+import { useHotkeys, useElementSize, useMergedRef, useStateHistory } from '@mantine/hooks';
 import { useImmer } from 'use-immer';
-import { castDraft, type Draft } from 'immer';
+import { castDraft, produce, type Draft } from 'immer';
 import { Stage, Layer, Line, Rect, Text as KonvaText, Image as KonvaImage, Transformer } from 'react-konva';
 import Konva from 'konva';
 import { Button } from '@/components/ui/button';
@@ -12,7 +12,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';
 import { useToolVisit } from '@/stores/toolVisit';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
-import { renderPageToCanvas, stageToDataUrl, embedAnnotationOnPage, annotationPxPerPoint } from '@/lib/pdf/pdfAnnotate';
+import { renderPageToCanvas, stageToDataUrl, embedAnnotationOnPage, annotationPxPerPoint, changedPage } from '@/lib/pdf/pdfAnnotate';
 import { stripExtension, generateId } from '@/lib/utils/fileUtils';
 import { cn } from '@/lib/utils/cn';
 import PDFFileBar from './PDFFileBar';
@@ -22,6 +22,7 @@ import type { KonvaEventObject } from 'konva/lib/Node';
 import {
   ArrowUpLeftIcon, PencilSimpleIcon, TextTIcon, ImageIcon,
   TrashIcon, CaretLeftIcon, CaretRightIcon, FloppyDiskIcon,
+  ArrowCounterClockwiseIcon, ArrowClockwiseIcon,
 } from '@phosphor-icons/react';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -31,9 +32,11 @@ type TextShape  = { id: string; type: 'text';  x: number; y: number; text: strin
 type ImageShape = { id: string; type: 'image'; x: number; y: number; width: number; height: number; src: string; imgEl: HTMLImageElement };
 type Shape = LineShape | TextShape | ImageShape;
 type Tool  = 'select' | 'pen' | 'text';
+type PageShapes = Record<number, Shape[]>;
 
 const PEN_SIZES = [2, 5, 10] as const;
 const NO_SHAPES: Shape[] = []; // stable reference so effects keyed on `shapes` don't refire on empty pages
+const NO_PAGES: PageShapes = {};
 
 // Shared between the live stage and the offscreen export render so both look the same
 const LINE_STYLE = { tension: 0.5, lineCap: 'round', lineJoin: 'round' } as const;
@@ -74,8 +77,12 @@ export default function PDFAnnotateTool() {
   const [color,    setColor]    = useState('#e11d48');
   const [penSize,  setPenSize]  = useState(3);
   const [fontSize, setFontSize] = useState(20);
-  const [pageShapes, updPageShapes] = useImmer<Record<number, Shape[]>>({});
+  // Every edit to the shapes is one history entry (immer keeps unchanged pages shared between entries)
+  const [pageShapes, shapeHistory, { history: snapshots, current: historyAt }] = useStateHistory<PageShapes>(NO_PAGES);
+  const canUndo = historyAt > 0, canRedo = historyAt < snapshots.length - 1;
   const shapes = pageShapes[page] ?? NO_SHAPES;
+  // The pen stroke being drawn — kept out of history until the pointer lifts so a stroke is one undo step
+  const [liveLine, setLiveLine] = useState<LineShape | null>(null);
   const annotatedPages = Object.keys(pageShapes).map(Number).filter(p => pageShapes[p].length > 0).sort((a, b) => a - b);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoverId, setHoverId]       = useState<string | null>(null);
@@ -97,21 +104,38 @@ export default function PDFAnnotateTool() {
   const pageCanvasRef = useMergedRef(canvasRef, pageSizeRef);
   const fit = pageShownW > 0 && sz.w > 0 ? pageShownW / sz.w : 1;
   const imageInput = useRef<HTMLInputElement>(null);
-  const isDrawing  = useRef(false);
   const layerRef   = useRef<Konva.Layer>(null);
   const trRef      = useRef<Konva.Transformer>(null);
 
-  // Edit the current page's shapes
-  const updShapes = useCallback((recipe: (d: Draft<Shape[]>) => void) => {
-    updPageShapes(d => { recipe(d[page] ??= []); });
-  }, [page]);
-
-  const revokeAllImages = (all: Record<number, Shape[]>) => {
-    Object.values(all).flat().forEach(s => { if (s.type === 'image') URL.revokeObjectURL(s.src); });
-  };
   const pageShapesRef = useRef(pageShapes);
   pageShapesRef.current = pageShapes;
-  useEffect(() => () => revokeAllImages(pageShapesRef.current), []);
+
+  // Edit the current page's shapes. Builds on the ref so several edits in one event compose.
+  const updShapes = useCallback((recipe: (d: Draft<Shape[]>) => void) => {
+    const next = produce(pageShapesRef.current, d => { recipe(d[page] ??= []); });
+    if (next === pageShapesRef.current) return;
+    pageShapesRef.current = next;
+    shapeHistory.set(next);
+  }, [page, shapeHistory]);
+
+  const clearHistory = () => { pageShapesRef.current = NO_PAGES; shapeHistory.reset(); };
+
+  // Deleted images can come back via undo, so their object URLs live until the file is closed
+  const imageUrls = useRef(new Set<string>());
+  const revokeAllImages = () => { imageUrls.current.forEach(URL.revokeObjectURL); imageUrls.current.clear(); };
+  useEffect(() => revokeAllImages, []);
+
+  /** Step through history, showing the page the change was on */
+  const travel = (to: number) => {
+    const target = snapshots[to];
+    if (!target) return;
+    const changed = changedPage(pageShapes, target);
+    if (to < historyAt) shapeHistory.back(); else shapeHistory.forward();
+    setSelectedId(null);
+    if (changed !== undefined && changed !== page) setPage(changed);
+  };
+  const undo = () => travel(historyAt - 1);
+  const redo = () => travel(historyAt + 1);
 
   // Session restore
   useEffect(() => {
@@ -157,9 +181,9 @@ export default function PDFAnnotateTool() {
       const buf = await f.arrayBuffer();
       const doc = await loadPDFDocument(buf.slice(0));
       setFile({ name: f.name, size: f.size, buffer: buf });
-      revokeAllImages(pageShapes); pageSizes.current = {};
+      revokeAllImages(); pageSizes.current = {};
       setPdf(doc); setTotal(doc.numPages); setPage(1);
-      updPageShapes(() => ({})); setSelectedId(null);
+      clearHistory(); setSelectedId(null);
       setSessionFiles([f]);
       updateOp(d => { d.status = 'idle'; });
     } catch (e) {
@@ -168,9 +192,9 @@ export default function PDFAnnotateTool() {
   };
 
   const reset = () => {
-    revokeAllImages(pageShapes); pageSizes.current = {};
+    revokeAllImages(); pageSizes.current = {};
     setFile(null); setPdf(null); setPage(1); setTotal(0);
-    updPageShapes(() => ({})); setSelectedId(null);
+    clearHistory(); setSelectedId(null);
     updateOp(() => ({ ...IDLE_OP })); clearSession();
   };
 
@@ -193,11 +217,8 @@ export default function PDFAnnotateTool() {
       return;
     }
 
-    if (tool === 'pen') {
-      isDrawing.current = true;
-      updShapes(d => { d.push({ id: generateId(), type: 'line', x: 0, y: 0, points: [pos.x, pos.y], color, width: penSize }); });
-    }
-  }, [tool, color, penSize, updShapes]);
+    if (tool === 'pen') setLiveLine({ id: generateId(), type: 'line', x: 0, y: 0, points: [pos.x, pos.y], color, width: penSize });
+  }, [tool, color, penSize]);
 
   // Text placement runs on click, not mousedown: the browser's default mousedown focus
   // handling would otherwise blur the freshly focused textarea and commit it empty.
@@ -216,20 +237,22 @@ export default function PDFAnnotateTool() {
   };
 
   const onStageMove = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
-    if (!isDrawing.current || tool !== 'pen') return;
+    if (!liveLine || tool !== 'pen') return;
     const pos = e.target.getStage()?.getRelativePointerPosition();
     if (!pos) return;
-    updShapes(d => {
-      const last = d[d.length - 1];
-      if (last?.type === 'line') last.points = [...last.points, pos.x, pos.y];
-    });
-  }, [tool, updShapes]);
+    setLiveLine(l => l && { ...l, points: [...l.points, pos.x, pos.y] });
+  }, [liveLine, tool]);
 
-  const onStageUp = useCallback(() => { isDrawing.current = false; }, []);
+  const onStageUp = useCallback(() => {
+    if (!liveLine) return;
+    updShapes(d => { d.push(liveLine); });
+    setLiveLine(null);
+  }, [liveLine, updShapes]);
 
   const handleImagePick = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]; if (!f) return;
     const src = URL.createObjectURL(f);
+    imageUrls.current.add(src);
     const img = new window.Image();
     img.onload = () => {
       const maxW = sz.w * 0.4;
@@ -248,13 +271,15 @@ export default function PDFAnnotateTool() {
 
   const deleteSelected = () => {
     if (!selectedId) return;
-    const s = shapes.find(s => s.id === selectedId);
-    if (s?.type === 'image') URL.revokeObjectURL(s.src);
     updShapes(d => { const i = d.findIndex(s => s.id === selectedId); if (i >= 0) d.splice(i, 1); });
     setSelectedId(null);
   };
 
-  useHotkeys([['Delete', deleteSelected], ['Backspace', deleteSelected], ['Escape', () => setSelectedId(null)]]);
+  // Ignored while typing in the text box, which keeps its own native undo
+  useHotkeys([
+    ['Delete', deleteSelected], ['Backspace', deleteSelected], ['Escape', () => setSelectedId(null)],
+    ['mod+Z', undo], ['mod+shift+Z', redo], ['mod+Y', redo],
+  ]);
 
   const updateShape = (id: string, u: Partial<Shape>) =>
     updShapes(d => { const i = d.findIndex(x => x.id === id); if (i >= 0) Object.assign(d[i], u); });
@@ -267,7 +292,6 @@ export default function PDFAnnotateTool() {
   };
 
   const clearAll = () => {
-    shapes.forEach(s => { if (s.type === 'image') URL.revokeObjectURL(s.src); });
     updShapes(d => { d.length = 0; }); setSelectedId(null);
   };
 
@@ -387,6 +411,14 @@ export default function PDFAnnotateTool() {
                     <TrashIcon className="size-4" /> Delete
                   </Button>
                 )}
+                <Button variant="outline" size="icon" className="size-8 text-muted-foreground" aria-label="Undo" title="Undo (Ctrl+Z)"
+                  onClick={undo} disabled={!canUndo}>
+                  <ArrowCounterClockwiseIcon className="size-4" />
+                </Button>
+                <Button variant="outline" size="icon" className="size-8 text-muted-foreground" aria-label="Redo" title="Redo (Ctrl+Shift+Z)"
+                  onClick={redo} disabled={!canRedo}>
+                  <ArrowClockwiseIcon className="size-4" />
+                </Button>
                 <Button variant="outline" size="sm" onClick={clearAll} disabled={shapes.length === 0}
                   className="gap-1.5 text-muted-foreground">
                   <TrashIcon className="size-4" /> Clear All
@@ -443,6 +475,9 @@ export default function PDFAnnotateTool() {
                             x={s.x} y={s.y} width={s.width} height={s.height} onTransformEnd={onTransformEnd(s)} />
                         );
                       })}
+                      {liveLine && (
+                        <Line points={liveLine.points} stroke={liveLine.color} strokeWidth={liveLine.width} listening={false} {...LINE_STYLE} />
+                      )}
                       <Transformer ref={trRef} rotateEnabled={false}
                         resizeEnabled={selectedType !== 'line'}
                         enabledAnchors={selectedType === 'text' ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : undefined}

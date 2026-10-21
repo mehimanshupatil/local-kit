@@ -144,3 +144,40 @@ test('fits the page on a phone-width screen', async ({ page }) => {
   expect(sizes.page).toBeLessThanOrEqual(390);
   expect(Math.abs(sizes.stage - sizes.page)).toBeLessThanOrEqual(1);
 });
+
+test('undoes and redoes strokes across pages', async ({ page }) => {
+  await page.goto('/pdf/annotate');
+  const undo = page.getByRole('button', { name: 'Undo' });
+  const redo = page.getByRole('button', { name: 'Redo' });
+  const pdfBuffer = await buildBlankPdf(2);
+
+  await expect(async () => {
+    await page.setInputFiles('input[type="file"][accept*="pdf"]', { name: 'two-pages.pdf', mimeType: 'application/pdf', buffer: pdfBuffer });
+    await expect(page.getByText('Page 1 / 2')).toBeVisible({ timeout: 3_000 });
+  }).toPass({ timeout: 30_000 });
+
+  await expect(undo).toBeDisabled();
+  await scribble(page);
+  await page.getByRole('button', { name: 'Next page' }).click();
+  await scribble(page);
+  await expect(page.getByText('Page 2 / 2 · 2 annotated')).toBeVisible();
+
+  // A whole stroke is one step
+  await undo.click();
+  await expect(page.getByText('Page 2 / 2 · 1 annotated')).toBeVisible();
+
+  // Undoing a change on another page jumps to it
+  await page.keyboard.press('ControlOrMeta+z');
+  await expect(page.getByText('Page 1 / 2', { exact: true })).toBeVisible();
+  await expect(undo).toBeDisabled();
+
+  await redo.click();
+  await page.keyboard.press('ControlOrMeta+Shift+z');
+  await expect(page.getByText('Page 2 / 2 · 2 annotated')).toBeVisible();
+  await expect(redo).toBeDisabled();
+
+  // A new edit after undo drops the redo branch
+  await undo.click();
+  await scribble(page);
+  await expect(redo).toBeDisabled();
+});
