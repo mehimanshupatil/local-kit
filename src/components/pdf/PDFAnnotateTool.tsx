@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useHotkeys } from '@mantine/hooks';
+import { useHotkeys, useElementSize, useMergedRef } from '@mantine/hooks';
 import { useImmer } from 'use-immer';
 import { castDraft, type Draft } from 'immer';
 import { Stage, Layer, Line, Rect, Text as KonvaText, Image as KonvaImage, Transformer } from 'react-konva';
@@ -91,6 +91,11 @@ export default function PDFAnnotateTool() {
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   const canvasRef  = useRef<HTMLCanvasElement>(null);
+  // The page canvas shrinks to fit narrow screens; the drawing layer is scaled by the same factor.
+  // Shape coordinates stay in canvas px (what export expects) — only the display is scaled.
+  const { ref: pageSizeRef, width: pageShownW } = useElementSize<HTMLCanvasElement>();
+  const pageCanvasRef = useMergedRef(canvasRef, pageSizeRef);
+  const fit = pageShownW > 0 && sz.w > 0 ? pageShownW / sz.w : 1;
   const imageInput = useRef<HTMLInputElement>(null);
   const isDrawing  = useRef(false);
   const layerRef   = useRef<Konva.Layer>(null);
@@ -178,7 +183,7 @@ export default function PDFAnnotateTool() {
 
   const onStageDown = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     const stage = e.target.getStage();
-    const pos   = stage?.getPointerPosition();
+    const pos   = stage?.getRelativePointerPosition();
     if (!pos) return;
 
     if (tool === 'select') {
@@ -197,7 +202,7 @@ export default function PDFAnnotateTool() {
   // Text placement runs on click, not mousedown: the browser's default mousedown focus
   // handling would otherwise blur the freshly focused textarea and commit it empty.
   const onStageClick = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
-    const pos = e.target.getStage()?.getPointerPosition();
+    const pos = e.target.getStage()?.getRelativePointerPosition();
     if (tool === 'text' && pos) { setTextVal(''); setTextInput(pos); }
   }, [tool]);
 
@@ -205,13 +210,14 @@ export default function PDFAnnotateTool() {
   const visiblePageCentre = () => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return { x: sz.w / 2, y: sz.h / 2 };
-    const top = Math.max(0, -rect.top), bottom = Math.min(sz.h, window.innerHeight - rect.top);
+    // rect is in screen px; divide by fit to get canvas px
+    const top = Math.max(0, -rect.top / fit), bottom = Math.min(sz.h, (window.innerHeight - rect.top) / fit);
     return { x: sz.w / 2, y: bottom > top ? (top + bottom) / 2 : sz.h / 2 };
   };
 
   const onStageMove = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!isDrawing.current || tool !== 'pen') return;
-    const pos = e.target.getStage()?.getPointerPosition();
+    const pos = e.target.getStage()?.getRelativePointerPosition();
     if (!pos) return;
     updShapes(d => {
       const last = d[d.length - 1];
@@ -406,12 +412,12 @@ export default function PDFAnnotateTool() {
               </div>
             )}
 
-            <div className="relative rounded-lg overflow-hidden border border-border bg-gray-100 dark:bg-gray-900"
+            <div className="relative rounded-lg overflow-hidden border border-border bg-gray-100 dark:bg-gray-900 max-w-full"
               style={{ display: 'inline-block', width: sz.w || '100%' }}>
-              <canvas ref={canvasRef} className="block" />
+              <canvas ref={pageCanvasRef} className="block w-full h-auto" />
               {sz.w > 0 && sz.h > 0 && (
                 <div className="absolute inset-0" style={{ cursor }}>
-                  <Stage width={sz.w} height={sz.h}
+                  <Stage width={sz.w * fit} height={sz.h * fit} scaleX={fit} scaleY={fit}
                     onMouseDown={onStageDown} onMouseMove={onStageMove} onMouseUp={onStageUp}
                     onTouchStart={onStageDown} onTouchMove={onStageMove} onTouchEnd={onStageUp}
                     onClick={onStageClick} onTap={onStageClick}>
@@ -456,8 +462,8 @@ export default function PDFAnnotateTool() {
                   onBlur={commitText}
                   onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitText(); } if (e.key === 'Escape') { setTextInput(null); setTextVal(''); } }}
                   style={{
-                    position: 'absolute', left: textInput.x - 7, top: textInput.y - 3,
-                    fontSize, color, fontFamily: 'sans-serif', lineHeight: 1,
+                    position: 'absolute', left: textInput.x * fit - 7, top: textInput.y * fit - 3,
+                    fontSize: fontSize * fit, color, fontFamily: 'sans-serif', lineHeight: 1,
                     background: 'rgba(255,255,255,0.9)', border: `1px dashed ${BRAND}`,
                     padding: '2px 6px', minWidth: 120, zIndex: 10,
                     outline: 'none', resize: 'none', overflow: 'hidden',
