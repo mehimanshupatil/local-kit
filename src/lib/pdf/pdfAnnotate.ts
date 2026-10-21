@@ -29,6 +29,20 @@ export async function renderPageToCanvas(
   };
 }
 
+/** Annotation layers are rasterised at this many pixels per PDF point (3 = 216 DPI) */
+export const ANNOTATION_PX_PER_POINT = 3;
+/** Longest side of an annotation raster, so very large pages don't need a giant canvas */
+export const MAX_ANNOTATION_PX = 4096;
+
+/**
+ * Pixels per PDF point to rasterise a page's annotations at. 1 px/pt (72 DPI) looks
+ * pixelated once zoomed or printed; this aims for ANNOTATION_PX_PER_POINT, capped by size.
+ */
+export function annotationPxPerPoint(page: PageDimensions): number {
+  const longest = Math.max(page.width, page.height);
+  return Math.max(1, Math.min(ANNOTATION_PX_PER_POINT, MAX_ANNOTATION_PX / longest));
+}
+
 /** Export a Konva stage / canvas as a transparent PNG data URL */
 export function stageToDataUrl(canvas: HTMLCanvasElement): string {
   return canvas.toDataURL('image/png');

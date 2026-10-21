@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useHotkeys } from '@mantine/hooks';
 import { useImmer } from 'use-immer';
-import { castDraft } from 'immer';
-import { Stage, Layer, Line, Text as KonvaText, Image as KonvaImage, Transformer } from 'react-konva';
-import type Konva from 'konva';
+import { castDraft, type Draft } from 'immer';
+import { Stage, Layer, Line, Rect, Text as KonvaText, Image as KonvaImage, Transformer } from 'react-konva';
+import Konva from 'konva';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -11,7 +12,7 @@ import ProgressBar from '@/components/shared/ProgressBar';
 import OutputFiles from '@/components/shared/OutputFiles';
 import { useToolVisit } from '@/stores/toolVisit';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
-import { renderPageToCanvas, stageToDataUrl, embedAnnotationOnPage } from '@/lib/pdf/pdfAnnotate';
+import { renderPageToCanvas, stageToDataUrl, embedAnnotationOnPage, annotationPxPerPoint } from '@/lib/pdf/pdfAnnotate';
 import { stripExtension, generateId } from '@/lib/utils/fileUtils';
 import { cn } from '@/lib/utils/cn';
 import PDFFileBar from './PDFFileBar';
@@ -25,84 +26,35 @@ import {
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type LineShape  = { id: string; type: 'line';  points: number[]; color: string; width: number };
+type LineShape  = { id: string; type: 'line';  x: number; y: number; points: number[]; color: string; width: number };
 type TextShape  = { id: string; type: 'text';  x: number; y: number; text: string; color: string; fontSize: number };
 type ImageShape = { id: string; type: 'image'; x: number; y: number; width: number; height: number; src: string; imgEl: HTMLImageElement };
 type Shape = LineShape | TextShape | ImageShape;
-type Tool  = 'select' | 'pen' | 'text' | 'image';
+type Tool  = 'select' | 'pen' | 'text';
 
 const PEN_SIZES = [2, 5, 10] as const;
+const NO_SHAPES: Shape[] = []; // stable reference so effects keyed on `shapes` don't refire on empty pages
 
-// ── Draggable text node ───────────────────────────────────────────────────────
+// Shared between the live stage and the offscreen export render so both look the same
+const LINE_STYLE = { tension: 0.5, lineCap: 'round', lineJoin: 'round' } as const;
+const TEXT_STYLE = { fontFamily: 'sans-serif' } as const;
+const BRAND = '#10b981';
 
-function DraggableText({ shape, selected, onSelect, onChange }: {
-  shape: TextShape; selected: boolean;
-  onSelect: () => void; onChange: (u: Partial<TextShape>) => void;
-}) {
-  const nodeRef = useRef<Konva.Text>(null);
-  const trRef   = useRef<Konva.Transformer>(null);
-
-  useEffect(() => {
-    if (selected && trRef.current && nodeRef.current) {
-      trRef.current.nodes([nodeRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    }
-  }, [selected]);
-
-  return (
-    <>
-      <KonvaText
-        ref={nodeRef} draggable
-        x={shape.x} y={shape.y}
-        text={shape.text} fontSize={shape.fontSize}
-        fill={shape.color} fontFamily="sans-serif"
-        onClick={onSelect} onTap={onSelect}
-        onDragEnd={e => onChange({ x: e.target.x(), y: e.target.y() })}
-        onTransformEnd={() => {
-          const n = nodeRef.current!;
-          onChange({ x: n.x(), y: n.y(), fontSize: Math.max(10, shape.fontSize * n.scaleY()) });
-          n.scaleX(1); n.scaleY(1);
-        }}
-      />
-      {selected && <Transformer ref={trRef} enabledAnchors={['top-left','top-right','bottom-left','bottom-right']} keepRatio={false} boundBoxFunc={(o, n) => n.width < 20 ? o : n} />}
-    </>
-  );
-}
-
-// ── Draggable image node ──────────────────────────────────────────────────────
-
-function DraggableImage({ shape, selected, onSelect, onChange }: {
-  shape: ImageShape; selected: boolean;
-  onSelect: () => void; onChange: (u: Partial<ImageShape>) => void;
-}) {
-  const nodeRef = useRef<Konva.Image>(null);
-  const trRef   = useRef<Konva.Transformer>(null);
-
-  useEffect(() => {
-    if (selected && trRef.current && nodeRef.current) {
-      trRef.current.nodes([nodeRef.current]);
-      trRef.current.getLayer()?.batchDraw();
-    }
-  }, [selected]);
-
-  return (
-    <>
-      <KonvaImage
-        ref={nodeRef} draggable
-        image={shape.imgEl as HTMLImageElement}
-        x={shape.x} y={shape.y} width={shape.width} height={shape.height}
-        shadowColor="rgba(0,0,0,0.25)" shadowBlur={selected ? 8 : 0}
-        onClick={onSelect} onTap={onSelect}
-        onDragEnd={e => onChange({ x: e.target.x(), y: e.target.y() })}
-        onTransformEnd={() => {
-          const n = nodeRef.current!;
-          onChange({ x: n.x(), y: n.y(), width: Math.max(20, n.width() * n.scaleX()), height: Math.max(20, n.height() * n.scaleY()) });
-          n.scaleX(1); n.scaleY(1);
-        }}
-      />
-      {selected && <Transformer ref={trRef} keepRatio={false} boundBoxFunc={(o, n) => n.width < 20 || n.height < 20 ? o : n} />}
-    </>
-  );
+/** Draw one page's shapes on a throwaway Konva stage → transparent PNG at print-quality resolution */
+function renderShapesToDataUrl(shapes: Shape[], w: number, h: number, scale: number): string {
+  const stage = new Konva.Stage({ container: document.createElement('div'), width: w, height: h });
+  const layer = new Konva.Layer();
+  stage.add(layer);
+  for (const s of shapes) {
+    if (s.type === 'line') layer.add(new Konva.Line({ x: s.x, y: s.y, points: s.points, stroke: s.color, strokeWidth: s.width, ...LINE_STYLE }));
+    else if (s.type === 'text') layer.add(new Konva.Text({ x: s.x, y: s.y, text: s.text, fontSize: s.fontSize, fill: s.color, ...TEXT_STYLE }));
+    else layer.add(new Konva.Image({ image: s.imgEl, x: s.x, y: s.y, width: s.width, height: s.height }));
+  }
+  // Stage is in display px (scale px per point); render at annotationPxPerPoint px per point instead
+  const pxPerPoint = annotationPxPerPoint({ width: w / scale, height: h / scale });
+  const dataUrl = stageToDataUrl(stage.toCanvas({ pixelRatio: pxPerPoint / scale }));
+  stage.destroy();
+  return dataUrl;
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -114,27 +66,47 @@ export default function PDFAnnotateTool() {
   const [pdf,  setPdf]    = useState<PDFDocumentProxy | null>(null);
   const [page, setPage]   = useState(1);
   const [total, setTotal] = useState(0);
-  const [scale, setScale] = useState(1);
   const [sz, setSz]       = useState({ w: 0, h: 0 });
+  // Display size + scale of each page as rendered — needed to export pages that aren't on screen
+  const pageSizes = useRef<Record<number, { w: number; h: number; scale: number }>>({});
 
   const [tool,     setTool]     = useState<Tool>('pen');
   const [color,    setColor]    = useState('#e11d48');
   const [penSize,  setPenSize]  = useState(3);
   const [fontSize, setFontSize] = useState(20);
-  const [shapes, updShapes]     = useImmer<Shape[]>([]);
+  const [pageShapes, updPageShapes] = useImmer<Record<number, Shape[]>>({});
+  const shapes = pageShapes[page] ?? NO_SHAPES;
+  const annotatedPages = Object.keys(pageShapes).map(Number).filter(p => pageShapes[p].length > 0).sort((a, b) => a - b);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [hoverId, setHoverId]       = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  // Bounding boxes of every shape, shown as dashed outlines in Select mode so it's clear what can be picked
+  const [outlines, setOutlines]     = useState<{ id: string; x: number; y: number; width: number; height: number }[]>([]);
   const [op, updateOp]          = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
 
   // Inline text input state
-  const [textInput, setTextInput] = useState<{ x: number; y: number; stageX: number; stageY: number } | null>(null);
+  const [textInput, setTextInput] = useState<{ x: number; y: number } | null>(null);
   const [textVal, setTextVal]     = useState('');
   const textRef = useRef<HTMLTextAreaElement>(null);
 
   const canvasRef  = useRef<HTMLCanvasElement>(null);
-  const stageRef   = useRef<import('konva/lib/Stage').Stage | null>(null);
   const imageInput = useRef<HTMLInputElement>(null);
   const isDrawing  = useRef(false);
+  const layerRef   = useRef<Konva.Layer>(null);
+  const trRef      = useRef<Konva.Transformer>(null);
+
+  // Edit the current page's shapes
+  const updShapes = useCallback((recipe: (d: Draft<Shape[]>) => void) => {
+    updPageShapes(d => { recipe(d[page] ??= []); });
+  }, [page]);
+
+  const revokeAllImages = (all: Record<number, Shape[]>) => {
+    Object.values(all).flat().forEach(s => { if (s.type === 'image') URL.revokeObjectURL(s.src); });
+  };
+  const pageShapesRef = useRef(pageShapes);
+  pageShapesRef.current = pageShapes;
+  useEffect(() => () => revokeAllImages(pageShapesRef.current), []);
 
   // Session restore
   useEffect(() => {
@@ -148,11 +120,26 @@ export default function PDFAnnotateTool() {
     (async () => {
       const r = await renderPageToCanvas(pdf, page, canvasRef.current!);
       if (cancel) return;
-      setScale(r.scale);
-      setSz({ w: canvasRef.current!.width, h: canvasRef.current!.height });
+      const size = { w: canvasRef.current!.width, h: canvasRef.current!.height };
+      pageSizes.current[page] = { ...size, scale: r.scale };
+      setSz(size);
     })();
     return () => { cancel = true; };
   }, [pdf, page]);
+
+  const findNode = (id: string) => layerRef.current?.findOne((n: Konva.Node) => n.hasName('annotation') && n.id() === id);
+
+  // Attach the transformer to the selected shape
+  useEffect(() => {
+    const node = selectedId && tool === 'select' ? findNode(selectedId) : undefined;
+    trRef.current?.nodes(node ? [node] : []);
+  }, [selectedId, tool, shapes]);
+
+  useEffect(() => {
+    const layer = layerRef.current;
+    if (tool !== 'select' || !layer) { setOutlines(prev => prev.length ? [] : prev); return; }
+    setOutlines(layer.find('.annotation').map(n => ({ id: n.id(), ...n.getClientRect({ relativeTo: layer, skipShadow: true }) })));
+  }, [tool, shapes, sz]);
 
   // Focus text input when it appears
   useEffect(() => {
@@ -165,8 +152,9 @@ export default function PDFAnnotateTool() {
       const buf = await f.arrayBuffer();
       const doc = await loadPDFDocument(buf.slice(0));
       setFile({ name: f.name, size: f.size, buffer: buf });
+      revokeAllImages(pageShapes); pageSizes.current = {};
       setPdf(doc); setTotal(doc.numPages); setPage(1);
-      updShapes(() => []); setSelectedId(null);
+      updPageShapes(() => ({})); setSelectedId(null);
       setSessionFiles([f]);
       updateOp(d => { d.status = 'idle'; });
     } catch (e) {
@@ -175,18 +163,18 @@ export default function PDFAnnotateTool() {
   };
 
   const reset = () => {
-    shapes.forEach(s => { if (s.type === 'image') URL.revokeObjectURL(s.src); });
+    revokeAllImages(pageShapes); pageSizes.current = {};
     setFile(null); setPdf(null); setPage(1); setTotal(0);
-    updShapes(() => []); setSelectedId(null);
+    updPageShapes(() => ({})); setSelectedId(null);
     updateOp(() => ({ ...IDLE_OP })); clearSession();
   };
 
   const commitText = useCallback(() => {
     if (!textInput || !textVal.trim()) { setTextInput(null); setTextVal(''); return; }
-    updShapes(d => { d.push({ id: generateId(), type: 'text', x: textInput.stageX, y: textInput.stageY, text: textVal.trim(), color, fontSize }); });
+    updShapes(d => { d.push({ id: generateId(), type: 'text', x: textInput.x, y: textInput.y, text: textVal.trim(), color, fontSize }); });
     setTextInput(null); setTextVal('');
     setTool('select');
-  }, [textInput, textVal, color, fontSize]);
+  }, [textInput, textVal, color, fontSize, updShapes]);
 
   const onStageDown = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     const stage = e.target.getStage();
@@ -194,28 +182,32 @@ export default function PDFAnnotateTool() {
     if (!pos) return;
 
     if (tool === 'select') {
-      if (e.target === stage) setSelectedId(null);
+      // Transformer handles are neither a shape nor the stage — leave the selection alone for those
+      if (e.target.hasName('annotation')) setSelectedId(e.target.id());
+      else if (e.target === stage) setSelectedId(null);
       return;
     }
 
     if (tool === 'pen') {
       isDrawing.current = true;
-      updShapes(d => { d.push({ id: generateId(), type: 'line', points: [pos.x, pos.y], color, width: penSize }); });
-      return;
+      updShapes(d => { d.push({ id: generateId(), type: 'line', x: 0, y: 0, points: [pos.x, pos.y], color, width: penSize }); });
     }
+  }, [tool, color, penSize, updShapes]);
 
-    if (tool === 'text') {
-      // Show inline textarea at click position
-      const container = stage?.container();
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      setTextVal('');
-      setTextInput({ x: rect.left + pos.x, y: rect.top + pos.y, stageX: pos.x, stageY: pos.y });
-      return;
-    }
+  // Text placement runs on click, not mousedown: the browser's default mousedown focus
+  // handling would otherwise blur the freshly focused textarea and commit it empty.
+  const onStageClick = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
+    const pos = e.target.getStage()?.getPointerPosition();
+    if (tool === 'text' && pos) { setTextVal(''); setTextInput(pos); }
+  }, [tool]);
 
-    if (tool === 'image') { imageInput.current?.click(); }
-  }, [tool, color, penSize]);
+  /** Centre of the part of the page currently on screen, in stage coordinates */
+  const visiblePageCentre = () => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return { x: sz.w / 2, y: sz.h / 2 };
+    const top = Math.max(0, -rect.top), bottom = Math.min(sz.h, window.innerHeight - rect.top);
+    return { x: sz.w / 2, y: bottom > top ? (top + bottom) / 2 : sz.h / 2 };
+  };
 
   const onStageMove = useCallback((e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (!isDrawing.current || tool !== 'pen') return;
@@ -225,7 +217,7 @@ export default function PDFAnnotateTool() {
       const last = d[d.length - 1];
       if (last?.type === 'line') last.points = [...last.points, pos.x, pos.y];
     });
-  }, [tool]);
+  }, [tool, updShapes]);
 
   const onStageUp = useCallback(() => { isDrawing.current = false; }, []);
 
@@ -237,66 +229,78 @@ export default function PDFAnnotateTool() {
       const maxW = sz.w * 0.4;
       const ratio = img.naturalHeight / Math.max(1, img.naturalWidth);
       const w = Math.min(maxW, img.naturalWidth), h = w * ratio;
-      updShapes(d => { d.push({ id: generateId(), type: 'image', x: (sz.w - w) / 2, y: (sz.h - h) / 2, width: w, height: h, src, imgEl: castDraft(img) }); });
-      setSelectedId(null); setTool('select');
+      // Drop it where the user can see it, kept inside the page
+      const at = visiblePageCentre();
+      const x = Math.min(Math.max(0, at.x - w / 2), sz.w - w);
+      const y = Math.min(Math.max(0, at.y - h / 2), sz.h - h);
+      const id = generateId();
+      updShapes(d => { d.push({ id, type: 'image', x, y, width: w, height: h, src, imgEl: castDraft(img) }); });
+      setTool('select'); setSelectedId(id);
     };
     img.src = src; e.target.value = '';
   };
 
-  // Revoke image URLs on page change
-  useEffect(() => () => { shapes.forEach(s => { if (s.type === 'image') URL.revokeObjectURL(s.src); }); }, [page]);
-
   const deleteSelected = () => {
+    if (!selectedId) return;
     const s = shapes.find(s => s.id === selectedId);
     if (s?.type === 'image') URL.revokeObjectURL(s.src);
-    updShapes(d => d.filter(s => s.id !== selectedId));
+    updShapes(d => { const i = d.findIndex(s => s.id === selectedId); if (i >= 0) d.splice(i, 1); });
     setSelectedId(null);
+  };
+
+  useHotkeys([['Delete', deleteSelected], ['Backspace', deleteSelected], ['Escape', () => setSelectedId(null)]]);
+
+  const updateShape = (id: string, u: Partial<Shape>) =>
+    updShapes(d => { const i = d.findIndex(x => x.id === id); if (i >= 0) Object.assign(d[i], u); });
+
+  const onTransformEnd = (s: Shape) => (e: KonvaEventObject<Event>) => {
+    const n = e.target;
+    if (s.type === 'text') updateShape(s.id, { x: n.x(), y: n.y(), fontSize: Math.max(10, s.fontSize * n.scaleY()) });
+    if (s.type === 'image') updateShape(s.id, { x: n.x(), y: n.y(), width: Math.max(20, n.width() * n.scaleX()), height: Math.max(20, n.height() * n.scaleY()) });
+    n.scaleX(1); n.scaleY(1);
   };
 
   const clearAll = () => {
     shapes.forEach(s => { if (s.type === 'image') URL.revokeObjectURL(s.src); });
-    updShapes(() => []); setSelectedId(null);
+    updShapes(d => { d.length = 0; }); setSelectedId(null);
   };
 
   const exportPDF = async () => {
-    if (!file || !stageRef.current) return;
-    updateOp(d => { d.status = 'processing'; d.progress = 10; d.error = ''; d.output = []; });
+    if (!file) return;
+    updateOp(d => { d.status = 'processing'; d.progress = 0; d.error = ''; d.output = []; });
     try {
-      const konvaCanvas = stageRef.current.toCanvas({ pixelRatio: 1 / scale });
-      const dataUrl = stageToDataUrl(konvaCanvas);
-      updateOp(d => { d.progress = 50; });
-      const blob = await embedAnnotationOnPage(file.buffer, page - 1, dataUrl, scale);
-      updateOp(d => { d.status = 'done'; d.progress = 100; d.output = [{ name: `${stripExtension(file.name)}_annotated_p${page}.pdf`, blob, size: blob.size }]; });
+      let buf = file.buffer.slice(0);
+      for (let i = 0; i < annotatedPages.length; i++) {
+        const p = annotatedPages[i];
+        const { w, h, scale } = pageSizes.current[p];
+        const dataUrl = renderShapesToDataUrl(pageShapes[p], w, h, scale);
+        const blob = await embedAnnotationOnPage(buf, p - 1, dataUrl, scale);
+        buf = await blob.arrayBuffer();
+        updateOp(d => { d.progress = Math.round(((i + 1) / annotatedPages.length) * 95); });
+      }
+      const final = new Blob([buf], { type: 'application/pdf' });
+      updateOp(d => { d.status = 'done'; d.progress = 100; d.output = [{ name: `${stripExtension(file.name)}_annotated.pdf`, blob: final, size: final.size }]; });
     } catch (e) {
       updateOp(d => { d.status = 'error'; d.error = e instanceof Error ? e.message : 'Export failed'; });
     }
   };
 
-  const cursor = tool === 'pen' ? 'crosshair' : tool === 'text' ? 'text' : 'default';
+  const isSelect = tool === 'select';
+  const cursor = tool === 'pen' ? 'crosshair' : tool === 'text' ? 'text' : hoverId ? 'move' : 'default';
+  const selectedType = shapes.find(s => s.id === selectedId)?.type;
+
+  // Props every shape node shares: identity for selection, Select-mode dragging and hover feedback
+  const shapeProps = (s: Shape) => ({
+    id: s.id, name: 'annotation', draggable: isSelect,
+    onMouseEnter: () => isSelect && setHoverId(s.id),
+    onMouseLeave: () => setHoverId(null),
+    onDragStart: () => { setDraggingId(s.id); setSelectedId(s.id); },
+    onDragEnd: (e: KonvaEventObject<DragEvent>) => { setDraggingId(null); updateShape(s.id, { x: e.target.x(), y: e.target.y() }); },
+  });
 
   return (
     <div className="space-y-4">
       <input ref={imageInput} type="file" accept="image/*" className="hidden" onChange={handleImagePick} />
-
-      {/* Inline text input — floats over the canvas */}
-      {textInput && (
-        <textarea
-          ref={textRef}
-          value={textVal}
-          onChange={e => setTextVal(e.target.value)}
-          onBlur={commitText}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitText(); } if (e.key === 'Escape') { setTextInput(null); setTextVal(''); } }}
-          style={{
-            position: 'fixed', left: textInput.x, top: textInput.y,
-            fontSize: fontSize, color, fontFamily: 'sans-serif',
-            background: 'rgba(255,255,255,0.9)', border: '1px dashed #10b981',
-            padding: '2px 6px', minWidth: 120, zIndex: 9999,
-            outline: 'none', resize: 'none', overflow: 'hidden',
-          }}
-          rows={2}
-          placeholder="Type here, Enter to place…"
-        />
-      )}
 
       {!file ? (
         <DropZone onFiles={handleFiles} accept=".pdf,application/pdf" multiple={false}
@@ -319,13 +323,16 @@ export default function PDFAnnotateTool() {
                   { key: 'select', icon: <ArrowUpLeftIcon className="size-4" />, label: 'Select' },
                   { key: 'pen',    icon: <PencilSimpleIcon className="size-4" />, label: 'Pen' },
                   { key: 'text',   icon: <TextTIcon className="size-4" />,        label: 'Text' },
-                  { key: 'image',  icon: <ImageIcon className="size-4" />,        label: 'Image' },
                 ] as const).map(({ key, icon, label }) => (
                   <Button key={key} variant="outline" size="sm" onClick={() => { setTool(key); setSelectedId(null); }}
                     className={cn('gap-1.5', tool === key ? 'border-brand-500 bg-brand-500/10 text-brand-500' : 'text-muted-foreground')}>
                     {icon}{label}
                   </Button>
                 ))}
+                {/* An action, not a mode: opens the picker straight away */}
+                <Button variant="outline" size="sm" onClick={() => imageInput.current?.click()} className="gap-1.5 text-muted-foreground">
+                  <ImageIcon className="size-4" />Image
+                </Button>
               </div>
 
               <div className="w-px h-6 bg-border" />
@@ -386,11 +393,14 @@ export default function PDFAnnotateTool() {
           <div className="space-y-2">
             {total > 1 && (
               <div className="flex items-center justify-center gap-3">
-                <Button variant="ghost" size="icon" className="size-8" onClick={() => { updShapes(() => []); setPage(p => p - 1); }} disabled={page <= 1}>
+                <Button variant="ghost" size="icon" className="size-8" aria-label="Previous page" onClick={() => { setSelectedId(null); setPage(p => p - 1); }} disabled={page <= 1}>
                   <CaretLeftIcon className="size-4" />
                 </Button>
-                <span className="text-sm text-muted-foreground">Page {page} / {total}</span>
-                <Button variant="ghost" size="icon" className="size-8" onClick={() => { updShapes(() => []); setPage(p => p + 1); }} disabled={page >= total}>
+                <span className="text-sm text-muted-foreground">
+                  Page {page} / {total}
+                  {annotatedPages.length > 0 && <> · {annotatedPages.length} annotated</>}
+                </span>
+                <Button variant="ghost" size="icon" className="size-8" aria-label="Next page" onClick={() => { setSelectedId(null); setPage(p => p + 1); }} disabled={page >= total}>
                   <CaretRightIcon className="size-4" />
                 </Button>
               </div>
@@ -401,45 +411,73 @@ export default function PDFAnnotateTool() {
               <canvas ref={canvasRef} className="block" />
               {sz.w > 0 && sz.h > 0 && (
                 <div className="absolute inset-0" style={{ cursor }}>
-                  <Stage ref={stageRef} width={sz.w} height={sz.h}
+                  <Stage width={sz.w} height={sz.h}
                     onMouseDown={onStageDown} onMouseMove={onStageMove} onMouseUp={onStageUp}
-                    onTouchStart={onStageDown} onTouchMove={onStageMove} onTouchEnd={onStageUp}>
-                    <Layer>
+                    onTouchStart={onStageDown} onTouchMove={onStageMove} onTouchEnd={onStageUp}
+                    onClick={onStageClick} onTap={onStageClick}>
+                    <Layer listening={false}>
+                      {outlines.filter(o => o.id !== selectedId && o.id !== draggingId).map(o => (
+                        <Rect key={o.id} x={o.x - 4} y={o.y - 4} width={o.width + 8} height={o.height + 8}
+                          stroke={BRAND} strokeWidth={1} dash={o.id === hoverId ? undefined : [4, 4]}
+                          opacity={o.id === hoverId ? 1 : 0.5} cornerRadius={2} />
+                      ))}
+                    </Layer>
+                    <Layer ref={layerRef}>
                       {shapes.map(s => {
                         if (s.type === 'line') return (
-                          <Line key={s.id} points={s.points} stroke={s.color} strokeWidth={s.width}
-                            tension={0.5} lineCap="round" lineJoin="round"
-                            onClick={() => { if (tool === 'select') setSelectedId(s.id); }}
-                          />
+                          <Line key={s.id} {...shapeProps(s)} x={s.x} y={s.y} points={s.points}
+                            stroke={s.color} strokeWidth={s.width} hitStrokeWidth={Math.max(12, s.width)} {...LINE_STYLE} />
                         );
                         if (s.type === 'text') return (
-                          <DraggableText key={s.id} shape={s}
-                            selected={selectedId === s.id && tool === 'select'}
-                            onSelect={() => tool === 'select' && setSelectedId(s.id)}
-                            onChange={u => updShapes(d => { const idx = d.findIndex(x => x.id === s.id); if (idx >= 0) Object.assign(d[idx], u); })}
-                          />
+                          <KonvaText key={s.id} {...shapeProps(s)} x={s.x} y={s.y} text={s.text}
+                            fontSize={s.fontSize} fill={s.color} {...TEXT_STYLE} onTransformEnd={onTransformEnd(s)} />
                         );
-                        if (s.type === 'image') return (
-                          <DraggableImage key={s.id} shape={s}
-                            selected={selectedId === s.id && tool === 'select'}
-                            onSelect={() => tool === 'select' && setSelectedId(s.id)}
-                            onChange={u => updShapes(d => { const idx = d.findIndex(x => x.id === s.id); if (idx >= 0) Object.assign(d[idx], u); })}
-                          />
+                        return (
+                          <KonvaImage key={s.id} {...shapeProps(s)} image={s.imgEl as HTMLImageElement}
+                            x={s.x} y={s.y} width={s.width} height={s.height} onTransformEnd={onTransformEnd(s)} />
                         );
-                        return null;
                       })}
+                      <Transformer ref={trRef} rotateEnabled={false}
+                        resizeEnabled={selectedType !== 'line'}
+                        enabledAnchors={selectedType === 'text' ? ['top-left', 'top-right', 'bottom-left', 'bottom-right'] : undefined}
+                        keepRatio={selectedType === 'text'}
+                        borderStroke={BRAND} anchorStroke={BRAND} anchorCornerRadius={2} padding={4}
+                        boundBoxFunc={(o, n) => n.width < 20 || n.height < 10 ? o : n} />
                     </Layer>
                   </Stage>
                 </div>
+              )}
+              {/* Inline text input, positioned in page coordinates where the user clicked */}
+              {textInput && (
+                <textarea
+                  ref={textRef}
+                  value={textVal}
+                  onChange={e => setTextVal(e.target.value)}
+                  onBlur={commitText}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); commitText(); } if (e.key === 'Escape') { setTextInput(null); setTextVal(''); } }}
+                  style={{
+                    position: 'absolute', left: textInput.x - 7, top: textInput.y - 3,
+                    fontSize, color, fontFamily: 'sans-serif', lineHeight: 1,
+                    background: 'rgba(255,255,255,0.9)', border: `1px dashed ${BRAND}`,
+                    padding: '2px 6px', minWidth: 120, zIndex: 10,
+                    outline: 'none', resize: 'none', overflow: 'hidden',
+                  }}
+                  rows={2}
+                  placeholder="Type here, Enter to place…"
+                />
               )}
             </div>
           </div>
 
           <div className="space-y-2">
+            {/* Below the canvas so toggling it never shifts the page under the pointer */}
+            <p className={cn('text-xs text-muted-foreground', !(isSelect && shapes.length > 0) && 'invisible')}>
+              Click an outlined item to select it · drag to move · corner handles resize text and images · Delete removes it
+            </p>
             {status === 'processing' && <ProgressBar progress={progress} label="Exporting…" />}
-            <Button onClick={exportPDF} disabled={status === 'processing' || shapes.length === 0} className="w-full gap-2">
+            <Button onClick={exportPDF} disabled={status === 'processing' || annotatedPages.length === 0} className="w-full gap-2">
               <FloppyDiskIcon className="size-4" />
-              {status === 'processing' ? 'Exporting…' : 'Save Annotated PDF'}
+              {status === 'processing' ? 'Exporting…' : annotatedPages.length > 1 ? `Save Annotated PDF (${annotatedPages.length} pages)` : 'Save Annotated PDF'}
             </Button>
           </div>
         </>
