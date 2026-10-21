@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "scripts": {
     "dev": "astro dev",
+    "prebuild": "pnpm generate-og",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
