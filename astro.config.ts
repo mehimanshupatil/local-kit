@@ -1,7 +1,7 @@
 import { defineConfig } from 'astro/config';
 import react from '@astrojs/react';
 import tailwindcss from '@tailwindcss/vite';
-import AstroPWA from '@vite-pwa/astro';
+import pwa from './integrations/pwa';
 import { copyFileSync, mkdirSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -36,7 +36,7 @@ function copyPDFWorkerPlugin(): Plugin {
 export default defineConfig({
   integrations: [
     react(),
-    AstroPWA({
+    pwa({
       registerType: 'autoUpdate',
       devOptions: { enabled: true },
       manifest: {

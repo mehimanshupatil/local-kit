@@ -13,7 +13,7 @@ Privacy-first browser-based utilities. 100% client-side — no uploads, no serve
 | Video/Audio | @ffmpeg/ffmpeg (WASM) |
 | Image | Canvas API + @imgly/background-removal (ONNX) |
 | Drag & Drop | @dnd-kit/core + @dnd-kit/sortable |
-| PWA | @vite-pwa/astro + Workbox |
+| PWA | vite-plugin-pwa + Workbox, via vendored Astro integration `integrations/pwa.ts` |
 | Package mgr | pnpm |
 | TypeScript | 6.0 strict mode |
 
