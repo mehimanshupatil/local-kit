@@ -23,7 +23,7 @@ Privacy-first browser-based utilities. 100% client-side — no uploads, no serve
 pnpm dev             # dev server with HMR
 pnpm build           # static output → dist/
 pnpm preview         # preview production build
-pnpm generate-og     # regenerate OG images in public/og/ — re-run when tools change
+pnpm generate-og     # OG images → public/og/ (gitignored); runs automatically as prebuild
 pnpm typecheck       # tsc --noEmit over src/ (CI gate)
 pnpm test            # Vitest — unit tests for src/lib pure functions
 pnpm test:e2e        # Playwright — full upload → process → verify flow in a real browser

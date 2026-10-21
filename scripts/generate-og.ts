@@ -1,7 +1,7 @@
 /**
  * OG image generator — run with:  pnpm generate-og
  * Outputs 1200×630 PNG per page to public/og/
- * Re-run whenever tools are added or the template changes.
+ * Runs automatically as `prebuild`; output is gitignored.
  */
 
 import satori from 'satori';
