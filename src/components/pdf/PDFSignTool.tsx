@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useImmer } from 'use-immer';
+import { useElementSize, useMergedRef } from '@mantine/hooks';
 import { Stage, Layer, Image as KonvaImage, Transformer } from 'react-konva';
 import { castDraft } from 'immer';
 import type Konva from 'konva';
@@ -14,7 +15,7 @@ import OutputFiles from '@/components/shared/OutputFiles';
 import ProgressBar from '@/components/shared/ProgressBar';
 import PDFFileBar from './PDFFileBar';
 import { loadPDFDocument } from '@/lib/pdf/pdfLoader';
-import { renderPageToCanvas, embedAnnotationOnPage } from '@/lib/pdf/pdfAnnotate';
+import { renderPageToCanvas, embedAnnotationOnPage, annotationPxPerPoint } from '@/lib/pdf/pdfAnnotate';
 import { useToolVisit } from '@/stores/toolVisit';
 import { generateId, stripExtension } from '@/lib/utils/fileUtils';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
@@ -29,14 +30,15 @@ interface SignatureItem {
 }
 
 function typedSigToDataUrl(name: string): string {
+  // Drawn at 2× so the signature stays sharp when enlarged on the page
   const c = document.createElement('canvas');
-  c.width = 500; c.height = 160;
+  c.width = 1000; c.height = 320;
   const ctx = c.getContext('2d')!;
   ctx.clearRect(0, 0, c.width, c.height);
   ctx.fillStyle = '#1e3a5f';
-  ctx.font = 'italic bold 64px Georgia, serif';
+  ctx.font = 'italic bold 128px Georgia, serif';
   ctx.textBaseline = 'middle';
-  ctx.fillText(name, 20, 80);
+  ctx.fillText(name, 40, 160);
   return c.toDataURL('image/png');
 }
 
@@ -181,6 +183,11 @@ export default function PDFSignTool() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  // The page canvas is CSS-scaled to fit its column; scale the signature layer by the same
+  // factor so what you see lines up with the export (signature coords stay in canvas px)
+  const { ref: pageSizeRef, width: pageShownW } = useElementSize<HTMLCanvasElement>();
+  const pageCanvasRef = useMergedRef(canvasRef, pageSizeRef);
+  const fit = pageShownW > 0 ? pageShownW / dims.w : 1;
   const [op, updateOp] = useImmer<ToolOp>({ ...IDLE_OP });
   const { status, progress, output, error } = op;
 
@@ -250,15 +257,19 @@ export default function PDFSignTool() {
 
         const offscreen = document.createElement('canvas');
         const doc2 = await loadPDFDocument(buf.slice(0));
-        const { scale: s } = await renderPageToCanvas(doc2, p, offscreen);
+        const { scale: s, dims: pageDims } = await renderPageToCanvas(doc2, p, offscreen);
 
+        // Signature positions are in display px (s px per point); rasterise at print resolution instead
+        const pxPerPoint = annotationPxPerPoint(pageDims);
+        const k = pxPerPoint / s;
         const ann = document.createElement('canvas');
-        ann.width = offscreen.width; ann.height = offscreen.height;
+        ann.width = Math.round(pageDims.width * pxPerPoint); ann.height = Math.round(pageDims.height * pxPerPoint);
         const ctx = ann.getContext('2d')!;
+        ctx.imageSmoothingQuality = 'high';
 
         await Promise.all(sigs.map(sig => new Promise<void>(res => {
           const el = new window.Image();
-          el.onload = () => { ctx.drawImage(el, sig.x, sig.y, sig.width, sig.height); res(); };
+          el.onload = () => { ctx.drawImage(el, sig.x * k, sig.y * k, sig.width * k, sig.height * k); res(); };
           el.src = sig.dataUrl;
         })));
 
@@ -325,9 +336,9 @@ export default function PDFSignTool() {
 
               {/* PDF + Konva overlay */}
               <div className="relative overflow-hidden rounded border border-border bg-gray-100 dark:bg-gray-900">
-                <canvas ref={canvasRef} className="block w-full" />
-                <div className="absolute inset-0" style={{ width: dims.w, height: dims.h }}>
-                  <Stage width={dims.w} height={dims.h}
+                <canvas ref={pageCanvasRef} className="block w-full" />
+                <div className="absolute inset-0">
+                  <Stage width={dims.w * fit} height={dims.h * fit} scaleX={fit} scaleY={fit}
                     onMouseDown={e => { if (e.target === e.target.getStage()) setSelectedId(null); }}
                     onTouchStart={e => { if (e.target === e.target.getStage()) setSelectedId(null); }}
                   >
