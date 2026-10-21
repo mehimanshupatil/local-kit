@@ -1,0 +1,143 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Footer from "../components/layout/Footer.astro";
+import {
+  ArticleIcon,
+  EnvelopeSimpleIcon,
+  GithubLogoIcon,
+  GlobeIcon,
+  LinkedinLogoIcon,
+  MapPinIcon,
+  XLogoIcon,
+} from "@phosphor-icons/react";
+
+const author = {
+  name: "Himanshu Patil",
+  role: "Full-Stack Engineer",
+  location: "Mumbai, India",
+  bio: "I've spent about 7 years building frontend and full-stack products with React, Next.js, Angular and AWS — including browser extensions, design-tool plugins and shared component systems. I built LocalKit because routine file jobs like merging a PDF or compressing a photo shouldn't require uploading personal documents to someone else's server.",
+};
+
+const links = [
+  { label: "Website", href: "https://himanshupatil.dev", Icon: GlobeIcon },
+  { label: "LinkedIn", href: "https://www.linkedin.com/in/mehimanshupatil", Icon: LinkedinLogoIcon },
+  { label: "GitHub", href: "https://github.com/mehimanshupatil", Icon: GithubLogoIcon },
+  { label: "X", href: "https://x.com/mehimanshupatil", Icon: XLogoIcon },
+  { label: "Email", href: "mailto:dev@himanshupatil.dev", Icon: EnvelopeSimpleIcon },
+];
+
+const sections = [
+  {
+    title: "Why LocalKit exists",
+    body: `Most free online file tools work by uploading your file to a server, processing it there, and sending the result back. That's a lot of trust to hand over for a bank statement, an ID scan or a contract.
+
+LocalKit does the same jobs entirely inside your browser using WebAssembly, the Canvas API and Web Workers. Your files never leave your device, there are no accounts, and the tools keep working offline once loaded.`,
+  },
+  {
+    title: "Open source",
+    body: `The full source is on GitHub, so you can verify every claim on the privacy page yourself. Bug reports, tool ideas and pull requests are welcome.`,
+  },
+];
+
+const personJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: author.name,
+  jobTitle: author.role,
+  url: "https://himanshupatil.dev",
+  sameAs: links.filter((l) => l.href.startsWith("https://")).map((l) => l.href),
+};
+---
+
+<BaseLayout
+  title="About — LocalKit"
+  description="Who builds LocalKit and why — privacy-first file tools that run entirely in your browser, made by Himanshu Patil."
+  canonicalURL="/about"
+>
+  <script type="application/ld+json" set:html={JSON.stringify(personJsonLd)} />
+  <main class="min-h-screen bg-gray-50 dark:bg-gray-950 py-16 px-4">
+    <div class="max-w-2xl mx-auto">
+      <div class="text-center mb-10">
+        <h1 class="text-4xl font-bold text-foreground mb-2">About LocalKit</h1>
+        <p class="text-sm text-muted-foreground">
+          Free, private file tools — built by one developer, in the open.
+        </p>
+      </div>
+
+      <!-- Author card -->
+      <div class="bg-card rounded-xl border border-border px-6 py-6 mb-10">
+        <div class="flex items-center gap-4 mb-4">
+          <div
+            class="size-14 shrink-0 rounded-full bg-brand-500/10 border border-brand-500/20 text-brand-500 font-bold text-lg flex items-center justify-center"
+            aria-hidden="true"
+          >
+            HP
+          </div>
+          <div>
+            <h2 class="font-semibold text-foreground text-lg">{author.name}</h2>
+            <p class="text-sm text-muted-foreground flex flex-wrap items-center gap-x-2">
+              {author.role}
+              <span class="inline-flex items-center gap-1">
+                <MapPinIcon className="size-3.5" />
+                {author.location}
+              </span>
+            </p>
+          </div>
+        </div>
+        <p class="text-sm text-muted-foreground leading-relaxed mb-5">
+          {author.bio}
+        </p>
+        <div class="flex flex-wrap gap-2">
+          {
+            links.map(({ label, href, Icon }) => (
+              <a
+                href={href}
+                target={href.startsWith("https://") ? "_blank" : undefined}
+                rel={href.startsWith("https://") ? "noopener noreferrer me" : undefined}
+                class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-brand-500 border border-border hover:border-brand-500/40 rounded-lg px-3 py-1.5 transition-colors"
+              >
+                <Icon className="size-4" />
+                {label}
+              </a>
+            ))
+          }
+        </div>
+        <a
+          href="https://canvs.in/blog/building-localkit-to-keep-routine-file-jobs-local"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="mt-5 flex items-center gap-2 text-sm text-brand-500 hover:underline"
+        >
+          <ArticleIcon className="size-4 shrink-0" />
+          Read: Building LocalKit to keep routine file jobs local
+        </a>
+      </div>
+
+      <div class="bg-card rounded-xl border border-border divide-y divide-border">
+        {
+          sections.map((section) => (
+            <div class="px-6 py-6">
+              <h2 class="font-semibold text-foreground mb-3">{section.title}</h2>
+              <div class="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
+                {section.body}
+              </div>
+            </div>
+          ))
+        }
+        <div class="px-6 py-6 flex flex-wrap gap-x-4 gap-y-2 text-sm">
+          <a
+            href="https://github.com/mehimanshupatil/local-kit"
+            class="text-brand-500 hover:underline">Source code</a
+          >
+          <a
+            href="https://github.com/mehimanshupatil/local-kit/issues"
+            class="text-brand-500 hover:underline">Report a bug</a
+          >
+          <a href="/privacy" class="text-brand-500 hover:underline">Privacy policy</a>
+          <a href="/faq" class="text-brand-500 hover:underline">FAQ</a>
+        </div>
+      </div>
+    </div>
+  </main>
+  <Footer />
+</BaseLayout>
