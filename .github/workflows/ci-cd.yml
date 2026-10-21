@@ -44,8 +44,19 @@ jobs:
         run: |
           pnpm exec playwright install --with-deps chromium
       - name: E2E tests
+        env:
+          # Show the dev server's output in the log (warnings, dep re-optimisation, errors)
+          DEBUG: pw:webserver
         run: |
           pnpm run test:e2e
+      - name: Upload Playwright results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-results
+          # error-context.md (page snapshot + console) and trace.zip per failed test
+          path: test-results/
+          retention-days: 7
       - name: Build the app
         run: |
           pnpm run build
