@@ -22,7 +22,9 @@ function ignoreNodeBinariesPlugin(): Plugin {
 function copyPDFWorkerPlugin(): Plugin {
   return {
     name: 'copy-pdf-worker',
-    buildStart() {
+    // `config` runs before Vite scans public/ — in buildStart the dev server had already listed
+    // public/ files, so the copied worker 404'd until the watcher noticed it (it never did on Linux CI)
+    config() {
       const dest = resolve('public/workers');
       if (!existsSync(dest)) mkdirSync(dest, { recursive: true });
       const src = resolve('node_modules/pdfjs-dist/build/pdf.worker.min.mjs');
