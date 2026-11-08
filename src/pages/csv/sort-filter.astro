@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CsvSortFilterTool from '../../components/csv/CsvSortFilterTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/csv/sort-filter');
+---
+<ToolLayout {...meta}>
+  <CsvSortFilterTool client:load />
+</ToolLayout>

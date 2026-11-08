@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CsvSplitTool from '../../components/csv/CsvSplitTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/csv/split');
+---
+<ToolLayout {...meta}>
+  <CsvSplitTool client:load />
+</ToolLayout>

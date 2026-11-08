@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CsvDiffTool from '../../components/csv/CsvDiffTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/csv/diff');
+---
+<ToolLayout {...meta}>
+  <CsvDiffTool client:load />
+</ToolLayout>

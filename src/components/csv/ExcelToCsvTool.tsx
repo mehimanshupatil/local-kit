@@ -5,14 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import DropZone from '@/components/shared/DropZone';
 import OutputFiles from '@/components/shared/OutputFiles';
 import CsvOptionsFields from '@/components/csv/CsvOptionsFields';
+import CsvPreviewTable from '@/components/csv/CsvPreviewTable';
 import { useToolVisit } from '@/stores/toolVisit';
 import { type ToolOp, IDLE_OP } from '@/lib/utils/toolState';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
-import { DEFAULT_CSV_OPTIONS, csvBlob, serializeCsv, trimGrid, type CsvOptions } from '@/lib/csv/csv';
+import { DEFAULT_CSV_OPTIONS, csvOutputFile, trimGrid, type CsvOptions } from '@/lib/csv/csv';
 import { readWorkbook, sheetFileName, type SheetGrid } from '@/lib/csv/excelToCsv';
 
 const PREVIEW_ROWS = 10;
@@ -52,10 +52,8 @@ export default function ExcelToCsvTool() {
 
   const convert = (targets: SheetGrid[]) => {
     const multi = sheets.length > 1;
-    const files = targets.map(s => {
-      const blob = csvBlob(serializeCsv(trimGrid(s.rows.length ? s.rows : [['']]), options), options.bom);
-      return { name: sheetFileName(baseName, s.name, multi), blob, size: blob.size };
-    });
+    const files = targets.map(s =>
+      csvOutputFile(sheetFileName(baseName, s.name, multi), trimGrid(s.rows.length ? s.rows : [['']]), options));
     updateOp(d => { d.output = files; d.status = 'done'; });
   };
 
@@ -120,29 +118,7 @@ export default function ExcelToCsvTool() {
                   </div>
                 )}
 
-                <div className="space-y-1.5">
-                  <p className="text-xs text-muted-foreground">
-                    Preview · {sheet.rows.length} {sheet.rows.length === 1 ? 'row' : 'rows'}
-                    {sheet.rows.length > PREVIEW_ROWS && ` (showing first ${PREVIEW_ROWS})`}
-                  </p>
-                  {sheet.rows.length === 0 ? (
-                    <p className="text-sm text-muted-foreground px-3 py-6 text-center rounded-xl border border-border">This sheet is empty.</p>
-                  ) : (
-                    <div className="rounded-xl border border-border max-h-80 overflow-auto">
-                      <Table>
-                        <TableBody>
-                          {sheet.rows.slice(0, PREVIEW_ROWS).map((row, r) => (
-                            <TableRow key={r}>
-                              {row.map((v, c) => (
-                                <TableCell key={c} className="max-w-60 truncate">{v}</TableCell>
-                              ))}
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
+                <CsvPreviewTable rows={sheet.rows} header={false} maxRows={PREVIEW_ROWS} />
 
                 <CsvOptionsFields options={options} onChange={o => { setOptions(o); clearOutput(); }} />
 

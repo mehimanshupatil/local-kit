@@ -30,6 +30,7 @@
     "@phosphor-icons/react": "^2.1.10",
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.5",
+    "@tanstack/react-virtual": "^3.14.26",
     "astro": "^7.4.7",
     "browser-image-compression": "^2.0.2",
     "class-variance-authority": "^0.7.1",

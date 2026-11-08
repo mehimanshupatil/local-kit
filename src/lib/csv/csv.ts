@@ -1,4 +1,6 @@
 import Papa from 'papaparse';
+import type { OutputFile } from '@/components/shared/OutputFiles';
+import { formatFileSize } from '@/lib/utils/fileUtils';
 
 /** A rectangular table of cell strings — row-major. */
 export type Grid = string[][];
@@ -84,6 +86,29 @@ export function serializeCsv(rows: Grid, opts: CsvOptions = DEFAULT_CSV_OPTIONS)
 
 export function csvBlob(text: string, bom: boolean): Blob {
   return new Blob([bom ? '\uFEFF' + text : text], { type: 'text/csv;charset=utf-8' });
+}
+
+export const MAX_CSV_BYTES = 50 * 1024 * 1024;
+
+/** Read and parse a CSV/TSV file, rejecting empty and oversized files with a user-facing message. */
+export async function readCsvFile(file: File, maxBytes = MAX_CSV_BYTES): Promise<{ rows: Grid; delimiter: Delimiter }> {
+  if (file.size > maxBytes) {
+    throw new Error(`File is ${formatFileSize(file.size)} — the limit is ${formatFileSize(maxBytes)}.`);
+  }
+  const text = await file.text();
+  if (text.trim() === '') throw new Error('That file is empty.');
+  return parseCsv(text);
+}
+
+/** Serialize rows into a downloadable `.csv` OutputFile. */
+export function csvOutputFile(name: string, rows: Grid, opts: CsvOptions): OutputFile {
+  const blob = csvBlob(serializeCsv(rows, opts), opts.bom);
+  return { name: name.endsWith('.csv') ? name : `${name}.csv`, blob, size: blob.size };
+}
+
+/** Display names for each column: the header cell, or the column letter when the header is blank. */
+export function headerNames(rows: Grid): string[] {
+  return (rows[0] ?? []).map((h, i) => h.trim() || `Column ${columnLabel(i)}`);
 }
 
 /** Write `block` into `grid` with its top-left at (row, col), growing the grid as needed. */

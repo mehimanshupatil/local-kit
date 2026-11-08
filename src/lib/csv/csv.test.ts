@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_CSV_OPTIONS, columnLabel, deleteCol, deleteRow, insertCol, insertRow, moveCol, moveRow,
+  DEFAULT_CSV_OPTIONS, columnLabel, deleteCol, headerNames, deleteRow, insertCol, insertRow, moveCol, moveRow,
   normalizeGrid, parseClipboardTable, parseCsv, pasteIntoGrid, serializeCsv, trimGrid,
 } from './csv';
 
@@ -130,5 +130,15 @@ describe('normalizeGrid', () => {
 describe('columnLabel', () => {
   it('produces spreadsheet column letters', () => {
     expect([0, 25, 26, 51, 701, 702].map(columnLabel)).toEqual(['A', 'Z', 'AA', 'AZ', 'ZZ', 'AAA']);
+  });
+});
+
+describe('headerNames', () => {
+  it('uses header cells and falls back to column letters for blanks', () => {
+    expect(headerNames([['id', ' ', 'name'], ['1', '2', '3']])).toEqual(['id', 'Column B', 'name']);
+  });
+
+  it('returns nothing for an empty grid', () => {
+    expect(headerNames([])).toEqual([]);
   });
 });

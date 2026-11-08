@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CsvChartTool from '../../components/csv/CsvChartTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/csv/chart');
+---
+<ToolLayout {...meta}>
+  <CsvChartTool client:load />
+</ToolLayout>

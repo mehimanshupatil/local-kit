@@ -19,16 +19,15 @@ import CsvOptionsFields from '@/components/csv/CsvOptionsFields';
 import { useToolVisit } from '@/stores/toolVisit';
 import { cn } from '@/lib/utils/cn';
 import { downloadBlob } from '@/lib/utils/downloadUtils';
-import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
+import { stripExtension } from '@/lib/utils/fileUtils';
 import {
   DEFAULT_CSV_OPTIONS, columnLabel, csvBlob, deleteCol, deleteRow, emptyGrid, insertCol, insertRow,
-  moveCol, moveRow, parseClipboardTable, parseCsv, pasteIntoGrid, serializeCsv, trimGrid,
+  moveCol, moveRow, parseClipboardTable, pasteIntoGrid, readCsvFile, serializeCsv, trimGrid,
   type CsvOptions, type Grid,
 } from '@/lib/csv/csv';
 
 /** Rendering thousands of inputs locks up the page; past this the grid shows a window and export still uses every row. */
 const MAX_RENDER_ROWS = 500;
-const MAX_IMPORT_BYTES = 50 * 1024 * 1024;
 
 export default function CsvMakerTool() {
   useToolVisit('csv', '/csv/maker');
@@ -80,20 +79,15 @@ export default function CsvMakerTool() {
     const file = files[0];
     if (!file) return;
     setImportError('');
-    if (file.size > MAX_IMPORT_BYTES) {
-      setImportError(`File is ${formatFileSize(file.size)} — the limit is ${formatFileSize(MAX_IMPORT_BYTES)}.`);
-      return;
+    try {
+      const { rows, delimiter } = await readCsvFile(file);
+      setGrid(rows);
+      setOptions(o => ({ ...o, delimiter }));
+      setFileName(stripExtension(file.name) || 'data');
+      importPanel.close();
+    } catch (e) {
+      setImportError(e instanceof Error ? e.message : 'Could not read that file.');
     }
-    const text = await file.text();
-    if (text.trim() === '') {
-      setImportError('That file is empty.');
-      return;
-    }
-    const { rows, delimiter } = parseCsv(text);
-    setGrid(rows);
-    setOptions(o => ({ ...o, delimiter }));
-    setFileName(stripExtension(file.name) || 'data');
-    importPanel.close();
   };
 
   const handleClear = () => {
