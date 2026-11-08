@@ -106,3 +106,80 @@ test('row and column controls reorder and delete', async ({ page }) => {
   await page.getByRole('button', { name: 'Delete row 1' }).click();
   await expect(page.locator('#csv-output')).toHaveValue('b1,a1');
 });
+
+test('undo and redo cover typing and structural edits', async ({ page }) => {
+  await page.goto('/csv/maker');
+  await fillWhenHydrated(page, 'A1', 'one');
+  await cell(page, 'B1').fill('two');
+
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(cell(page, 'B1')).toHaveValue('');
+  await page.getByRole('button', { name: 'Redo' }).click();
+  await expect(cell(page, 'B1')).toHaveValue('two');
+
+  await page.getByRole('button', { name: 'Delete column A' }).click();
+  await expect(cell(page, 'A1')).toHaveValue('two');
+
+  // Ctrl/Cmd+Z inside a cell undoes at grid level, not just within that input
+  await cell(page, 'A1').press('ControlOrMeta+z');
+  await expect(cell(page, 'A1')).toHaveValue('one');
+  await expect(cell(page, 'B1')).toHaveValue('two');
+});
+
+test('shift-selects a range to clear, fill down and copy', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.goto('/csv/maker');
+  await fillWhenHydrated(page, 'A1', 'x');
+  await cell(page, 'B1').fill('y');
+  await cell(page, 'A2').fill('a2');
+  await cell(page, 'B2').fill('b2');
+
+  await cell(page, 'A1').click();
+  await cell(page, 'B3').click({ modifiers: ['Shift'] });
+  await expect(page.getByText('6 cells selected')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Copy', exact: true }).first().click();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toBe('x\ty\na2\tb2\n\t');
+
+  await page.getByRole('button', { name: 'Fill down' }).click();
+  await expect(cell(page, 'A3')).toHaveValue('x');
+  await expect(cell(page, 'B2')).toHaveValue('y');
+
+  await cell(page, 'B3').press('Delete');
+  await expect(cell(page, 'A1')).toHaveValue('');
+  await expect(cell(page, 'B3')).toHaveValue('');
+
+  await cell(page, 'B3').press('ControlOrMeta+z');
+  await expect(cell(page, 'A2')).toHaveValue('x');
+});
+
+test('autosaves the grid and restores it after a reload', async ({ page }) => {
+  await page.goto('/csv/maker');
+  await fillWhenHydrated(page, 'A1', 'persist me');
+  await page.getByLabel('File name').fill('saved');
+
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('localkit:csv-maker') ?? ''))
+    .toContain('persist me');
+
+  await page.reload();
+  await expect(cell(page, 'A1')).toHaveValue('persist me', { timeout: 30_000 });
+  await expect(page.getByLabel('File name')).toHaveValue('saved');
+  await expect(page.getByText('Restored your last session')).toBeVisible();
+});
+
+test('generates sample data that can be undone', async ({ page }) => {
+  await page.goto('/csv/maker');
+  await fillWhenHydrated(page, 'A1', 'mine');
+
+  await page.getByRole('button', { name: 'Generate data' }).click();
+  await page.getByLabel(/^Rows/).fill('25');
+  await page.getByRole('button', { name: 'Generate 25 rows' }).click();
+
+  await expect(page.getByText('CSV preview · 26 rows × 4 columns')).toBeVisible();
+  await expect(cell(page, 'A1')).toHaveValue('id');
+  await expect(cell(page, 'A26')).toHaveValue('25');
+  await expect(cell(page, 'C2')).toHaveValue(/@example\.com$/);
+
+  await page.getByRole('button', { name: 'Undo' }).click();
+  await expect(cell(page, 'A1')).toHaveValue('mine');
+});
