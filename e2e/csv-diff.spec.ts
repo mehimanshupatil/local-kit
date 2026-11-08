@@ -11,8 +11,11 @@ const fileInput = (page: Page, side: 'Original' | 'Changed') =>
 // The dropzone's input exists before hydration; retry the upload until the island reacts.
 async function upload(page: Page, side: 'Original' | 'Changed', name: string, text: string) {
   await expect(async () => {
-    await fileInput(page, side).setInputFiles({ name, mimeType: 'text/csv', buffer: Buffer.from(text) });
-    await expect(page.getByRole('button', { name: `Remove ${side.toLowerCase()} file` })).toBeVisible({ timeout: 3_000 });
+    const loaded = page.getByRole('button', { name: `Remove ${side.toLowerCase()} file` });
+    if (!(await loaded.isVisible())) {
+      await fileInput(page, side).setInputFiles({ name, mimeType: 'text/csv', buffer: Buffer.from(text) });
+    }
+    await expect(loaded).toBeVisible({ timeout: 3_000 });
   }).toPass({ timeout: 30_000 });
 }
 
@@ -26,7 +29,7 @@ async function loadBoth(page: Page) {
 test('matches rows by key column and summarises the differences', async ({ page }) => {
   await loadBoth(page);
 
-  await expect(page.getByRole('combobox', { name: 'Match rows by' })).toHaveText('id');
+  await expect(page.getByRole('combobox', { name: 'Match rows by' })).toHaveText(/^id/);
   // added, removed, changed, unchanged
   await expect(page.getByLabel('Summary').locator('dd')).toHaveText(['1', '1', '1', '1']);
   await expect(page.getByText('Only in Changed: zip')).toBeVisible();

@@ -8,7 +8,8 @@ const toFile = ({ name, text }: Upload) => ({ name, mimeType: 'text/csv', buffer
 async function uploadWhenHydrated(page: Page, files: Upload[]) {
   const list = page.getByRole('list', { name: 'Files to merge' });
   await expect(async () => {
-    await page.setInputFiles('input[type="file"]', files.map(toFile));
+    // A slow first attempt may still land; re-uploading would add the files twice
+    if (!(await list.isVisible())) await page.setInputFiles('input[type="file"]', files.map(toFile));
     await expect(list).toBeVisible({ timeout: 3_000 });
   }).toPass({ timeout: 30_000 });
 }

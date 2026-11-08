@@ -21,7 +21,10 @@ async function workbook() {
 // The dropzone's input exists before hydration; retry the upload until the island reacts.
 async function upload(page: Page, name: string, buffer: Buffer, until: () => Promise<void>) {
   await expect(async () => {
-    await page.setInputFiles('input[type="file"]', { name, mimeType: XLSX_MIME, buffer });
+    // The dropzone unmounts once a file loads; a slow first attempt must not be retried against a missing input
+    if (await page.locator('input[type="file"]').count()) {
+      await page.setInputFiles('input[type="file"]', { name, mimeType: XLSX_MIME, buffer });
+    }
     await until();
   }).toPass({ timeout: 30_000 });
 }

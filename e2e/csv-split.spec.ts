@@ -4,7 +4,10 @@ import { test, expect, type Page } from '@playwright/test';
 // The dropzone's input exists before hydration; retry the upload until the island reacts.
 async function upload(page: Page, name: string, text: string, until: () => Promise<void>) {
   await expect(async () => {
-    await page.setInputFiles('input[type="file"]', { name, mimeType: 'text/csv', buffer: Buffer.from(text) });
+    // The dropzone unmounts once a file loads; a slow first attempt must not be retried against a missing input
+    if (await page.locator('input[type="file"]').count()) {
+      await page.setInputFiles('input[type="file"]', { name, mimeType: 'text/csv', buffer: Buffer.from(text) });
+    }
     await until();
   }).toPass({ timeout: 30_000 });
 }
