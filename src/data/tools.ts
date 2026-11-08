@@ -9,6 +9,7 @@ import {
   TableIcon, PaletteIcon, ClockIcon, QrCodeIcon, BookOpenTextIcon,
   FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon, ChartLineUpIcon,
   FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon, FileSvgIcon, PercentIcon,
+  FileCsvIcon, FileXlsIcon, GridNineIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -456,6 +457,31 @@ export const categories: Category[] = [
         desc: 'Convert an opacity percent to its hex and decimal alpha byte',
         pageTitle: 'Percentage to Hex Converter — Alpha/Opacity | LocalKit',
         pageDesc: 'Convert a percent opacity value to its hex (00-FF) and decimal (0-255) alpha byte, for building RGBA or ARGB colors — 100% in your browser.',
+      },
+    ],
+  },
+  {
+    id: 'csv',
+    title: 'CSV Tools',
+    icon: FileCsvIcon,
+    href: '/csv',
+    color: 'teal',
+    pageTitle: 'CSV Tools — Create & Convert CSV Files | LocalKit',
+    pageDesc: 'Free CSV tools that run in your browser. Build CSV files in a spreadsheet grid and convert Excel to CSV — no uploads.',
+    heading: 'CSV Tools',
+    subheading: 'Create, edit and convert CSV files entirely in your browser — your data never leaves your device.',
+    tools: [
+      {
+        name: 'CSV Maker', href: '/csv/maker', icon: GridNineIcon,
+        desc: 'Build or edit a CSV in a spreadsheet-style grid',
+        pageTitle: 'CSV Maker — Create CSV Files Online, Free | LocalKit',
+        pageDesc: 'Create a CSV file by typing into a spreadsheet grid, pasting from Excel or Google Sheets, or editing an existing CSV. Choose delimiter and quoting — 100% in your browser.',
+      },
+      {
+        name: 'Excel → CSV', href: '/csv/excel-to-csv', icon: FileXlsIcon,
+        desc: 'Convert .xlsx sheets to CSV files',
+        pageTitle: 'Excel to CSV Converter — Free, No Upload | LocalKit',
+        pageDesc: 'Convert Excel .xlsx workbooks to CSV. Pick a sheet or export every sheet at once, with your choice of delimiter — 100% in your browser.',
       },
     ],
   },

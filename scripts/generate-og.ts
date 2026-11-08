@@ -35,6 +35,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   audio:   '#ec4899',
   ocr:     '#eab308',
   dev:     '#3b82f6',
+  csv:     '#14b8a6',
   archive: '#f59e0b',
 };
 

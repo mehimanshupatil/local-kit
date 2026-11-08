@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CsvMakerTool from '../../components/csv/CsvMakerTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/csv/maker');
+---
+<ToolLayout {...meta}>
+  <CsvMakerTool client:load />
+</ToolLayout>

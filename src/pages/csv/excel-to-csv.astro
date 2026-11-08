@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import ExcelToCsvTool from '../../components/csv/ExcelToCsvTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/csv/excel-to-csv');
+---
+<ToolLayout {...meta}>
+  <ExcelToCsvTool client:load />
+</ToolLayout>
