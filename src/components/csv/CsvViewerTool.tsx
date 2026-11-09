@@ -16,11 +16,10 @@ import OutputFiles, { type OutputFile } from '@/components/shared/OutputFiles';
 import { useToolVisit } from '@/stores/toolVisit';
 import { cn } from '@/lib/utils/cn';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
-import { DEFAULT_CSV_OPTIONS, columnLabel, csvOutputFile, headerNames, type Grid } from '@/lib/csv/csv';
+import { DEFAULT_CSV_OPTIONS, columnLabel, csvOutputFile, headerNames, readCsvFile, type Grid } from '@/lib/csv/csv';
 import {
   buildSearchIndex, columnStats, columnWidths, filterIndices, nextSort, sortIndices, type ColumnStats, type SortState,
 } from '@/lib/csv/viewer';
-import { readLargeCsvFile } from '@/lib/csv/largeCsv';
 
 const MAX_BYTES = 200 * 1024 * 1024;
 const ROW_H = 33;
@@ -63,7 +62,7 @@ export default function CsvViewerTool() {
     setStatus('parsing');
     await nextPaint();
     try {
-      const { rows: parsed } = await readLargeCsvFile(f, MAX_BYTES);
+      const { rows: parsed } = await readCsvFile(f, MAX_BYTES);
       if (id !== loadId.current) return;
       setRows(parsed);
       setStatus('ready');

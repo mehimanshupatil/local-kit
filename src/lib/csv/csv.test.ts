@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  DEFAULT_CSV_OPTIONS, columnLabel, deleteCol, headerNames, deleteRow, insertCol, insertRow, moveCol, moveRow,
+  DEFAULT_CSV_OPTIONS, columnLabel, deleteCol, headerNames, maxRowLength, deleteRow, insertCol, insertRow, moveCol, moveRow,
   normalizeGrid, parseClipboardTable, parseCsv, pasteIntoGrid, serializeCsv, trimGrid,
 } from './csv';
 
@@ -140,5 +140,26 @@ describe('headerNames', () => {
 
   it('returns nothing for an empty grid', () => {
     expect(headerNames([])).toEqual([]);
+  });
+});
+
+describe('large grids', () => {
+  // Spreading every row into Math.max(...) overflows the call stack around 100k rows
+  const big = Array.from({ length: 300_000 }, (_, i) => (i === 7 ? ['a', 'b', 'c'] : ['a']));
+
+  it('normalizes and trims without overflowing the stack', () => {
+    const rows = normalizeGrid(big);
+    expect(rows[0]).toEqual(['a', '', '']);
+    expect(trimGrid(rows)).toHaveLength(300_000);
+  });
+
+  it('parses a 300k-row CSV', () => {
+    const text = 'id,v\n' + Array.from({ length: 300_000 }, (_, i) => `${i},x`).join('\n');
+    expect(parseCsv(text).rows).toHaveLength(300_001);
+  });
+
+  it('reports the longest row length with a floor', () => {
+    expect(maxRowLength(big)).toBe(3);
+    expect(maxRowLength([], 1)).toBe(1);
   });
 });

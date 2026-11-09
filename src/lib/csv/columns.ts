@@ -1,4 +1,4 @@
-import { columnLabel, normalizeGrid, type Grid } from './csv';
+import { columnLabel, maxRowLength, normalizeGrid, type Grid } from './csv';
 
 /** One entry in the column editor list: which source column, whether to keep it, and its output name. */
 export interface ColumnSpec {
@@ -51,7 +51,7 @@ export function splitColumn(rows: Grid, opts: SplitOptions): Grid {
 
   const body = header ? rows.slice(1) : rows;
   const parts = body.map(r => (r[column] ?? '') === '' ? [] : (r[column] ?? '').split(separator));
-  const count = Math.max(1, ...parts.map(p => p.length));
+  const count = maxRowLength(parts, 1);
   const baseName = header ? (rows[0][column] ?? '').trim() || `Column ${columnLabel(column)}` : '';
 
   return normalizeGrid(rows.map((row, r) => {

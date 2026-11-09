@@ -31,9 +31,19 @@ export const DELIMITERS: { value: Delimiter; label: string }[] = [
   { value: '|', label: 'Pipe (|)' },
 ];
 
+/**
+ * Length of the longest row (at least `min`). A loop, not `Math.max(...rows)` —
+ * spreading 100k+ rows into call arguments overflows the stack.
+ */
+export function maxRowLength(rows: readonly { length: number }[], min = 0): number {
+  let width = min;
+  for (const r of rows) if (r.length > width) width = r.length;
+  return width;
+}
+
 /** Pad every row to the widest row (and at least `minCols`) so the grid is rectangular. */
 export function normalizeGrid(rows: Grid, minCols = 1): Grid {
-  const width = Math.max(minCols, ...rows.map(r => r.length));
+  const width = maxRowLength(rows, minCols);
   return rows.map(r => (r.length === width ? r : [...r, ...Array(width - r.length).fill('')]));
 }
 
@@ -46,7 +56,7 @@ export function trimGrid(rows: Grid): Grid {
   let lastRow = rows.length - 1;
   while (lastRow > 0 && rows[lastRow].every(c => c === '')) lastRow--;
   const kept = rows.slice(0, lastRow + 1);
-  let lastCol = Math.max(0, ...kept.map(r => r.length)) - 1;
+  let lastCol = maxRowLength(kept) - 1;
   while (lastCol > 0 && kept.every(r => (r[lastCol] ?? '') === '')) lastCol--;
   return normalizeGrid(kept.map(r => r.slice(0, lastCol + 1)));
 }
@@ -114,7 +124,7 @@ export function headerNames(rows: Grid): string[] {
 /** Write `block` into `grid` with its top-left at (row, col), growing the grid as needed. */
 export function pasteIntoGrid(grid: Grid, block: Grid, row: number, col: number): Grid {
   const height = Math.max(grid.length, row + block.length);
-  const width = Math.max(grid[0]?.length ?? 0, col + Math.max(0, ...block.map(r => r.length)));
+  const width = Math.max(grid[0]?.length ?? 0, col + maxRowLength(block));
   const next = normalizeGrid(
     Array.from({ length: height }, (_, i) => [...(grid[i] ?? [])]),
     width,

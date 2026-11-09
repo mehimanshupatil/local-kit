@@ -14,8 +14,7 @@ import DropZone from '@/components/shared/DropZone';
 import { useToolVisit } from '@/stores/toolVisit';
 import { downloadBlob } from '@/lib/utils/downloadUtils';
 import { formatFileSize, stripExtension } from '@/lib/utils/fileUtils';
-import { MAX_CSV_BYTES, columnLabel, headerNames, type Grid } from '@/lib/csv/csv';
-import { readLargeCsvFile } from '@/lib/csv/largeCsv';
+import { MAX_CSV_BYTES, columnLabel, headerNames, readCsvFile, type Grid } from '@/lib/csv/csv';
 import {
   OTHER_LABEL, buildSeries, numericColumns, type Aggregation, type ChartType, type SeriesSort,
 } from '@/lib/csv/chart';
@@ -105,7 +104,7 @@ export default function CsvChartTool() {
     setExportError('');
     setLoading(true);
     try {
-      const { rows: parsed } = await readLargeCsvFile(f, MAX_CSV_BYTES);
+      const { rows: parsed } = await readCsvFile(f, MAX_CSV_BYTES);
       setRows(parsed);
       applyDefaults(hasHeader ? parsed.slice(1) : parsed);
     } catch (e) {

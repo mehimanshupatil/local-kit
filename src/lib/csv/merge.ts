@@ -1,4 +1,4 @@
-import type { Grid } from './csv';
+import { maxRowLength, type Grid } from './csv';
 
 export interface MergeInput {
   name: string;
@@ -51,7 +51,7 @@ export function headerKeys(header: string[]): string[] {
   });
 }
 
-const width = (rows: Grid) => Math.max(0, ...rows.map(r => r.length));
+const width = (rows: Grid) => maxRowLength(rows);
 
 /** Merge several parsed CSVs into one grid. */
 export function mergeCsvs(inputs: MergeInput[], options: MergeOptions): MergeResult {
