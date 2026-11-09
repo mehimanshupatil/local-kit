@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CsvColumnsTool from '../../components/csv/CsvColumnsTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/csv/columns');
+---
+<ToolLayout {...meta}>
+  <CsvColumnsTool client:load />
+</ToolLayout>

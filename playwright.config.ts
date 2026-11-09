@@ -4,6 +4,10 @@ export default defineConfig({
   testDir: './e2e',
   globalTeardown: './e2e/global-teardown.ts',
   fullyParallel: true,
+  // Every spec hits the dev server, which compiles each tool's island on first
+  // request; more parallel cold compiles than this push hydration past the
+  // specs' 30s retry window on a laptop. CI's runner already defaults lower.
+  workers: process.env.CI ? undefined : 3,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['list']] : [['html', { open: 'never' }]],
   use: {

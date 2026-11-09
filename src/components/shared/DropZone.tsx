@@ -29,6 +29,7 @@ function parseAccept(accept?: string): Record<string, string[]> | undefined {
         '.zip':  'application/zip',
         '.md': 'text/markdown', '.markdown': 'text/markdown',
         '.txt': 'text/plain',
+        '.csv': 'text/csv',
         '.svg': 'image/svg+xml',
       };
       const mime = mimes[token];

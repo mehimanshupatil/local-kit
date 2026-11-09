@@ -9,6 +9,7 @@ import {
   TableIcon, PaletteIcon, ClockIcon, QrCodeIcon, BookOpenTextIcon,
   FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon, ChartLineUpIcon,
   FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon, FileSvgIcon, PercentIcon,
+  FileCsvIcon, FileXlsIcon, GridNineIcon, BroomIcon, ColumnsIcon, FunnelIcon, ArrowsMergeIcon, ChartBarIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -456,6 +457,79 @@ export const categories: Category[] = [
         desc: 'Convert an opacity percent to its hex and decimal alpha byte',
         pageTitle: 'Percentage to Hex Converter — Alpha/Opacity | LocalKit',
         pageDesc: 'Convert a percent opacity value to its hex (00-FF) and decimal (0-255) alpha byte, for building RGBA or ARGB colors — 100% in your browser.',
+      },
+    ],
+  },
+  {
+    id: 'csv',
+    title: 'CSV Tools',
+    icon: FileCsvIcon,
+    href: '/csv',
+    color: 'teal',
+    pageTitle: 'CSV Tools — Create & Convert CSV Files | LocalKit',
+    pageDesc: 'Free CSV tools that run in your browser. Build CSV files in a spreadsheet grid and convert Excel to CSV — no uploads.',
+    heading: 'CSV Tools',
+    subheading: 'Create, edit and convert CSV files entirely in your browser — your data never leaves your device.',
+    tools: [
+      {
+        name: 'CSV Maker', href: '/csv/maker', icon: GridNineIcon,
+        desc: 'Build or edit a CSV in a spreadsheet-style grid',
+        pageTitle: 'CSV Maker — Create CSV Files Online, Free | LocalKit',
+        pageDesc: 'Create a CSV file by typing into a spreadsheet grid, pasting from Excel or Google Sheets, or editing an existing CSV. Choose delimiter and quoting — 100% in your browser.',
+      },
+      {
+        name: 'Excel → CSV', href: '/csv/excel-to-csv', icon: FileXlsIcon,
+        desc: 'Convert .xlsx sheets to CSV files',
+        pageTitle: 'Excel to CSV Converter — Free, No Upload | LocalKit',
+        pageDesc: 'Convert Excel .xlsx workbooks to CSV. Pick a sheet or export every sheet at once, with your choice of delimiter — 100% in your browser.',
+      },
+      {
+        name: 'CSV Cleaner', href: '/csv/cleaner', icon: BroomIcon,
+        desc: 'Trim spaces, remove duplicates and blank rows, fix casing',
+        pageTitle: 'CSV Cleaner — Remove Duplicates & Trim Whitespace | LocalKit',
+        pageDesc: 'Clean a CSV file: trim whitespace, drop duplicate and empty rows, normalise text case and line endings — 100% in your browser.',
+      },
+      {
+        name: 'Column Editor', href: '/csv/columns', icon: ColumnsIcon,
+        desc: 'Pick, reorder, rename, split and join columns',
+        pageTitle: 'CSV Column Editor — Reorder, Rename & Remove Columns | LocalKit',
+        pageDesc: 'Reorder, rename, remove, split and join columns in a CSV file. Drag to rearrange — 100% in your browser.',
+      },
+      {
+        name: 'Sort & Filter', href: '/csv/sort-filter', icon: FunnelIcon,
+        desc: 'Sort by several columns and filter rows',
+        pageTitle: 'Sort & Filter CSV Online — Free, No Upload | LocalKit',
+        pageDesc: 'Sort a CSV by one or more columns and filter rows by conditions, then download the result — 100% in your browser.',
+      },
+      {
+        name: 'Split CSV', href: '/csv/split', icon: ScissorsIcon,
+        desc: 'Split a CSV every N rows or by a column value',
+        pageTitle: 'Split CSV File Online — By Rows or Column | LocalKit',
+        pageDesc: 'Split a large CSV into smaller files every N rows or by the value of a column. Header row kept in every file — 100% in your browser.',
+      },
+      {
+        name: 'Merge CSVs', href: '/csv/merge', icon: ArrowsMergeIcon,
+        desc: 'Combine several CSV files into one',
+        pageTitle: 'Merge CSV Files Online — Free, No Upload | LocalKit',
+        pageDesc: 'Combine multiple CSV files into one. Matches columns by header name, even when they are in a different order — 100% in your browser.',
+      },
+      {
+        name: 'CSV Viewer', href: '/csv/viewer', icon: TableIcon,
+        desc: 'Open large CSVs with search and column stats',
+        pageTitle: 'CSV Viewer — Open Large CSV Files Online | LocalKit',
+        pageDesc: 'View large CSV files with hundreds of thousands of rows. Search, sort and see per-column statistics — 100% in your browser.',
+      },
+      {
+        name: 'CSV Diff', href: '/csv/diff', icon: GitDiffIcon,
+        desc: 'Compare two CSVs row by row on a key column',
+        pageTitle: 'CSV Diff — Compare Two CSV Files Online | LocalKit',
+        pageDesc: 'Compare two CSV files and see added, removed and changed rows and cells, matched on a key column — 100% in your browser.',
+      },
+      {
+        name: 'CSV Chart', href: '/csv/chart', icon: ChartBarIcon,
+        desc: 'Make a bar, line or pie chart from CSV columns',
+        pageTitle: 'CSV to Chart — Make Charts from CSV Online | LocalKit',
+        pageDesc: 'Turn CSV columns into a bar, line or pie chart and download it as an image — 100% in your browser.',
       },
     ],
   },
