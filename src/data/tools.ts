@@ -573,9 +573,9 @@ export const categories: Category[] = [
     tools: [
       {
         name: 'Send', href: '/share/send', icon: PaperPlaneTiltIcon,
-        desc: 'Send a file to a nearby device on the same network',
+        desc: 'Send files to a nearby device on the same network',
         pageTitle: 'Send Files to Nearby Devices — Peer to Peer, No Upload | LocalKit',
-        pageDesc: 'Send a file from one device to another on the same Wi-Fi. Goes straight from device to device, end-to-end encrypted — no uploads, no accounts.',
+        pageDesc: 'Send files from one device to another on the same Wi-Fi. Goes straight from device to device, end-to-end encrypted — no uploads, no accounts.',
       },
     ],
   },

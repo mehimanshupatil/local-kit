@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CHUNK_SIZE, Reassembler, chunkCount, readChunks } from './chunking';
+import { CHUNK_SIZE, chunkCount, readChunks } from './chunking';
 
 const bytes = (n: number) => Uint8Array.from({ length: n }, (_, i) => (i * 31 + 7) % 256);
 
@@ -28,59 +28,31 @@ describe('readChunks', () => {
   it('yields nothing for an empty blob', async () => {
     expect(await collect(new Blob([]), 10)).toEqual([]);
   });
+
+  it('round-trips the bytes', async () => {
+    const original = bytes(CHUNK_SIZE * 2 + 123);
+    const chunks = await collect(new Blob([original]));
+    expect(new Uint8Array(await new Blob(chunks.map(c => c.data)).arrayBuffer())).toEqual(original);
+  });
 });
 
-describe('Reassembler', () => {
-  it('round-trips bytes through readChunks', async () => {
-    const original = bytes(CHUNK_SIZE * 2 + 123);
-    const assembler = new Reassembler(original.length);
-    for (const { index, data } of await collect(new Blob([original]))) assembler.add(index, data);
-    expect(assembler.complete).toBe(true);
-    expect(new Uint8Array(await assembler.toBlob().arrayBuffer())).toEqual(original);
+describe('readChunks block reads', () => {
+  it('keeps chunk boundaries when the read size is not a multiple of the chunk size', async () => {
+    const original = bytes(100);
+    const chunks = [];
+    for await (const c of readChunks(new Blob([original]), 10, 25)) chunks.push(c);
+    expect(chunks.map(c => c.index)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
+    expect(chunks.every(c => c.data.byteLength === 10)).toBe(true);
+    expect(new Uint8Array(await new Blob(chunks.map(c => c.data)).arrayBuffer())).toEqual(original);
   });
 
-  it('accepts chunks out of order and tracks progress', async () => {
-    const original = bytes(25);
-    const chunks = await collect(new Blob([original]), 10);
-    const assembler = new Reassembler(25, 10);
-    assembler.add(2, chunks[2].data);
-    assembler.add(0, chunks[0].data);
-    expect(assembler.received).toBe(15);
-    expect(assembler.complete).toBe(false);
-    assembler.add(1, chunks[1].data);
-    expect(new Uint8Array(await assembler.toBlob().arrayBuffer())).toEqual(original);
+  it('reads at least one chunk per block when the read size is smaller than a chunk', async () => {
+    const chunks = [];
+    for await (const c of readChunks(new Blob([bytes(25)]), 10, 4)) chunks.push(c);
+    expect(chunks.map(c => c.data.byteLength)).toEqual([10, 10, 5]);
   });
 
-  it('keeps the MIME type', () => {
-    const assembler = new Reassembler(3, 10);
-    assembler.add(0, new ArrayBuffer(3));
-    expect(assembler.toBlob('image/png').type).toBe('image/png');
-  });
-
-  it('is complete immediately for an empty file', () => {
-    const assembler = new Reassembler(0);
-    expect(assembler.complete).toBe(true);
-    expect(assembler.toBlob().size).toBe(0);
-  });
-
-  it('rejects out-of-range, duplicate and wrong-length chunks', () => {
-    const assembler = new Reassembler(25, 10);
-    expect(() => assembler.add(3, new ArrayBuffer(10))).toThrow(/out of range/);
-    expect(() => assembler.add(-1, new ArrayBuffer(10))).toThrow(/out of range/);
-    expect(() => assembler.add(0, new ArrayBuffer(9))).toThrow(/expected 10/);
-    expect(() => assembler.add(2, new ArrayBuffer(10))).toThrow(/expected 5/);
-    assembler.add(0, new ArrayBuffer(10));
-    expect(() => assembler.add(0, new ArrayBuffer(10))).toThrow(/twice/);
-  });
-
-  it('refuses to build an incomplete file', () => {
-    const assembler = new Reassembler(25, 10);
-    assembler.add(0, new ArrayBuffer(10));
-    expect(() => assembler.toBlob()).toThrow(/Missing 2 of 3/);
-  });
-
-  it('rejects an invalid size', () => {
-    expect(() => new Reassembler(-1)).toThrow();
-    expect(() => new Reassembler(1.5)).toThrow();
+  it('fits a chunk and its metadata in one 16 KiB Trystero frame', () => {
+    expect(CHUNK_SIZE).toBeLessThanOrEqual(16 * 1024 - 36 - 200);
   });
 });
