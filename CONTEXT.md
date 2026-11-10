@@ -2,11 +2,11 @@
 
 A collection of file-processing utilities that run entirely in the user's browser. No files are uploaded to any server; all processing happens client-side using browser APIs, WebAssembly, and the Canvas API. Deployed as a static site to GitHub Pages — no paid infrastructure, ever.
 
-**Hard constraint**: Any tool is in scope as long as it runs entirely client-side — file-processing or pure computation. Any feature that requires a server or external API is permanently out of scope — no exceptions.
+**Hard constraint**: Any tool is in scope as long as it runs entirely client-side — file-processing or pure computation — and user data never reaches a server. Any feature that requires a server or external API to handle user data is permanently out of scope. The one carve-out is third-party connection setup for peer-to-peer tools (public STUN, public Nostr relays), which never carries user data (ADR-0012).
 
 ## Language
 
-**Privacy-first**: Files never leave the user's device. No uploads, no runtime network requests after page load, no telemetry. The app is PWA-installable and fully functional air-gap (offline) after first visit.
+**Privacy-first**: Your files never leave your device, or go straight to the device you choose. No uploads, no storage, no servers of ours, no telemetry. Apart from first-use asset downloads, the only runtime network requests are a peer-to-peer tool's connection setup (STUN, Nostr relays), which sees IP addresses and encrypted setup messages but never file data. The app is PWA-installable; every tool except the peer-to-peer ones works fully offline after first visit.
 _Avoid_: "client-side", "serverless", "secure"
 
 **Tool**: A single client-side function exposed to the user as a page — file-processing (e.g. Merge PDFs, Compress Image) or pure computation (e.g. EMI Calculator, Epoch Converter). Each tool is self-contained — it owns its UI state and calls one or more lib functions.

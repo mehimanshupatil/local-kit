@@ -2,13 +2,16 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Footer from "../components/layout/Footer.astro";
 import { ShieldIcon } from "@phosphor-icons/react";
-const lastUpdated = "April 2026";
+import { NOSTR_RELAYS, STUN_SERVERS } from "../lib/share/servers";
+const lastUpdated = "November 2026";
+const listServices = (services: { url: string; operator: string }[]) =>
+  services.map((s) => `• ${s.url} (${s.operator})`).join("\n");
 const data = [
   {
     title: "1. How LocalKit Works",
     body: `LocalKit is a client-side web application. Every tool — PDF manipulation, image processing, video conversion, and background removal — runs entirely inside your browser using WebAssembly (WASM), the Canvas API, and Web Workers.
 
-When you drop a file into any tool, it is read into browser memory and processed locally. The output file is generated in your browser and downloaded directly to your device. No file data is ever transmitted over the network.`,
+When you drop a file into any tool, it is read into browser memory and processed locally. The output file is generated in your browser and downloaded directly to your device. No file data is ever transmitted to a server. The only exception to "files stay on your device" is the Share tools, which send a file straight to another device you choose — see section 6.`,
   },
   {
     title: "2. Files and Data",
@@ -33,19 +36,35 @@ If analytics are ever added in the future, only privacy-respecting, cookieless a
 No third-party advertising, analytics, or social media scripts are loaded.`,
   },
   {
-    title: "6. Offline Use",
-    body: `After the initial page load, all tools work without an internet connection. The Background Remover model is cached in your browser after the first download and works offline on subsequent visits.`,
+    title: "6. Share Tools",
+    body: `The Share tools (Send, Call) connect two of your devices directly to each other. Files, text, and call audio/video travel only over that direct connection, end-to-end encrypted. They never pass through a relay, a STUN server, or any server of ours, and nothing is stored.
+
+To find each other and set up that connection, your devices use these public, third-party services:
+
+Nostr relays — exchange encrypted connection-setup messages:
+${listServices(NOSTR_RELAYS)}
+
+STUN servers — tell your device its public IP address:
+${listServices(STUN_SERVERS)}
+
+These services can see your IP address, that a LocalKit device is looking for peers, and the encrypted setup messages. They never see file names, file contents, text, or call audio/video. No TURN relay is used: if your devices can't connect directly, the transfer fails rather than routing your data through a third party.
+
+Share tools need an internet connection to pair devices. They are not loaded by any other tool, so the other tools never contact these services.`,
   },
   {
-    title: "7. Open Source",
+    title: "7. Offline Use",
+    body: `After the initial page load, all tools except the Share tools work without an internet connection. The Background Remover model is cached in your browser after the first download and works offline on subsequent visits.`,
+  },
+  {
+    title: "8. Open Source",
     body: `LocalKit is open source. You can audit the full source code on GitHub to verify these claims. There is no obfuscated code, no hidden network requests, and no server-side component.`,
   },
   {
-    title: "8. Changes to This Policy",
+    title: "9. Changes to This Policy",
     body: `If this policy changes, the updated version will be published at this URL with an updated date. We will not introduce data collection without clearly disclosing it here.`,
   },
   {
-    title: "9. Contact",
+    title: "10. Contact",
     body: `Questions or concerns about privacy? Open an issue on GitHub.`,
   },
 ];
@@ -53,7 +72,7 @@ No third-party advertising, analytics, or social media scripts are loaded.`,
 
 <BaseLayout
   title="Privacy Policy — LocalKit"
-  description="LocalKit privacy policy. Your files never leave your device — all processing is done locally in your browser."
+  description="LocalKit privacy policy. Your files never leave your device, or go straight to the device you choose. No uploads, no storage, no servers of ours."
   canonicalURL="/privacy"
 >
   <main class="min-h-screen bg-gray-50 dark:bg-gray-950 py-16 px-4">
@@ -87,6 +106,11 @@ No third-party advertising, analytics, or social media scripts are loaded.`,
           <li>✓ We use <strong>no tracking cookies</strong></li>
           <li>
             ✓ Works <strong>fully offline</strong> after initial page load
+            (except Share tools, which need a connection to pair)
+          </li>
+          <li>
+            ✓ Share tools send files <strong>straight to your other device</strong>,
+            never through a server
           </li>
         </ul>
       </div>

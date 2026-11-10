@@ -94,7 +94,7 @@ export default function PWAInstallPrompt() {
           <img src="/icon.svg" alt="LocalKit" className="w-10 h-10 rounded-xl shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-foreground text-sm">Install LocalKit</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Works offline · No uploads · Free</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Works offline · No uploads, no servers of ours · Free</p>
             <div className="flex gap-2 mt-3">
               <Button onClick={install} variant="default" size="sm">
                 <DownloadSimpleIcon className="size-3" /> Install

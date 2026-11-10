@@ -1,8 +1,8 @@
 # LocalKit
 
-**Privacy-first file tools — 100% in your browser. No uploads. No servers.**
+**Privacy-first file tools — 100% in your browser. Your files never leave your device, or go straight to the device you choose. No uploads, no storage, no servers of ours.**
 
-LocalKit is a collection of PDF, image, video, and audio utilities that run entirely client-side using WebAssembly and browser APIs. Your files never leave your device.
+LocalKit is a collection of PDF, image, video, and audio utilities that run entirely client-side using WebAssembly and browser APIs. Your files never leave your device, or go straight to the device you choose.
 
 ---
 
@@ -128,7 +128,8 @@ All processing happens in your browser:
 - **PDF tools** use pdf-lib and PDF.js — pure JavaScript, no network calls
 - **Image tools** use the HTML5 Canvas API and `@imgly/background-removal` (ONNX model downloaded once, then cached)
 - **Video/Audio tools** use FFmpeg compiled to WebAssembly — runs entirely in a Web Worker
-- **No analytics, no tracking, no file uploads**
+- **Share tools** connect your devices directly over WebRTC, end-to-end encrypted. Public Nostr relays and STUN servers help set up the connection; they see IP addresses and encrypted setup messages, never file data. See [ADR-0012](docs/adr/0012-peer-to-peer-share-tools.md) and the privacy page.
+- **No analytics, no tracking, no file uploads, no servers of ours**
 
 ---
 

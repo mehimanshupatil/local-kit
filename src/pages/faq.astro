@@ -5,11 +5,11 @@ import { CaretDownIcon, ShieldIcon } from "@phosphor-icons/react";
 const faqs = [
   {
     q: "Are my files uploaded to any server?",
-    a: "No. Every tool on LocalKit processes files entirely inside your browser using WebAssembly and the Canvas API. Your files are never sent over the network — not even to our servers. You can verify this by opening DevTools → Network and watching for zero outbound file traffic.",
+    a: "No. Your files never leave your device, or go straight to the device you choose. No uploads, no storage, no servers of ours. Every processing tool works entirely inside your browser using WebAssembly and the Canvas API. The Share tools send a file directly to your other device over an end-to-end encrypted connection; public relays help the two devices find each other but never see the file. The privacy page lists exactly which services those are and what they can see.",
   },
   {
     q: "Does it work offline?",
-    a: "Yes — once the page has loaded, all tools work without an internet connection. The exceptions are tools that download assets on first use: Background Remover (~50 MB AI model), video/audio tools (~30 MB FFmpeg core), and OCR (~10 MB engine assets). Once a tool has been used once online, it's cached and works offline afterward.",
+    a: "Yes — once the page has loaded, all tools work without an internet connection. The exceptions are tools that download assets on first use: Background Remover (~50 MB AI model), video/audio tools (~30 MB FFmpeg core), and OCR (~10 MB engine assets). Once a tool has been used once online, it's cached and works offline afterward. Share tools always need an internet connection to pair devices.",
   },
   {
     q: "Is LocalKit free?",
@@ -29,7 +29,7 @@ const faqs = [
   },
   {
     q: "How is this different from tools like Smallpdf, ILovePDF, or Canva?",
-    a: "Those tools upload your files to their servers to process them. LocalKit never uploads anything — all computation happens locally. This means your sensitive documents (contracts, medical records, photos) stay on your device.",
+    a: "Those tools upload your files to their servers to process them. LocalKit never uploads anything — all computation happens locally, and the Share tools send files straight to your own device rather than through a server. This means your sensitive documents (contracts, medical records, photos) stay on your device.",
   },
   {
     q: "What powers the tools under the hood?",
@@ -73,11 +73,10 @@ const faqs = [
 
         <div>
           <p class="font-semibold text-green-800 dark:text-green-300 text-sm">
-            Your files never leave your device
+            Your files never leave your device, or go straight to the device you choose
           </p>
           <p class="text-brand-500 text-sm mt-0.5">
-            All processing happens locally using WebAssembly. No uploads. No
-            servers. No accounts required.
+            No uploads, no storage, no servers of ours. No accounts required.
           </p>
         </div>
       </div>
