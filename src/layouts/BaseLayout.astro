@@ -64,7 +64,7 @@ const ogImageURL = `${siteURL}${ogImage ?? "/og/home.png"}`;
     </script>
   </head>
   <body class="min-h-screen">
-    <AppLayout client:load>
+    <AppLayout client:load path={Astro.url.pathname}>
       <slot />
     </AppLayout>
 

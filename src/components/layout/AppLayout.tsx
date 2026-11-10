@@ -105,8 +105,9 @@ function NavContent({ currentPath }: { currentPath: string }) {
   );
 }
 
-export default function AppLayout({ children }: { children?: ReactNode }) {
-  const currentPath = typeof window !== "undefined" ? window.location.pathname : "";
+export default function AppLayout({ children, path }: { children?: ReactNode; path: string }) {
+  // From Astro at render time, so server and client agree during hydration
+  const currentPath = path.length > 1 ? path.replace(/\/+$/, "") : path;
 
   const [defaultOpen] = useState(() => {
     if (typeof window === "undefined") return true;
