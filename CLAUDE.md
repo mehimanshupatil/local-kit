@@ -105,3 +105,17 @@ GitHub Pages via `.github/workflows/ci-cd.yml`. Pushes to `main` trigger build +
 5. Use `DropZone` + `OutputFiles` shared components
 6. Add tests: Vitest unit tests (`*.test.ts` next to the lib file) for any pure logic in `src/lib/<category>/`; a Playwright spec in `e2e/` that drives the full upload → process → output flow in a real browser. Both run in CI and gate merges.
 7. Manually verify in Chrome, Firefox, and Safari (desktop + one mobile browser) with an empty file, a corrupt file, and an oversized file before merging.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues on mehimanshupatil/local-kit, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: glossary in `CONTEXT.md`, decisions in `docs/adr/`. See `docs/agents/domain.md`.
