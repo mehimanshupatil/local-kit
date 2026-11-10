@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type CategoryId = 'pdf' | 'image' | 'video' | 'audio' | 'dev' | 'csv' | 'archive' | 'calculators';
+export type CategoryId = 'pdf' | 'image' | 'video' | 'audio' | 'dev' | 'csv' | 'archive' | 'share' | 'calculators';
 
 interface FileStore {
   sessions: Partial<Record<CategoryId, File[]>>;

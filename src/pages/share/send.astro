@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import SendTool from '../../components/share/SendTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/share/send');
+---
+<ToolLayout {...meta}>
+  <SendTool client:load />
+</ToolLayout>

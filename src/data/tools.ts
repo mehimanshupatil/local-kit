@@ -10,6 +10,7 @@ import {
   FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon, ChartLineUpIcon,
   FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon, FileSvgIcon, PercentIcon,
   FileCsvIcon, FileXlsIcon, GridNineIcon, BroomIcon, ColumnsIcon, FunnelIcon, ArrowsMergeIcon, ChartBarIcon,
+  ShareNetworkIcon, PaperPlaneTiltIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -555,6 +556,26 @@ export const categories: Category[] = [
         desc: 'Extract files from a ZIP archive',
         pageTitle: 'Extract ZIP Archive — Free, No Upload | LocalKit',
         pageDesc: 'Extract files from any ZIP archive and download them individually or all at once.',
+      },
+    ],
+  },
+  {
+    id: 'share',
+    title: 'Share Tools',
+    icon: ShareNetworkIcon,
+    href: '/share',
+    color: 'cyan',
+    pageTitle: 'Share Tools — Send Files Between Devices | LocalKit',
+    pageDesc: 'Send files straight to a nearby phone or laptop, peer to peer and end-to-end encrypted. No uploads, no storage, no servers of ours.',
+    heading: 'Share Tools',
+    subheading: 'Send files straight to your other devices — peer to peer, end-to-end encrypted, never through a server of ours.',
+    note: 'Needs an internet connection to find nearby devices',
+    tools: [
+      {
+        name: 'Send', href: '/share/send', icon: PaperPlaneTiltIcon,
+        desc: 'Send a file to a nearby device on the same network',
+        pageTitle: 'Send Files to Nearby Devices — Peer to Peer, No Upload | LocalKit',
+        pageDesc: 'Send a file from one device to another on the same Wi-Fi. Goes straight from device to device, end-to-end encrypted — no uploads, no accounts.',
       },
     ],
   },

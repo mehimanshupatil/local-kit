@@ -37,6 +37,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   dev:     '#3b82f6',
   csv:     '#14b8a6',
   archive: '#f59e0b',
+  share:   '#06b6d4',
 };
 
 /** Convert href → filename: /pdf/merge → pdf-merge.png */

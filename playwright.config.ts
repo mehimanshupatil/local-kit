@@ -14,12 +14,21 @@ export default defineConfig({
     baseURL: 'http://localhost:4321',
     trace: 'retain-on-failure',
   },
-  webServer: {
-    command: './e2e/dev-server.sh',
-    url: 'http://localhost:4321',
-    reuseExistingServer: false,
-    timeout: 30_000,
-  },
+  webServer: [
+    {
+      command: './e2e/dev-server.sh',
+      url: 'http://localhost:4321',
+      reuseExistingServer: false,
+      timeout: 30_000,
+    },
+    {
+      // Local stand-in for public Nostr relays, used by the Share specs
+      command: 'node e2e/nostr-relay.mjs',
+      port: 7447,
+      reuseExistingServer: false,
+      timeout: 10_000,
+    },
+  ],
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   ],

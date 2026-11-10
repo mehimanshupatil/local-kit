@@ -22,3 +22,28 @@ export const STUN_SERVERS: ConnectionService[] = [
   { url: 'stun:stun1.l.google.com:19302', operator: 'Google' },
   { url: 'stun:stun.cloudflare.com:3478', operator: 'Cloudflare' },
 ];
+
+export interface ShareConfig {
+  relayUrls: string[];
+  iceServers: RTCIceServer[];
+  /** Skip STUN discovery and use this address for the discovery room. */
+  publicIp?: string;
+  /** Let peers on one machine connect when mDNS host candidates can't resolve (headless test browsers). */
+  loopbackFallback?: boolean;
+}
+
+declare global {
+  interface Window {
+    /** Test-only override, injected by Playwright before the page loads. */
+    __LOCALKIT_SHARE__?: Partial<ShareConfig>;
+  }
+}
+
+export function getShareConfig(): ShareConfig {
+  const override = typeof window === 'undefined' ? undefined : window.__LOCALKIT_SHARE__;
+  return {
+    relayUrls: NOSTR_RELAYS.map(r => r.url),
+    iceServers: STUN_SERVERS.map(s => ({ urls: s.url })),
+    ...override,
+  };
+}
