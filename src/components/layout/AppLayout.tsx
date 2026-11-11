@@ -2,6 +2,7 @@ import { type ReactNode, useState } from "react";
 import { categories } from "@/data/tools";
 import { cn } from "@/lib/utils/cn";
 import ThemeToggle from "./ThemeToggle";
+import SharePageButton from "./SharePageButton";
 import { LockIcon, MagnifyingGlassIcon } from "@phosphor-icons/react";
 import { useUIStore } from "@/stores/uiStore";
 import {
@@ -142,6 +143,7 @@ export default function AppLayout({ children, path }: { children?: ReactNode; pa
               LOCAL
             </span>
             <SidebarTrigger className="size-7" />
+            <SharePageButton />
             <ThemeToggle />
           </div>
         </SidebarFooter>
@@ -154,7 +156,10 @@ export default function AppLayout({ children, path }: { children?: ReactNode; pa
             <img src="/icon.svg" alt="LocalKit" className="size-5 rounded-sm" />
             LocalKit
           </a>
-          <SidebarTrigger />
+          <div className="flex items-center gap-1">
+            <SharePageButton className="size-8" />
+            <SidebarTrigger />
+          </div>
         </header>
         {children}
       </SidebarInset>

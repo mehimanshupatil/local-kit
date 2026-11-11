@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import QRCode from 'qrcode';
+import { useState } from 'react';
 import { useClipboard, useInterval } from '@mantine/hooks';
 import { CheckIcon, CopyIcon, ShieldCheckIcon, SpinnerIcon, WarningCircleIcon } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import QrCode from '@/components/shared/QrCode';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { normalizeCode } from '@/lib/share/pairing';
 import type { PairingEnd, PairingInvite, Peer } from '@/lib/share/session';
@@ -115,17 +115,9 @@ function ShowCode({ state, onShowCode }: { state: PairingState; onShowCode: () =
 }
 
 function Invite({ invite }: { invite: PairingInvite }) {
-  const [qr, setQr] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now);
   const clipboard = useClipboard({ timeout: 2000 });
   useInterval(() => setNow(Date.now()), 1000, { autoInvoke: true });
-
-  useEffect(() => {
-    let current = true;
-    // Dark on white whatever the theme: phone cameras read that most reliably
-    void QRCode.toDataURL(invite.link, { margin: 2, width: 440, errorCorrectionLevel: 'M' }).then(url => { if (current) setQr(url); });
-    return () => { current = false; };
-  }, [invite.link]);
 
   const left = Math.max(0, invite.expiresAt - now);
   const mins = Math.floor(left / 60_000);
@@ -134,9 +126,7 @@ function Invite({ invite }: { invite: PairingInvite }) {
   return (
     <div className="space-y-4">
       <div className="flex justify-center">
-        {qr
-          ? <img src={qr} alt="QR code for the pairing link" className="size-52 rounded-lg bg-white" />
-          : <div className="size-52 rounded-lg bg-secondary" />}
+        <QrCode value={invite.link} label="QR code for the pairing link" />
       </div>
       <p className="text-sm text-muted-foreground text-center">Scan with the other device's camera, or open the link on it.</p>
 
