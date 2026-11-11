@@ -1,6 +1,7 @@
 import type { Room } from 'trystero';
 import { generateId } from '@/lib/utils/fileUtils';
 import { readChunks } from './chunking';
+import { readProfile, type DeviceInfo, type Profile } from './device';
 import { discoverPublicIp, roomIdForIp } from './room';
 import { getShareConfig } from './servers';
 import type { FileSink, IncomingFileMeta, SinkFactory } from './sinks';
@@ -15,9 +16,9 @@ const HELLO_TIMEOUT_MS = 10_000;
 export interface Peer {
   id: string;
   name: string;
+  device: DeviceInfo;
 }
 
-type Profile = { name: string };
 type FileMeta = { name: string; size: number; type: string };
 type Offer = { transferId: string; files: FileMeta[] };
 type ChunkMeta = { transferId: string; file: number; index: number };
@@ -48,6 +49,8 @@ export type TransferEnd =
 
 export interface ShareSessionHandlers {
   onPeersChange: (peers: Peer[]) => void;
+  /** A device on this network was found but a direct connection to it couldn't be made (no TURN relay). */
+  onConnectionFailed: () => void;
   /** Ask the user. Resolve with where to write the files, or null to decline. */
   onOffer: (offer: IncomingOffer) => Promise<SinkFactory | null>;
   /** Ask the user whether to accept a text message; resolve true to accept. */
@@ -73,6 +76,8 @@ export interface OutgoingTransfer {
 }
 
 export interface ShareSession {
+  /** Change this device's name; connected devices see it straight away. */
+  updateProfile: (profile: Profile) => void;
   sendFiles: (peerId: string, files: File[], onProgress: (progress: TransferProgress) => void) => OutgoingTransfer;
   sendText: (peerId: string, text: string) => OutgoingTransfer;
   cancelReceive: (transferId: string) => void;
@@ -111,7 +116,8 @@ interface Outgoing {
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : 'The transfer failed.');
 
 /** Join the discovery room shared by every device on this network. */
-export async function joinShareSession(selfName: string, handlers: ShareSessionHandlers): Promise<ShareSession> {
+export async function joinShareSession(initialProfile: Profile, handlers: ShareSessionHandlers): Promise<ShareSession> {
+  let self = initialProfile;
   const config = getShareConfig();
   const ip = config.publicIp ?? await discoverPublicIp(config.iceServers);
   if (!ip) {
@@ -124,14 +130,15 @@ export async function joinShareSession(selfName: string, handlers: ShareSessionH
     {
       appId: APP_ID,
       relayConfig: { urls: config.relayUrls, warnOnRelayFailure: false },
-      rtcConfig: { iceServers: config.iceServers },
+      rtcConfig: { iceServers: config.iceServers, iceTransportPolicy: config.iceTransportPolicy },
       _test_only_mdnsHostFallbackToLoopback: config.loopbackFallback,
     },
     roomId,
+    { onJoinError: () => handlers.onConnectionFailed() },
   );
 
-  const peers = new Map<string, string>();
-  const emitPeers = () => handlers.onPeersChange([...peers].map(([id, name]) => ({ id, name })));
+  const peers = new Map<string, Profile>();
+  const emitPeers = () => handlers.onPeersChange([...peers].map(([id, { name, device }]) => ({ id, name, device })));
   const key = (peerId: string, transferId: string) => `${peerId}:${transferId}`;
   const incoming = new Map<string, Incoming>();
   const outgoing = new Map<string, Outgoing>();
@@ -142,9 +149,9 @@ export async function joinShareSession(selfName: string, handlers: ShareSessionH
 
   // Peers whose connection is open; a hello reply that arrives after the peer left is ignored.
   const connected = new Set<string>();
-  const addPeer = (peerId: string, name: string) => {
+  const addPeer = (peerId: string, profile: unknown) => {
     connected.add(peerId);
-    peers.set(peerId, name);
+    peers.set(peerId, readProfile(profile));
     emitPeers();
   };
 
@@ -154,21 +161,27 @@ export async function joinShareSession(selfName: string, handlers: ShareSessionH
   // carries the other side's name.
   const hello = room.makeAction<Profile, Profile>('hello', {
     kind: 'request',
-    onRequest: ({ name }, { peerId }) => {
-      addPeer(peerId, name);
-      return { name: selfName };
+    onRequest: (profile, { peerId }) => {
+      addPeer(peerId, profile);
+      return self;
     },
   });
 
+  // Renames after connecting
+  const profileAction = room.makeAction<Profile>('profile');
+  profileAction.onMessage = (profile, { peerId }) => {
+    if (connected.has(peerId)) addPeer(peerId, profile);
+  };
+
   room.onPeerJoin = peerId => {
     connected.add(peerId);
-    hello.request({ name: selfName }, { target: peerId, timeoutMs: HELLO_TIMEOUT_MS })
-      .then(({ name }) => { if (connected.has(peerId)) addPeer(peerId, name); })
+    hello.request(self, { target: peerId, timeoutMs: HELLO_TIMEOUT_MS })
+      .then(profile => { if (connected.has(peerId)) addPeer(peerId, profile); })
       .catch(() => { /* the other side's hello covers it */ });
   };
 
   room.onPeerLeave = peerId => {
-    const message = `${peers.get(peerId) ?? 'The other device'} disconnected before the transfer finished.`;
+    const message = `${peers.get(peerId)?.name ?? 'The other device'} disconnected before the transfer finished.`;
     connected.delete(peerId);
     peers.delete(peerId);
     emitPeers();
@@ -250,7 +263,7 @@ export async function joinShareSession(selfName: string, handlers: ShareSessionH
     return withdrawn ? null : answer;
   };
 
-  const peerName = (peerId: string) => peers.get(peerId) ?? 'Unknown device';
+  const peerName = (peerId: string) => peers.get(peerId)?.name ?? 'Unknown device';
 
   const offerAction = room.makeAction<Offer, boolean>('offer', {
     kind: 'request',
@@ -399,6 +412,10 @@ export async function joinShareSession(selfName: string, handlers: ShareSessionH
   };
 
   return {
+    updateProfile(profile) {
+      self = profile;
+      void profileAction.send(profile);
+    },
     sendFiles,
     sendText,
     cancelReceive(transferId) {

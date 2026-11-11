@@ -30,6 +30,8 @@ export interface ShareConfig {
   publicIp?: string;
   /** Let peers on one machine connect when mDNS host candidates can't resolve (headless test browsers). */
   loopbackFallback?: boolean;
+  /** 'relay' with no TURN server makes every direct connection fail (tests the failure message). */
+  iceTransportPolicy?: RTCIceTransportPolicy;
 }
 
 declare global {

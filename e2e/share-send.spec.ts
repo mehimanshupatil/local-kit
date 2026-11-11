@@ -15,31 +15,45 @@ type Upload = { name: string; mimeType: string; buffer: Buffer };
 
 // Two browser contexts stand in for two devices. Each test gets its own fake
 // public IP so parallel tests land in separate discovery rooms.
+interface DeviceOptions {
+  folderPicker?: boolean;
+  touch?: boolean;
+  clipboard?: boolean;
+  userAgent?: string;
+  /** Extra share config, e.g. to make connections fail. */
+  config?: Record<string, unknown>;
+}
+
 async function openDevice(
   browser: Browser,
   publicIp: string,
-  { folderPicker = false, touch = false, clipboard = false } = {},
+  { folderPicker = false, touch = false, clipboard = false, userAgent, config = {} }: DeviceOptions = {},
 ): Promise<Device> {
-  const context = await browser.newContext({ hasTouch: touch, isMobile: touch });
+  const context = await browser.newContext({ hasTouch: touch, isMobile: touch, userAgent });
   if (clipboard) await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   contexts.push(context);
-  await context.addInitScript(({ ip, folderPicker }) => {
+  await context.addInitScript(({ ip, folderPicker, config }) => {
     window.__LOCALKIT_SHARE__ = {
       relayUrls: ['ws://localhost:7447'],
       iceServers: [],
       publicIp: ip,
       loopbackFallback: true,
+      ...config,
     };
     // The real picker needs a user to choose a folder; the origin-private file
     // system is a real FileSystemDirectoryHandle the test can read back
     if (folderPicker) window.showDirectoryPicker = () => navigator.storage.getDirectory();
     else delete (window as Partial<Window>).showDirectoryPicker;
-  }, { ip: publicIp, folderPicker });
+  }, { ip: publicIp, folderPicker, config });
   const page = await context.newPage();
   await page.goto('/share/send');
+  return { page, name: await ownName(page) };
+}
+
+async function ownName(page: Page) {
   const name = await page.getByText(/^You appear as/).locator('span').first().textContent();
-  expect(name).toMatch(/^\w+ \w+$/);
-  return { page, name: name! };
+  expect(name).toBeTruthy();
+  return name!;
 }
 
 const fakeIp = () => `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`;
@@ -285,4 +299,80 @@ test('long-press on touch opens the text box instead of the file picker; tap sti
   const chooser = sender.page.waitForEvent('filechooser');
   await device.tap();
   await chooser;
+});
+
+const IPHONE_SAFARI = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1';
+
+test('shows each device with its type and browser', async ({ browser }) => {
+  const ip = fakeIp();
+  const laptop = await openDevice(browser, ip);
+  const phone = await openDevice(browser, ip, { userAgent: IPHONE_SAFARI });
+
+  await expect(devices(laptop.page).getByRole('button', { name: phone.name })).toContainText('Safari on iPhone', { timeout: 30_000 });
+  await expect(devices(phone.page).getByRole('button', { name: laptop.name })).toContainText(/Chrome on (Mac|Windows|Linux)/, { timeout: 30_000 });
+  // Each device also sees its own description
+  await expect(phone.page.getByText('Safari on iPhone')).toBeVisible();
+});
+
+test('a rename shows up on the other device straight away and survives a reload', async ({ browser }) => {
+  const { sender, receiver } = await pairUp(browser);
+
+  await receiver.page.getByRole('button', { name: 'Rename this device' }).click();
+  const field = receiver.page.getByRole('textbox', { name: 'Device name' });
+  await field.fill('  Kitchen   Laptop ');
+  await field.press('Enter');
+
+  await expect(receiver.page.getByText(/^You appear as/)).toContainText('Kitchen Laptop');
+  await expect(devices(sender.page).getByRole('button', { name: 'Kitchen Laptop' })).toBeVisible();
+
+  await receiver.page.reload();
+  expect(await ownName(receiver.page)).toBe('Kitchen Laptop');
+  await expect(devices(sender.page).getByRole('button', { name: 'Kitchen Laptop' })).toBeVisible({ timeout: 30_000 });
+});
+
+test('turning visibility off hides this device until it is turned back on', async ({ browser }) => {
+  const { sender, receiver } = await pairUp(browser);
+  const visible = receiver.page.getByRole('switch', { name: 'Visible to others' });
+  await expect(visible).toBeChecked();
+
+  await visible.click();
+  await expect(receiver.page.getByText(/^Hidden\. Other devices can't find this one/)).toBeVisible();
+  await expect(devices(sender.page).getByRole('button', { name: receiver.name })).toHaveCount(0, { timeout: 20_000 });
+
+  // The choice is remembered, and a hidden device never touches the relay — not even briefly while loading
+  const relayConnections: string[] = [];
+  receiver.page.on('websocket', ws => { if (ws.url().includes(':7447')) relayConnections.push(ws.url()); });
+  await receiver.page.reload();
+  await expect(receiver.page.getByRole('switch', { name: 'Visible to others' })).not.toBeChecked();
+  await receiver.page.waitForTimeout(3000);
+  expect(relayConnections).toEqual([]);
+  await expect(devices(sender.page).getByRole('button', { name: receiver.name })).toHaveCount(0);
+
+  await receiver.page.getByRole('switch', { name: 'Visible to others' }).click();
+  await expect(devices(sender.page).getByRole('button', { name: receiver.name })).toBeVisible({ timeout: 30_000 });
+});
+
+test('says when it is offline and recovers when the network returns', async ({ browser }) => {
+  const { sender, receiver } = await pairUp(browser);
+  const offline = sender.page.getByText(/^You're offline\./);
+
+  await sender.page.context().setOffline(true);
+  await expect(offline).toBeVisible();
+  await sender.page.context().setOffline(false);
+  await expect(offline).toBeHidden();
+  await expect(devices(sender.page).getByRole('button', { name: receiver.name })).toBeVisible({ timeout: 30_000 });
+});
+
+test('explains a failed direct connection instead of failing silently', async ({ browser }) => {
+  const ip = fakeIp();
+  // Relay-only ICE with no TURN server: the devices find each other but can never connect
+  const config = { iceTransportPolicy: 'relay' };
+  const a = await openDevice(browser, ip, { config });
+  await openDevice(browser, ip, { config });
+
+  const notice = a.page.getByText(/couldn't connect to it directly/);
+  await expect(notice).toBeVisible({ timeout: 45_000 });
+  await expect(devices(a.page)).toHaveCount(0);
+  await a.page.getByRole('button', { name: 'Dismiss' }).click();
+  await expect(notice).toBeHidden();
 });
