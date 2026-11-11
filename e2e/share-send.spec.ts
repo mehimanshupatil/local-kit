@@ -1,75 +1,12 @@
-import { createHash, randomBytes, randomInt } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { test, expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
+import { closeDevices, devices, fakeIp, openDevice, ownName, pairUp, type Upload } from './share-helpers';
 
 // Pairing waits on two cold page loads plus WebRTC setup
 test.describe.configure({ timeout: 60_000 });
 
-const contexts: BrowserContext[] = [];
-test.afterEach(async () => {
-  await Promise.all(contexts.splice(0).map(c => c.close()));
-});
-
-type Device = { page: Page; name: string };
-type Upload = { name: string; mimeType: string; buffer: Buffer };
-
-// Two browser contexts stand in for two devices. Each test gets its own fake
-// public IP so parallel tests land in separate discovery rooms.
-interface DeviceOptions {
-  folderPicker?: boolean;
-  touch?: boolean;
-  clipboard?: boolean;
-  userAgent?: string;
-  /** Extra share config, e.g. to make connections fail. */
-  config?: Record<string, unknown>;
-}
-
-async function openDevice(
-  browser: Browser,
-  publicIp: string,
-  { folderPicker = false, touch = false, clipboard = false, userAgent, config = {} }: DeviceOptions = {},
-): Promise<Device> {
-  const context = await browser.newContext({ hasTouch: touch, isMobile: touch, userAgent });
-  if (clipboard) await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-  contexts.push(context);
-  await context.addInitScript(({ ip, folderPicker, config }) => {
-    window.__LOCALKIT_SHARE__ = {
-      relayUrls: ['ws://localhost:7447'],
-      iceServers: [],
-      publicIp: ip,
-      loopbackFallback: true,
-      ...config,
-    };
-    // The real picker needs a user to choose a folder; the origin-private file
-    // system is a real FileSystemDirectoryHandle the test can read back
-    if (folderPicker) window.showDirectoryPicker = () => navigator.storage.getDirectory();
-    else delete (window as Partial<Window>).showDirectoryPicker;
-  }, { ip: publicIp, folderPicker, config });
-  const page = await context.newPage();
-  await page.goto('/share/send');
-  return { page, name: await ownName(page) };
-}
-
-async function ownName(page: Page) {
-  const name = await page.getByText(/^You appear as/).locator('span').first().textContent();
-  expect(name).toBeTruthy();
-  return name!;
-}
-
-const fakeIp = () => `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`;
-const devices = (page: Page) => page.getByRole('list', { name: 'Nearby devices' });
-
-async function pairUp(
-  browser: Browser,
-  options: { receiverFolderPicker?: boolean; senderTouch?: boolean; receiverClipboard?: boolean } = {},
-) {
-  const ip = fakeIp();
-  const sender = await openDevice(browser, ip, { touch: options.senderTouch });
-  const receiver = await openDevice(browser, ip, { folderPicker: options.receiverFolderPicker, clipboard: options.receiverClipboard });
-  await expect(devices(sender.page).getByRole('button', { name: receiver.name })).toBeVisible({ timeout: 30_000 });
-  await expect(devices(receiver.page).getByRole('button', { name: sender.name })).toBeVisible({ timeout: 30_000 });
-  return { sender, receiver };
-}
+test.afterEach(closeDevices);
 
 async function offerFiles(sender: Page, receiverName: string, files: Upload[]) {
   const chooser = sender.waitForEvent('filechooser');

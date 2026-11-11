@@ -5,7 +5,8 @@ import { useToolVisit } from '@/stores/toolVisit';
 import { usePrefsStore, useToolPrefs } from '@/stores/prefsStore';
 import {
   ChatTextIcon, CheckIcon, CopyIcon, DesktopIcon, DeviceMobileIcon, DeviceTabletIcon, DownloadSimpleIcon, EyeSlashIcon,
-  FolderOpenIcon, PaperPlaneTiltIcon, PencilSimpleIcon, SpinnerIcon, WarningCircleIcon, WifiSlashIcon, XIcon,
+  FolderOpenIcon, LinkSimpleIcon, PaperPlaneTiltIcon, PencilSimpleIcon, QrCodeIcon, SpinnerIcon, WarningCircleIcon,
+  WifiSlashIcon, XIcon,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -28,10 +29,12 @@ import { formatFileSize } from '@/lib/utils/fileUtils';
 import { randomDeviceName } from '@/lib/share/names';
 import { MAX_NAME_LENGTH, cleanName, thisDevice, type DeviceKind, type Profile } from '@/lib/share/device';
 import {
-  joinShareSession, type IncomingOffer, type IncomingTextOffer, type OutgoingTransfer, type Peer, type ShareSession,
+  createShareSession, type IncomingOffer, type IncomingTextOffer, type OutgoingTransfer, type Peer, type ShareSession,
   type TransferEnd,
 } from '@/lib/share/session';
 import { MAX_TEXT_LENGTH, linkify } from '@/lib/share/text';
+import { secretFromHash } from '@/lib/share/pairing';
+import PairDialog, { type PairTab, type PairingState } from './PairDialog';
 import { canSaveToDisk, isMobileDevice, memorySinks, pickFolderSinks, type SinkFactory } from '@/lib/share/sinks';
 import { SpeedMeter, batchProgress, planReceive, type BatchProgress, type ReceivePlan } from '@/lib/share/transfer';
 
@@ -114,6 +117,10 @@ export default function SendTool() {
   /** Bumped to rejoin, e.g. when the network comes back. */
   const [attempt, setAttempt] = useState(0);
   const [connectionFailed, setConnectionFailed] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
+  const [pairOpen, setPairOpen] = useState(false);
+  const [pairTab, setPairTab] = useState<PairTab>('show');
+  const [pairing, setPairing] = useState<PairingState>({ step: 'idle' });
   const [peers, setPeers] = useState<Peer[]>([]);
   const [prompts, updatePrompts] = useImmer<Prompt[]>([]);
   const [transfers, updateTransfers] = useImmer<Transfer[]>([]);
@@ -189,16 +196,16 @@ export default function SendTool() {
   }, [online]);
 
   useEffect(() => {
-    setPeers([]);
-    setConnectionFailed(false);
-    if (!storedSharePrefs().visible) return void setConnection({ status: 'hidden' });
-    if (!navigator.onLine) return void setConnection({ status: 'offline' });
-    setConnection({ status: 'connecting' });
     let cancelled = false;
 
-    joinShareSession(profileRef.current!, {
+    createShareSession(profileRef.current!, {
       onPeersChange: setPeers,
       onConnectionFailed: () => setConnectionFailed(true),
+      onPaired: (peer, emojis) => {
+        setPairing({ step: 'paired', peer, emojis });
+        setPairOpen(true);
+      },
+      onPairingEnded: reason => setPairing({ step: 'ended', reason }),
       onOffer: offer => new Promise<SinkFactory | null>(resolve => {
         const total = offer.files.reduce((a, f) => a + f.size, 0);
         const plan = planReceive(total, { mobile: isMobileDevice(), canSaveToDisk: canSaveToDisk() });
@@ -261,7 +268,7 @@ export default function SendTool() {
       .then(s => {
         if (cancelled) return void s.leave();
         session.current = s;
-        setConnection({ status: 'ready' });
+        setSessionReady(true);
       })
       .catch(e => {
         if (!cancelled) setConnection({ status: 'error', message: e instanceof Error ? e.message : 'Could not start sharing.' });
@@ -274,7 +281,82 @@ export default function SendTool() {
       void session.current?.leave();
       session.current = null;
     };
-  }, [prefs.visible, attempt]);
+  }, []);
+
+  // Nearby discovery follows the visibility switch and the network
+  useEffect(() => {
+    const s = session.current;
+    if (!sessionReady || !s) return;
+    setConnectionFailed(false);
+    if (!storedSharePrefs().visible) {
+      void s.setNearby(false);
+      return void setConnection({ status: 'hidden' });
+    }
+    if (!navigator.onLine) return void setConnection({ status: 'offline' });
+    setConnection({ status: 'connecting' });
+    let stale = false;
+    s.setNearby(true)
+      .then(() => { if (!stale) setConnection({ status: 'ready' }); })
+      .catch(e => {
+        if (!stale) setConnection({ status: 'error', message: e instanceof Error ? e.message : 'Could not start sharing.' });
+      });
+    return () => { stale = true; };
+  }, [sessionReady, prefs.visible, attempt]);
+
+  // Opened from a pairing link: pair straight away, and drop the secret from the address bar
+  useEffect(() => {
+    if (!sessionReady) return;
+    const secret = secretFromHash(location.hash);
+    if (!secret) return;
+    history.replaceState(null, '', location.pathname + location.search);
+    setPairTab('enter');
+    setPairing({ step: 'joining' });
+    setPairOpen(true);
+    session.current?.joinPairing({ kind: 'link', secret }).catch(() => setPairing({ step: 'ended', reason: 'failed' }));
+  }, [sessionReady]);
+
+  // The other side said the emojis didn't match (or just left) while this side was still checking
+  useEffect(() => {
+    if (pairing.step === 'paired' && !peers.some(p => p.id === pairing.peer.id)) {
+      setPairing({ step: 'mismatch', peerName: pairing.peer.name });
+    }
+  }, [peers, pairing]);
+
+  const showCode = () => {
+    const s = session.current;
+    if (!s) return;
+    setPairing({ step: 'starting' });
+    s.startPairing(location.href)
+      .then(invite => setPairing(p => (p.step === 'starting' ? { step: 'showing', invite } : p)))
+      .catch(() => setPairing({ step: 'ended', reason: 'failed' }));
+  };
+
+  const enterCode = (code: string) => {
+    const s = session.current;
+    if (!s) return;
+    setPairing({ step: 'joining' });
+    s.joinPairing({ kind: 'code', code }).catch(() => setPairing({ step: 'ended', reason: 'failed' }));
+  };
+
+  const openPairing = () => {
+    setPairTab('show');
+    setPairOpen(true);
+    showCode();
+  };
+
+  const changePairTab = (tab: PairTab) => {
+    setPairTab(tab);
+    session.current?.cancelPairing();
+    if (tab === 'show') showCode();
+    else setPairing({ step: 'idle' });
+  };
+
+  const closePairing = () => {
+    // A code nobody has used yet stops working once it's not on screen
+    if (pairing.step !== 'paired') session.current?.cancelPairing();
+    setPairOpen(false);
+    setPairing({ step: 'idle' });
+  };
 
   const rename = (name: string) => {
     const cleaned = cleanName(name);
@@ -424,7 +506,7 @@ export default function SendTool() {
           )}
 
           {peers.length > 0 && (
-            <ul aria-label="Nearby devices" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <ul aria-label="Devices" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {peers.map(peer => (
                 <li key={peer.id}>
                   <DeviceButton
@@ -436,6 +518,15 @@ export default function SendTool() {
                 </li>
               ))}
             </ul>
+          )}
+
+          {sessionReady && (
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1">
+              <Button variant="secondary" size="sm" onClick={openPairing}>
+                <QrCodeIcon className="size-4" /> Pair a device
+              </Button>
+              <span className="text-xs text-muted-foreground">Not on the same network? Pair with a QR code or a code.</span>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -456,6 +547,22 @@ export default function SendTool() {
           {prompt?.kind === 'text' && <TextOfferPrompt offer={prompt.offer} onAccept={() => answer(true)} />}
         </AlertDialogContent>
       </AlertDialog>
+
+      <PairDialog
+        open={pairOpen}
+        tab={pairTab}
+        state={pairing}
+        onTabChange={changePairTab}
+        onClose={closePairing}
+        onShowCode={showCode}
+        onEnterCode={enterCode}
+        onConfirm={closePairing}
+        onReject={() => {
+          if (pairing.step !== 'paired') return;
+          session.current?.unpair(pairing.peer.id);
+          setPairing({ step: 'mismatch', peerName: pairing.peer.name });
+        }}
+      />
 
       <ComposeDialog
         peer={composeFor}
@@ -624,6 +731,11 @@ function DeviceButton({ peer, filesBusy, onSendFiles, onSendText }: {
       <span className="text-center">
         <span className="block text-sm font-medium text-foreground break-words">{peer.name}</span>
         {peer.device.label && <span className="block text-xs text-muted-foreground">{peer.device.label}</span>}
+        {peer.via === 'paired' && (
+          <span className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-brand-500">
+            <LinkSimpleIcon className="size-3" /> Paired
+          </span>
+        )}
       </span>
     </button>
   );

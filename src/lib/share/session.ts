@@ -1,7 +1,11 @@
-import type { Room } from 'trystero';
+import type { JoinRoomConfig, Room } from 'trystero';
 import { generateId } from '@/lib/utils/fileUtils';
 import { readChunks } from './chunking';
 import { readProfile, type DeviceInfo, type Profile } from './device';
+import {
+  PAIRING_TTL_MS, fingerprintFromSdp, generateCode, generateSecret, pairingLink, pairingRoom, safetyEmojis,
+  type PairingKey,
+} from './pairing';
 import { discoverPublicIp, roomIdForIp } from './room';
 import { getShareConfig } from './servers';
 import type { FileSink, IncomingFileMeta, SinkFactory } from './sinks';
@@ -12,11 +16,17 @@ const APP_ID = 'localkit-share';
 /** How long a sender waits for the receiver to tap Accept or Decline. */
 const OFFER_TIMEOUT_MS = 5 * 60_000;
 const HELLO_TIMEOUT_MS = 10_000;
+/** How long someone entering a code waits for the device showing it. */
+const PAIRING_JOIN_TIMEOUT_MS = 30_000;
+
+/** How this device reached a peer: discovered on the same network, or paired with a code or link. */
+export type PeerVia = 'nearby' | 'paired';
 
 export interface Peer {
   id: string;
   name: string;
   device: DeviceInfo;
+  via: PeerVia;
 }
 
 type FileMeta = { name: string; size: number; type: string };
@@ -47,10 +57,28 @@ export type TransferEnd =
   | { reason: 'cancelled-by-peer' }
   | { reason: 'error'; message: string };
 
+export interface PairingInvite {
+  code: string;
+  link: string;
+  expiresAt: number;
+}
+
+/** Why a pairing attempt ended without connecting. */
+export type PairingEnd =
+  /** Nobody used the code or link before it expired. */
+  | 'expired'
+  /** No device was showing the code that was entered. */
+  | 'not-found'
+  /** The device was found but the connection failed (or it was already paired). */
+  | 'failed';
+
 export interface ShareSessionHandlers {
   onPeersChange: (peers: Peer[]) => void;
   /** A device on this network was found but a direct connection to it couldn't be made (no TURN relay). */
   onConnectionFailed: () => void;
+  /** Paired with a device; show both people the safety emojis to compare. */
+  onPaired: (peer: Peer, emojis: string[]) => void;
+  onPairingEnded: (reason: PairingEnd) => void;
   /** Ask the user. Resolve with where to write the files, or null to decline. */
   onOffer: (offer: IncomingOffer) => Promise<SinkFactory | null>;
   /** Ask the user whether to accept a text message; resolve true to accept. */
@@ -76,6 +104,16 @@ export interface OutgoingTransfer {
 }
 
 export interface ShareSession {
+  /** Join or leave the room shared by every device on this network. */
+  setNearby: (on: boolean) => Promise<void>;
+  /** Show a code and link another device can use to pair, from any network. */
+  startPairing: (pageUrl: string) => Promise<PairingInvite>;
+  /** Pair using a code or link from another device. */
+  joinPairing: (key: PairingKey) => Promise<void>;
+  /** Stop a pairing attempt that hasn't connected yet. */
+  cancelPairing: () => void;
+  /** Disconnect a paired device (e.g. the safety emojis didn't match). */
+  unpair: (peerId: string) => void;
   /** Change this device's name; connected devices see it straight away. */
   updateProfile: (profile: Profile) => void;
   sendFiles: (peerId: string, files: File[], onProgress: (progress: TransferProgress) => void) => OutgoingTransfer;
@@ -91,10 +129,41 @@ export class ShareError extends Error {
 }
 
 // Trystero hands back the same room instance for the same room ID, so a join
-// that overlaps an earlier session's leave (a remount) would be torn down by it.
-let pendingLeave: Promise<void> = Promise.resolve();
+// that overlaps an earlier leave of that room (a remount) would be torn down by it.
+const pendingLeaves = new Map<string, Promise<void>>();
+
+function makeActions(room: Room) {
+  return {
+    hello: room.makeAction<Profile, Profile>('hello', { kind: 'request' }),
+    profile: room.makeAction<Profile>('profile'),
+    offer: room.makeAction<Offer, boolean>('offer', { kind: 'request' }),
+    chunk: room.makeAction<ArrayBuffer>('chunk'),
+    cancel: room.makeAction<Cancel>('cancel'),
+    textOffer: room.makeAction<TextOffer, boolean>('text-offer', { kind: 'request' }),
+    text: room.makeAction<TextMessage>('text'),
+  };
+}
+
+type Actions = ReturnType<typeof makeActions>;
+
+/** One Trystero room and the actions that run over it. */
+interface Channel extends Actions {
+  kind: 'nearby' | 'pairing';
+  roomId: string;
+  room: Room;
+  /** Peers whose connection in this room is open. */
+  members: Set<string>;
+}
+
+interface Pairing {
+  channels: Channel[];
+  timer: ReturnType<typeof setTimeout>;
+  /** The one device allowed in; set as soon as it connects, which locks the rooms. */
+  peerId: string | null;
+}
 
 interface Incoming {
+  channel: Channel;
   offer: IncomingOffer;
   sinks: SinkFactory;
   fileIndex: number;
@@ -107,6 +176,7 @@ interface Incoming {
 }
 
 interface Outgoing {
+  channel: Channel;
   peerId: string;
   controller: AbortController;
   /** Set when the transfer stopped for a reason other than our own cancel. */
@@ -115,85 +185,114 @@ interface Outgoing {
 
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : 'The transfer failed.');
 
-/** Join the discovery room shared by every device on this network. */
-export async function joinShareSession(initialProfile: Profile, handlers: ShareSessionHandlers): Promise<ShareSession> {
+export async function createShareSession(initialProfile: Profile, handlers: ShareSessionHandlers): Promise<ShareSession> {
   let self = initialProfile;
   const config = getShareConfig();
-  const ip = config.publicIp ?? await discoverPublicIp(config.iceServers);
-  if (!ip) {
-    throw new ShareError('no-public-ip', "Couldn't reach the internet to look for nearby devices. Check your connection and reload.");
-  }
+  const { joinRoom } = await import('trystero');
 
-  const [{ joinRoom }, roomId] = await Promise.all([import('trystero'), roomIdForIp(ip)]);
-  await pendingLeave;
-  const room: Room = joinRoom(
-    {
-      appId: APP_ID,
-      relayConfig: { urls: config.relayUrls, warnOnRelayFailure: false },
-      rtcConfig: { iceServers: config.iceServers, iceTransportPolicy: config.iceTransportPolicy },
-      _test_only_mdnsHostFallbackToLoopback: config.loopbackFallback,
-    },
-    roomId,
-    { onJoinError: () => handlers.onConnectionFailed() },
-  );
+  const channels = new Set<Channel>();
+  let nearby: Channel | null = null;
+  let pairing: Pairing | null = null;
+  /** Paired peers whose safety emojis have been sent to the UI. */
+  const announcedPairs = new Set<string>();
 
   const peers = new Map<string, Profile>();
-  const emitPeers = () => handlers.onPeersChange([...peers].map(([id, { name, device }]) => ({ id, name, device })));
   const key = (peerId: string, transferId: string) => `${peerId}:${transferId}`;
   const incoming = new Map<string, Incoming>();
   const outgoing = new Map<string, Outgoing>();
   /** Offers on screen waiting for an answer, so the sender can withdraw them. */
   const pendingOffers = new Map<string, () => void>();
+  /** Text offers this side accepted and is waiting to receive. */
+  const acceptedTexts = new Set<string>();
+
+  const channelsOf = (peerId: string) => [...channels].filter(c => c.members.has(peerId));
+  /** The room to reach a peer through, preferring a paired one. */
+  const channelOf = (peerId: string) => {
+    const options = channelsOf(peerId);
+    return options.find(c => c.kind === 'pairing') ?? options[0] ?? null;
+  };
+  const peerName = (peerId: string) => peers.get(peerId)?.name ?? 'Unknown device';
+
+  const toPeer = (id: string): Peer => {
+    const { name, device } = peers.get(id)!;
+    return { id, name, device, via: channelsOf(id).some(c => c.kind === 'pairing') ? 'paired' : 'nearby' };
+  };
+  const emitPeers = () => handlers.onPeersChange([...peers.keys()].filter(id => channelOf(id)).map(toPeer));
+
+  // ── Rooms ────────────────────────────────────────────────────────────────
+
+  const roomConfig = (password?: string): JoinRoomConfig => ({
+    appId: APP_ID,
+    password,
+    relayConfig: { urls: config.relayUrls, warnOnRelayFailure: false },
+    rtcConfig: { iceServers: config.iceServers, iceTransportPolicy: config.iceTransportPolicy },
+    _test_only_mdnsHostFallbackToLoopback: config.loopbackFallback,
+  });
+
+  const open = async (
+    kind: Channel['kind'],
+    roomId: string,
+    password: string | undefined,
+    callbacks: Parameters<typeof joinRoom>[2],
+  ): Promise<Channel> => {
+    await pendingLeaves.get(roomId);
+    const room = joinRoom(roomConfig(password), roomId, callbacks);
+    const actions = makeActions(room);
+    const channel: Channel = { kind, roomId, room, members: new Set(), ...actions };
+    channels.add(channel);
+    wire(channel);
+    return channel;
+  };
+
+  const close = (channel: Channel) => {
+    if (!channels.delete(channel)) return;
+    for (const peerId of [...channel.members]) peerLeft(channel, peerId);
+    const leaving = channel.room.leave();
+    pendingLeaves.set(channel.roomId, leaving);
+    void leaving.finally(() => { if (pendingLeaves.get(channel.roomId) === leaving) pendingLeaves.delete(channel.roomId); });
+  };
 
   // ── Peers ────────────────────────────────────────────────────────────────
 
-  // Peers whose connection is open; a hello reply that arrives after the peer left is ignored.
-  const connected = new Set<string>();
-  const addPeer = (peerId: string, profile: unknown) => {
-    connected.add(peerId);
+  const addPeer = (channel: Channel, peerId: string, profile: unknown) => {
+    if (!channel.members.has(peerId)) return;
     peers.set(peerId, readProfile(profile));
     emitPeers();
-  };
-
-  // Both sides say hello on join. A message that lands before the other side
-  // has finished admitting this peer is dropped, so a one-way announcement can
-  // be lost; the later of the two requests always gets through, and its reply
-  // carries the other side's name.
-  const hello = room.makeAction<Profile, Profile>('hello', {
-    kind: 'request',
-    onRequest: (profile, { peerId }) => {
-      addPeer(peerId, profile);
-      return self;
-    },
-  });
-
-  // Renames after connecting
-  const profileAction = room.makeAction<Profile>('profile');
-  profileAction.onMessage = (profile, { peerId }) => {
-    if (connected.has(peerId)) addPeer(peerId, profile);
-  };
-
-  room.onPeerJoin = peerId => {
-    connected.add(peerId);
-    hello.request(self, { target: peerId, timeoutMs: HELLO_TIMEOUT_MS })
-      .then(profile => { if (connected.has(peerId)) addPeer(peerId, profile); })
-      .catch(() => { /* the other side's hello covers it */ });
-  };
-
-  room.onPeerLeave = peerId => {
-    const message = `${peers.get(peerId)?.name ?? 'The other device'} disconnected before the transfer finished.`;
-    connected.delete(peerId);
-    peers.delete(peerId);
-    emitPeers();
-    for (const [k, t] of incoming) {
-      if (t.offer.peerId === peerId) void endIncoming(k, { reason: 'error', message });
+    if (channel.kind === 'pairing' && !announcedPairs.has(peerId)) {
+      announcedPairs.add(peerId);
+      void announcePair(channel, peerId);
     }
-    for (const [k, withdraw] of pendingOffers) if (k.startsWith(`${peerId}:`)) withdraw();
+  };
+
+  /** Work out the safety emojis from both ends' DTLS certificates. */
+  const announcePair = async (channel: Channel, peerId: string) => {
+    const pc = channel.room.getPeers()[peerId];
+    const local = fingerprintFromSdp(pc?.localDescription?.sdp);
+    const remote = fingerprintFromSdp(pc?.remoteDescription?.sdp);
+    const emojis = local && remote ? await safetyEmojis(local, remote) : [];
+    if (channel.members.has(peerId)) handlers.onPaired(toPeer(peerId), emojis);
+  };
+
+  /** A peer's connection in one room closed; it's gone once it's in no room at all. */
+  const peerLeft = (channel: Channel, peerId: string) => {
+    if (!channel.members.delete(peerId)) return;
+    const message = `${peerName(peerId)} disconnected before the transfer finished.`;
+    for (const [k, t] of incoming) {
+      if (t.offer.peerId === peerId && t.channel === channel) void endIncoming(k, { reason: 'error', message });
+    }
     for (const t of outgoing.values()) {
-      if (t.peerId !== peerId) continue;
+      if (t.peerId !== peerId || t.channel !== channel) continue;
       t.stop = new Error(message);
       t.controller.abort();
     }
+    if (!channelOf(peerId)) {
+      for (const [k, withdraw] of pendingOffers) if (k.startsWith(`${peerId}:`)) withdraw();
+      peers.delete(peerId);
+      announcedPairs.delete(peerId);
+    }
+    // A pairing room is for one device; once it's gone, so is the room
+    if (channel.kind === 'pairing' && channel.members.size === 0) close(channel);
+    emitPeers();
   };
 
   // ── Receiving ────────────────────────────────────────────────────────────
@@ -263,88 +362,174 @@ export async function joinShareSession(initialProfile: Profile, handlers: ShareS
     return withdrawn ? null : answer;
   };
 
-  const peerName = (peerId: string) => peers.get(peerId)?.name ?? 'Unknown device';
+  /** Hook a room's actions up to the shared transfer logic. */
+  const wire = (channel: Channel) => {
+    const { room, hello } = channel;
 
-  const offerAction = room.makeAction<Offer, boolean>('offer', {
-    kind: 'request',
-    onRequest: async (offer, { peerId }) => {
+    // Both sides say hello on join. A message that lands before the other side
+    // has finished admitting this peer is dropped, so a one-way announcement can
+    // be lost; the later of the two requests always gets through, and its reply
+    // carries the other side's name.
+    hello.onRequest = (profile, { peerId }) => {
+      channel.members.add(peerId);
+      addPeer(channel, peerId, profile);
+      return self;
+    };
+
+    // Renames after connecting
+    channel.profile.onMessage = (profile, { peerId }) => addPeer(channel, peerId, profile);
+
+    room.onPeerJoin = peerId => {
+      channel.members.add(peerId);
+      hello.request(self, { target: peerId, timeoutMs: HELLO_TIMEOUT_MS })
+        .then(profile => addPeer(channel, peerId, profile))
+        .catch(() => { /* the other side's hello covers it */ });
+    };
+    room.onPeerLeave = peerId => peerLeft(channel, peerId);
+
+    channel.offer.onRequest = async (offer, { peerId }) => {
       const k = key(peerId, offer.transferId);
       const full: IncomingOffer = { ...offer, peerId, peerName: peerName(peerId) };
       const answer = await ask(peerId, offer.transferId, () => handlers.onOffer(full));
       if (!answer) return false;
 
       const t: Incoming = {
-        offer: full, sinks: answer, fileIndex: 0, fileBytes: 0, sink: null,
+        channel, offer: full, sinks: answer, fileIndex: 0, fileBytes: 0, sink: null,
         order: new InOrderBuffer(), queue: Promise.resolve(), ended: false,
       };
       incoming.set(k, t);
       t.queue = openCurrent(t).catch(e => endIncoming(k, { reason: 'error', message: errorMessage(e) }));
       return true;
-    },
-  });
+    };
 
-  const chunkAction = room.makeAction<ArrayBuffer>('chunk');
-  const cancelAction = room.makeAction<Cancel>('cancel');
+    channel.chunk.onMessage = (data, { peerId, metadata }) => {
+      const meta = metadata as ChunkMeta;
+      const k = key(peerId, meta.transferId);
+      const t = incoming.get(k);
+      if (!t) return;
+      t.queue = t.queue
+        .then(() => handleChunk(t, meta, data))
+        .catch(e => {
+          void channel.cancel.send({ transferId: meta.transferId }, { target: peerId });
+          return endIncoming(k, { reason: 'error', message: errorMessage(e) });
+        });
+    };
 
-  // ── Text ─────────────────────────────────────────────────────────────────
-
-  /** Text offers this side accepted and is waiting to receive. */
-  const acceptedTexts = new Set<string>();
-
-  const textOfferAction = room.makeAction<TextOffer, boolean>('text-offer', {
-    kind: 'request',
-    onRequest: async (offer, { peerId }) => {
+    channel.textOffer.onRequest = async (offer, { peerId }) => {
       if (!(offer.length > 0 && offer.length <= MAX_TEXT_LENGTH)) return false;
       const full: IncomingTextOffer = { ...offer, peerId, peerName: peerName(peerId) };
       const accepted = await ask(peerId, offer.transferId, async () => (await handlers.onTextOffer(full)) || null);
       if (accepted) acceptedTexts.add(key(peerId, offer.transferId));
       return Boolean(accepted);
-    },
-  });
+    };
 
-  const textAction = room.makeAction<TextMessage>('text');
-  textAction.onMessage = ({ transferId, text }, { peerId }) => {
-    // Only text the user agreed to see, and no more than was offered
-    if (!acceptedTexts.delete(key(peerId, transferId)) || typeof text !== 'string' || text.length > MAX_TEXT_LENGTH) return;
-    handlers.onText(transferId, text);
+    channel.text.onMessage = ({ transferId, text }, { peerId }) => {
+      // Only text the user agreed to see, and no more than was offered
+      if (!acceptedTexts.delete(key(peerId, transferId)) || typeof text !== 'string' || text.length > MAX_TEXT_LENGTH) return;
+      handlers.onText(transferId, text);
+    };
+
+    channel.cancel.onMessage = ({ transferId }, { peerId }) => {
+      const k = key(peerId, transferId);
+      pendingOffers.get(k)?.();
+      void endIncoming(k, { reason: 'cancelled-by-peer' });
+      const out = outgoing.get(transferId);
+      if (out?.peerId === peerId && !out.controller.signal.aborted) {
+        out.stop = 'cancelled-by-peer';
+        out.controller.abort();
+      }
+    };
   };
 
-  chunkAction.onMessage = (data, { peerId, metadata }) => {
-    const meta = metadata as ChunkMeta;
-    const k = key(peerId, meta.transferId);
-    const t = incoming.get(k);
-    if (!t) return;
-    t.queue = t.queue
-      .then(() => handleChunk(t, meta, data))
-      .catch(e => {
-        void cancelAction.send({ transferId: meta.transferId }, { target: peerId });
-        return endIncoming(k, { reason: 'error', message: errorMessage(e) });
-      });
-  };
+  // ── Nearby ───────────────────────────────────────────────────────────────
 
-  // ── Cancelling ───────────────────────────────────────────────────────────
-
-  cancelAction.onMessage = ({ transferId }, { peerId }) => {
-    const k = key(peerId, transferId);
-    pendingOffers.get(k)?.();
-    void endIncoming(k, { reason: 'cancelled-by-peer' });
-    const out = outgoing.get(transferId);
-    if (out?.peerId === peerId && !out.controller.signal.aborted) {
-      out.stop = 'cancelled-by-peer';
-      out.controller.abort();
+  const setNearby: ShareSession['setNearby'] = async on => {
+    if (!on) {
+      if (nearby) close(nearby);
+      nearby = null;
+      return;
     }
+    if (nearby) return;
+    const ip = config.publicIp ?? await discoverPublicIp(config.iceServers);
+    if (!ip) {
+      throw new ShareError('no-public-ip', "Couldn't reach the internet to look for nearby devices. Check your connection and reload.");
+    }
+    nearby = await open('nearby', await roomIdForIp(ip), undefined, { onJoinError: () => handlers.onConnectionFailed() });
+  };
+
+  // ── Pairing ──────────────────────────────────────────────────────────────
+
+  const endPairing = (reason: PairingEnd | null) => {
+    const p = pairing;
+    if (!p) return;
+    pairing = null;
+    clearTimeout(p.timer);
+    for (const c of p.channels) if (c.members.size === 0) close(c);
+    if (reason) handlers.onPairingEnded(reason);
+  };
+
+  /** Join a private pairing room that admits exactly one other device. */
+  const openPairingRoom = async (p: Pairing, pairingKey: PairingKey) => {
+    const { roomId, password } = await pairingRoom(pairingKey);
+    const channel = await open('pairing', roomId, password, {
+      onPeerHandshake: async peerId => {
+        if (pairing !== p || (p.peerId && p.peerId !== peerId)) throw new Error('Already paired');
+        p.peerId = peerId;
+      },
+      // Someone else turned away once paired, or a guest's connection failing
+      onJoinError: () => { if (pairing === p && !p.peerId) endPairing('failed'); },
+    });
+    p.channels.push(channel);
+    const join = channel.room.onPeerJoin!;
+    channel.room.onPeerJoin = peerId => {
+      join(peerId);
+      if (pairing !== p) return;
+      // Paired: the other code or link is no longer needed
+      for (const other of p.channels) if (other !== channel) close(other);
+      p.channels = [channel];
+      endPairing(null);
+    };
+    return channel;
+  };
+
+  const startPairing: ShareSession['startPairing'] = async pageUrl => {
+    endPairing(null);
+    const ttl = config.pairingTtlMs ?? PAIRING_TTL_MS;
+    const p: Pairing = { channels: [], peerId: null, timer: setTimeout(() => { if (pairing === p) endPairing('expired'); }, ttl) };
+    pairing = p;
+    const code = generateCode();
+    const secret = generateSecret();
+    await Promise.all([openPairingRoom(p, { kind: 'code', code }), openPairingRoom(p, { kind: 'link', secret })]);
+    if (pairing !== p) for (const c of p.channels) if (c.members.size === 0) close(c);
+    return { code, link: pairingLink(pageUrl, secret), expiresAt: Date.now() + ttl };
+  };
+
+  const joinPairing: ShareSession['joinPairing'] = async pairingKey => {
+    endPairing(null);
+    const timeout = config.pairingJoinTimeoutMs ?? PAIRING_JOIN_TIMEOUT_MS;
+    const p: Pairing = { channels: [], peerId: null, timer: setTimeout(() => { if (pairing === p) endPairing('not-found'); }, timeout) };
+    pairing = p;
+    await openPairingRoom(p, pairingKey);
+    if (pairing !== p) for (const c of p.channels) if (c.members.size === 0) close(c);
   };
 
   // ── Sending ──────────────────────────────────────────────────────────────
 
+  const route = (peerId: string) => {
+    const channel = channelOf(peerId);
+    if (!channel) throw new Error(`${peerName(peerId)} is no longer connected.`);
+    return channel;
+  };
+
   const sendFiles: ShareSession['sendFiles'] = (peerId, files, onProgress) => {
     const transferId = generateId();
-    const t: Outgoing = { peerId, controller: new AbortController(), stop: null };
+    const channel = route(peerId);
+    const t: Outgoing = { channel, peerId, controller: new AbortController(), stop: null };
     const { signal } = t.controller;
     outgoing.set(transferId, t);
 
     const run = async (): Promise<SendResult> => {
-      const accepted = await offerAction.request(
+      const accepted = await channel.offer.request(
         { transferId, files: files.map(f => ({ name: f.name, size: f.size, type: f.type })) },
         { target: peerId, timeoutMs: OFFER_TIMEOUT_MS, signal },
       );
@@ -356,7 +541,7 @@ export async function joinShareSession(initialProfile: Profile, handlers: ShareS
         // threshold, so awaiting them in turn is the backpressure
         for await (const { index, data } of readChunks(file)) {
           signal.throwIfAborted();
-          await chunkAction.send(data, { target: peerId, metadata: { transferId, file: fileIndex, index }, signal });
+          await channel.chunk.send(data, { target: peerId, metadata: { transferId, file: fileIndex, index }, signal });
           fileBytes += data.byteLength;
           onProgress({ fileIndex, fileBytes });
         }
@@ -378,7 +563,7 @@ export async function joinShareSession(initialProfile: Profile, handlers: ShareS
       done,
       cancel: () => {
         if (signal.aborted) return;
-        void cancelAction.send({ transferId }, { target: peerId });
+        void channel.cancel.send({ transferId }, { target: peerId });
         t.controller.abort();
       },
     };
@@ -386,15 +571,16 @@ export async function joinShareSession(initialProfile: Profile, handlers: ShareS
 
   const sendText: ShareSession['sendText'] = (peerId, text) => {
     const transferId = generateId();
+    const channel = route(peerId);
     const controller = new AbortController();
     const { signal } = controller;
     const run = async (): Promise<SendResult> => {
-      const accepted = await textOfferAction.request(
+      const accepted = await channel.textOffer.request(
         { transferId, length: text.length },
         { target: peerId, timeoutMs: OFFER_TIMEOUT_MS, signal },
       );
       if (!accepted) return 'declined';
-      await textAction.send({ transferId, text }, { target: peerId, signal });
+      await channel.text.send({ transferId, text }, { target: peerId, signal });
       return 'sent';
     };
     return {
@@ -405,29 +591,40 @@ export async function joinShareSession(initialProfile: Profile, handlers: ShareS
       }),
       cancel: () => {
         if (signal.aborted) return;
-        void cancelAction.send({ transferId }, { target: peerId });
+        void channel.cancel.send({ transferId }, { target: peerId });
         controller.abort();
       },
     };
   };
 
   return {
+    setNearby,
+    startPairing,
+    joinPairing,
+    cancelPairing: () => endPairing(null),
+    unpair(peerId) {
+      for (const c of channelsOf(peerId)) if (c.kind === 'pairing') close(c);
+    },
     updateProfile(profile) {
       self = profile;
-      void profileAction.send(profile);
+      for (const c of channels) void c.profile.send(profile);
     },
     sendFiles,
     sendText,
     cancelReceive(transferId) {
       for (const [k, t] of incoming) {
         if (t.offer.transferId !== transferId) continue;
-        void cancelAction.send({ transferId }, { target: t.offer.peerId });
+        void t.channel.cancel.send({ transferId }, { target: t.offer.peerId });
         void endIncoming(k, { reason: 'cancelled' });
       }
     },
-    leave() {
-      pendingLeave = room.leave();
-      return pendingLeave;
+    async leave() {
+      endPairing(null);
+      const leaving = [...channels].map(c => {
+        close(c);
+        return pendingLeaves.get(c.roomId);
+      });
+      await Promise.all(leaving);
     },
   };
 }

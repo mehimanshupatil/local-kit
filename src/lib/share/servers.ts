@@ -32,6 +32,9 @@ export interface ShareConfig {
   loopbackFallback?: boolean;
   /** 'relay' with no TURN server makes every direct connection fail (tests the failure message). */
   iceTransportPolicy?: RTCIceTransportPolicy;
+  /** Shorter code lifetime and join wait, so tests needn't wait minutes. */
+  pairingTtlMs?: number;
+  pairingJoinTimeoutMs?: number;
 }
 
 declare global {
