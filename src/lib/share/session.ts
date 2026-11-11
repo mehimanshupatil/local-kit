@@ -4,6 +4,7 @@ import { readChunks } from './chunking';
 import { discoverPublicIp, roomIdForIp } from './room';
 import { getShareConfig } from './servers';
 import type { FileSink, IncomingFileMeta, SinkFactory } from './sinks';
+import { MAX_TEXT_LENGTH } from './text';
 import { InOrderBuffer } from './transfer';
 
 const APP_ID = 'localkit-share';
@@ -21,8 +22,15 @@ type FileMeta = { name: string; size: number; type: string };
 type Offer = { transferId: string; files: FileMeta[] };
 type ChunkMeta = { transferId: string; file: number; index: number };
 type Cancel = { transferId: string };
+type TextOffer = { transferId: string; length: number };
+type TextMessage = { transferId: string; text: string };
 
 export interface IncomingOffer extends Offer {
+  peerId: string;
+  peerName: string;
+}
+
+export interface IncomingTextOffer extends TextOffer {
   peerId: string;
   peerName: string;
 }
@@ -42,7 +50,11 @@ export interface ShareSessionHandlers {
   onPeersChange: (peers: Peer[]) => void;
   /** Ask the user. Resolve with where to write the files, or null to decline. */
   onOffer: (offer: IncomingOffer) => Promise<SinkFactory | null>;
-  /** The sender withdrew an offer that's still waiting for an answer. */
+  /** Ask the user whether to accept a text message; resolve true to accept. */
+  onTextOffer: (offer: IncomingTextOffer) => Promise<boolean>;
+  /** Text from an offer this side accepted. */
+  onText: (transferId: string, text: string) => void;
+  /** The sender withdrew an offer (files or text) that's still waiting for an answer. */
   onOfferWithdrawn: (transferId: string) => void;
   onReceiveProgress: (transferId: string, progress: TransferProgress) => void;
   /** `file` is null when it was written straight to disk. */
@@ -62,6 +74,7 @@ export interface OutgoingTransfer {
 
 export interface ShareSession {
   sendFiles: (peerId: string, files: File[], onProgress: (progress: TransferProgress) => void) => OutgoingTransfer;
+  sendText: (peerId: string, text: string) => OutgoingTransfer;
   cancelReceive: (transferId: string) => void;
   leave: () => Promise<void>;
 }
@@ -221,22 +234,31 @@ export async function joinShareSession(selfName: string, handlers: ShareSessionH
     }
   };
 
+  /** Put an offer to the user; resolves null if they decline or the sender withdraws it first. */
+  const ask = async <T>(peerId: string, transferId: string, question: () => Promise<T | null>): Promise<T | null> => {
+    const k = key(peerId, transferId);
+    let withdrawn = false;
+    const answer = await new Promise<T | null>(resolve => {
+      pendingOffers.set(k, () => {
+        withdrawn = true;
+        handlers.onOfferWithdrawn(transferId);
+        resolve(null);
+      });
+      question().then(resolve, () => resolve(null));
+    });
+    pendingOffers.delete(k);
+    return withdrawn ? null : answer;
+  };
+
+  const peerName = (peerId: string) => peers.get(peerId) ?? 'Unknown device';
+
   const offerAction = room.makeAction<Offer, boolean>('offer', {
     kind: 'request',
     onRequest: async (offer, { peerId }) => {
       const k = key(peerId, offer.transferId);
-      const full: IncomingOffer = { ...offer, peerId, peerName: peers.get(peerId) ?? 'Unknown device' };
-      let withdrawn = false;
-      const answer = await new Promise<SinkFactory | null>(resolve => {
-        pendingOffers.set(k, () => {
-          withdrawn = true;
-          handlers.onOfferWithdrawn(offer.transferId);
-          resolve(null);
-        });
-        handlers.onOffer(full).then(resolve, () => resolve(null));
-      });
-      pendingOffers.delete(k);
-      if (withdrawn || !answer) return false;
+      const full: IncomingOffer = { ...offer, peerId, peerName: peerName(peerId) };
+      const answer = await ask(peerId, offer.transferId, () => handlers.onOffer(full));
+      if (!answer) return false;
 
       const t: Incoming = {
         offer: full, sinks: answer, fileIndex: 0, fileBytes: 0, sink: null,
@@ -250,6 +272,29 @@ export async function joinShareSession(selfName: string, handlers: ShareSessionH
 
   const chunkAction = room.makeAction<ArrayBuffer>('chunk');
   const cancelAction = room.makeAction<Cancel>('cancel');
+
+  // ── Text ─────────────────────────────────────────────────────────────────
+
+  /** Text offers this side accepted and is waiting to receive. */
+  const acceptedTexts = new Set<string>();
+
+  const textOfferAction = room.makeAction<TextOffer, boolean>('text-offer', {
+    kind: 'request',
+    onRequest: async (offer, { peerId }) => {
+      if (!(offer.length > 0 && offer.length <= MAX_TEXT_LENGTH)) return false;
+      const full: IncomingTextOffer = { ...offer, peerId, peerName: peerName(peerId) };
+      const accepted = await ask(peerId, offer.transferId, async () => (await handlers.onTextOffer(full)) || null);
+      if (accepted) acceptedTexts.add(key(peerId, offer.transferId));
+      return Boolean(accepted);
+    },
+  });
+
+  const textAction = room.makeAction<TextMessage>('text');
+  textAction.onMessage = ({ transferId, text }, { peerId }) => {
+    // Only text the user agreed to see, and no more than was offered
+    if (!acceptedTexts.delete(key(peerId, transferId)) || typeof text !== 'string' || text.length > MAX_TEXT_LENGTH) return;
+    handlers.onText(transferId, text);
+  };
 
   chunkAction.onMessage = (data, { peerId, metadata }) => {
     const meta = metadata as ChunkMeta;
@@ -326,8 +371,36 @@ export async function joinShareSession(selfName: string, handlers: ShareSessionH
     };
   };
 
+  const sendText: ShareSession['sendText'] = (peerId, text) => {
+    const transferId = generateId();
+    const controller = new AbortController();
+    const { signal } = controller;
+    const run = async (): Promise<SendResult> => {
+      const accepted = await textOfferAction.request(
+        { transferId, length: text.length },
+        { target: peerId, timeoutMs: OFFER_TIMEOUT_MS, signal },
+      );
+      if (!accepted) return 'declined';
+      await textAction.send({ transferId, text }, { target: peerId, signal });
+      return 'sent';
+    };
+    return {
+      transferId,
+      done: run().catch((e): SendResult => {
+        if (signal.aborted) return 'cancelled';
+        throw e;
+      }),
+      cancel: () => {
+        if (signal.aborted) return;
+        void cancelAction.send({ transferId }, { target: peerId });
+        controller.abort();
+      },
+    };
+  };
+
   return {
     sendFiles,
+    sendText,
     cancelReceive(transferId) {
       for (const [k, t] of incoming) {
         if (t.offer.transferId !== transferId) continue;

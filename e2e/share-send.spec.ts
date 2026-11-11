@@ -15,8 +15,13 @@ type Upload = { name: string; mimeType: string; buffer: Buffer };
 
 // Two browser contexts stand in for two devices. Each test gets its own fake
 // public IP so parallel tests land in separate discovery rooms.
-async function openDevice(browser: Browser, publicIp: string, { folderPicker = false } = {}): Promise<Device> {
-  const context = await browser.newContext();
+async function openDevice(
+  browser: Browser,
+  publicIp: string,
+  { folderPicker = false, touch = false, clipboard = false } = {},
+): Promise<Device> {
+  const context = await browser.newContext({ hasTouch: touch, isMobile: touch });
+  if (clipboard) await context.grantPermissions(['clipboard-read', 'clipboard-write']);
   contexts.push(context);
   await context.addInitScript(({ ip, folderPicker }) => {
     window.__LOCALKIT_SHARE__ = {
@@ -40,10 +45,13 @@ async function openDevice(browser: Browser, publicIp: string, { folderPicker = f
 const fakeIp = () => `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`;
 const devices = (page: Page) => page.getByRole('list', { name: 'Nearby devices' });
 
-async function pairUp(browser: Browser, options: { receiverFolderPicker?: boolean } = {}) {
+async function pairUp(
+  browser: Browser,
+  options: { receiverFolderPicker?: boolean; senderTouch?: boolean; receiverClipboard?: boolean } = {},
+) {
   const ip = fakeIp();
-  const sender = await openDevice(browser, ip);
-  const receiver = await openDevice(browser, ip, { folderPicker: options.receiverFolderPicker });
+  const sender = await openDevice(browser, ip, { touch: options.senderTouch });
+  const receiver = await openDevice(browser, ip, { folderPicker: options.receiverFolderPicker, clipboard: options.receiverClipboard });
   await expect(devices(sender.page).getByRole('button', { name: receiver.name })).toBeVisible({ timeout: 30_000 });
   await expect(devices(receiver.page).getByRole('button', { name: sender.name })).toBeVisible({ timeout: 30_000 });
   return { sender, receiver };
@@ -212,4 +220,69 @@ test('fits a 400px-wide screen', async ({ browser }) => {
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     expect(overflow).toBeLessThanOrEqual(0);
   }
+});
+
+test('right-click sends text; the receiver accepts, sees safe links and can copy it', async ({ browser }) => {
+  const { sender, receiver } = await pairUp(browser, { receiverClipboard: true });
+  const text = 'Meeting notes: https://example.com/agenda?id=7.\nNot a link: javascript:alert(1)\nsecond line';
+
+  await devices(sender.page).getByRole('button', { name: receiver.name }).click({ button: 'right' });
+  const compose = sender.page.getByRole('dialog', { name: `Send text to ${receiver.name}` });
+  await compose.getByRole('textbox', { name: 'Message' }).fill(text);
+  await compose.getByRole('button', { name: 'Send' }).click();
+  await expect(compose).toBeHidden();
+  await expect(sender.page.getByText(`Waiting for ${receiver.name} to accept…`)).toBeVisible();
+
+  const prompt = receiver.page.getByRole('alertdialog');
+  await expect(prompt).toContainText(`${sender.name} wants to send you text`);
+  await expect(prompt).toContainText(`${text.length} characters`);
+  // Nothing is shown before accepting
+  await expect(receiver.page.getByText('Meeting notes')).toHaveCount(0);
+  await prompt.getByRole('button', { name: 'Accept' }).click();
+
+  const note = receiver.page.getByLabel(`Text from ${sender.name}`);
+  await expect(note).toContainText('Meeting notes:');
+  await expect(note).toContainText('second line');
+  await expect(sender.page.getByText(`Sent to ${receiver.name}.`)).toBeVisible();
+
+  // Only the http(s) URL is a link, without the sentence's full stop, and it opens safely
+  const links = note.getByRole('link');
+  await expect(links).toHaveCount(1);
+  await expect(links).toHaveAttribute('href', 'https://example.com/agenda?id=7');
+  await expect(links).toHaveAttribute('rel', /noopener/);
+  await expect(links).toHaveAttribute('target', '_blank');
+
+  await note.getByRole('button', { name: 'Copy' }).click();
+  await expect(note.getByRole('button', { name: 'Copied' })).toBeVisible();
+  expect(await receiver.page.evaluate(() => navigator.clipboard.readText())).toBe(text);
+});
+
+test('long-press on touch opens the text box instead of the file picker; tap still picks files', async ({ browser }) => {
+  const { sender, receiver } = await pairUp(browser, { senderTouch: true });
+  const device = devices(sender.page).getByRole('button', { name: receiver.name });
+  const box = (await device.boundingBox())!;
+  const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  const cdp = await sender.page.context().newCDPSession(sender.page);
+
+  let pickerOpened = false;
+  sender.page.on('filechooser', () => { pickerOpened = true; });
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+  await sender.page.waitForTimeout(800);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
+  const compose = sender.page.getByRole('dialog', { name: `Send text to ${receiver.name}` });
+  await expect(compose).toBeVisible();
+  await sender.page.waitForTimeout(500);
+  expect(pickerOpened).toBe(false);
+
+  await compose.getByRole('textbox', { name: 'Message' }).fill('hello from my phone');
+  await compose.getByRole('button', { name: 'Send' }).click();
+  await receiver.page.getByRole('alertdialog').getByRole('button', { name: 'Decline' }).click();
+  await expect(sender.page.getByLabel(`Text to ${receiver.name}`).getByText(`${receiver.name} declined.`)).toBeVisible();
+  await expect(receiver.page.getByLabel(`Text from ${sender.name}`)).toHaveCount(0);
+
+  // A short tap is still "send files"
+  const chooser = sender.page.waitForEvent('filechooser');
+  await device.tap();
+  await chooser;
 });

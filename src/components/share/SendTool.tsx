@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { useImmer } from 'use-immer';
-import { useInterval } from '@mantine/hooks';
+import { useClipboard, useInterval, useLongPress } from '@mantine/hooks';
 import { useToolVisit } from '@/stores/toolVisit';
 import {
-  DevicesIcon, DownloadSimpleIcon, FolderOpenIcon, PaperPlaneTiltIcon, SpinnerIcon, WarningCircleIcon, XIcon,
+  ChatTextIcon, CheckIcon, CopyIcon, DevicesIcon, DownloadSimpleIcon, FolderOpenIcon, PaperPlaneTiltIcon, SpinnerIcon,
+  WarningCircleIcon, XIcon,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+} from '@/components/ui/dialog';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription,
   AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -18,8 +23,10 @@ import { downloadBlob } from '@/lib/utils/downloadUtils';
 import { formatFileSize } from '@/lib/utils/fileUtils';
 import { randomDeviceName } from '@/lib/share/names';
 import {
-  joinShareSession, type IncomingOffer, type OutgoingTransfer, type Peer, type ShareSession, type TransferEnd,
+  joinShareSession, type IncomingOffer, type IncomingTextOffer, type OutgoingTransfer, type Peer, type ShareSession,
+  type TransferEnd,
 } from '@/lib/share/session';
+import { MAX_TEXT_LENGTH, linkify } from '@/lib/share/text';
 import { canSaveToDisk, isMobileDevice, memorySinks, pickFolderSinks, type SinkFactory } from '@/lib/share/sinks';
 import { SpeedMeter, batchProgress, planReceive, type BatchProgress, type ReceivePlan } from '@/lib/share/transfer';
 
@@ -40,10 +47,22 @@ interface Transfer {
   savedTo?: string;
 }
 
-interface Prompt {
-  offer: IncomingOffer;
-  plan: ReceivePlan;
+type Prompt =
+  | { kind: 'files'; offer: IncomingOffer; plan: ReceivePlan }
+  | { kind: 'text'; offer: IncomingTextOffer };
+
+/** A text message sent or received. */
+interface Note {
+  id: string;
+  direction: 'out' | 'in';
+  peerName: string;
+  status: TransferStatus;
+  text: string | null;
+  error?: string;
 }
+
+/** Files answer with where to write them; text answers with `true`; null declines. */
+type Answer = SinkFactory | true | null;
 
 /** Live byte counts, updated per chunk and copied into state on a timer. */
 interface LiveProgress {
@@ -72,9 +91,11 @@ export default function SendTool() {
   const [prompts, updatePrompts] = useImmer<Prompt[]>([]);
   const [transfers, updateTransfers] = useImmer<Transfer[]>([]);
   const [received, updateReceived] = useImmer<OutputFile[]>([]);
+  const [notes, updateNotes] = useImmer<Note[]>([]);
+  const [composeFor, setComposeFor] = useState<Peer | null>(null);
 
   const session = useRef<ShareSession | null>(null);
-  const answers = useRef(new Map<string, (sinks: SinkFactory | null) => void>());
+  const answers = useRef(new Map<string, (answer: Answer) => void>());
   const outgoing = useRef(new Map<string, OutgoingTransfer>());
   const live = useRef(new Map<string, LiveProgress>());
   /** Folder each incoming transfer is being saved into, when saving to disk. */
@@ -83,6 +104,11 @@ export default function SendTool() {
   const receivedFiles = useRef(new Map<string, File[]>());
   const fileInput = useRef<HTMLInputElement>(null);
   const targetPeer = useRef<Peer | null>(null);
+
+  const updateNote = (id: string, fn: (n: Note) => void) => updateNotes(d => {
+    const n = d.find(x => x.id === id);
+    if (n) fn(n);
+  });
 
   const updateTransfer = (id: string, fn: (t: Transfer) => void) => updateTransfers(d => {
     const t = d.find(x => x.id === id);
@@ -131,7 +157,8 @@ export default function SendTool() {
       onOffer: offer => new Promise<SinkFactory | null>(resolve => {
         const total = offer.files.reduce((a, f) => a + f.size, 0);
         const plan = planReceive(total, { mobile: isMobileDevice(), canSaveToDisk: canSaveToDisk() });
-        answers.current.set(offer.transferId, sinks => {
+        answers.current.set(offer.transferId, answer => {
+          const sinks = answer === true ? null : answer;
           answers.current.delete(offer.transferId);
           updatePrompts(d => d.filter(p => p.offer.transferId !== offer.transferId));
           if (sinks) {
@@ -146,7 +173,24 @@ export default function SendTool() {
           }
           resolve(sinks);
         });
-        updatePrompts(d => { d.push({ offer, plan }); });
+        updatePrompts(d => { d.push({ kind: 'files', offer, plan }); });
+      }),
+      onTextOffer: offer => new Promise<boolean>(resolve => {
+        answers.current.set(offer.transferId, answer => {
+          answers.current.delete(offer.transferId);
+          updatePrompts(d => d.filter(p => p.offer.transferId !== offer.transferId));
+          if (answer) {
+            updateNotes(d => {
+              d.unshift({ id: offer.transferId, direction: 'in', peerName: offer.peerName, status: 'active', text: null });
+            });
+          }
+          resolve(answer !== null);
+        });
+        updatePrompts(d => { d.push({ kind: 'text', offer }); });
+      }),
+      onText: (transferId, text) => updateNote(transferId, n => {
+        n.status = 'done';
+        n.text = text;
       }),
       onOfferWithdrawn: transferId => answers.current.get(transferId)?.(null),
       onReceiveProgress: (transferId, { fileIndex, fileBytes }) => recordProgress(transferId, fileIndex, fileBytes),
@@ -222,10 +266,25 @@ export default function SendTool() {
     else session.current?.cancelReceive(t.id);
   };
 
+  const sendText = (peer: Peer, text: string) => {
+    if (!session.current) return;
+    const transfer = session.current.sendText(peer.id, text);
+    const id = transfer.transferId;
+    outgoing.current.set(id, transfer);
+    updateNotes(d => { d.unshift({ id, direction: 'out', peerName: peer.name, status: 'waiting', text }); });
+    transfer.done
+      .then(result => updateNote(id, n => { n.status = result === 'sent' ? 'done' : result; }))
+      .catch(e => updateNote(id, n => {
+        n.status = 'error';
+        n.error = e instanceof Error ? e.message : 'The message failed to send.';
+      }))
+      .finally(() => outgoing.current.delete(id));
+  };
+
   const prompt = prompts[0] ?? null;
 
-  const answer = (sinks: SinkFactory | null) => {
-    if (prompt) answers.current.get(prompt.offer.transferId)?.(sinks);
+  const answer = (value: Answer) => {
+    if (prompt) answers.current.get(prompt.offer.transferId)?.(value);
   };
 
   const saveToFolder = async () => {
@@ -261,6 +320,7 @@ export default function SendTool() {
             <p className="text-sm text-muted-foreground">
               You appear as <span className="font-semibold text-foreground">{selfName}</span>.
               Open this page on another device on the same network, then tap it below to send files.
+              Right-click or long-press it to send text instead.
             </p>
           )}
 
@@ -286,15 +346,12 @@ export default function SendTool() {
             <ul aria-label="Nearby devices" className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {peers.map(peer => (
                 <li key={peer.id}>
-                  <button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => pickFilesFor(peer)}
-                    className="w-full flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-secondary hover:ring-1 hover:ring-brand-500/40 transition-colors disabled:opacity-50 disabled:pointer-events-none"
-                  >
-                    <DevicesIcon className="size-8 text-brand-500" />
-                    <span className="text-sm font-medium text-foreground text-center">{peer.name}</span>
-                  </button>
+                  <DeviceButton
+                    peer={peer}
+                    filesBusy={busy}
+                    onSendFiles={() => pickFilesFor(peer)}
+                    onSendText={() => setComposeFor(peer)}
+                  />
                 </li>
               ))}
             </ul>
@@ -302,21 +359,37 @@ export default function SendTool() {
         </CardContent>
       </Card>
 
+      {notes.map(n => (
+        <NoteCard key={n.id} note={n} onCancel={() => outgoing.current.get(n.id)?.cancel()} />
+      ))}
+
       {transfers.map(t => <TransferCard key={t.id} transfer={t} onCancel={() => cancel(t)} />)}
 
       {received.length > 0 && <OutputFiles files={received} />}
 
       <AlertDialog open={prompt !== null} onOpenChange={open => { if (!open) answer(null); }}>
         <AlertDialogContent>
-          {prompt && <OfferPrompt prompt={prompt} onAccept={() => answer(memorySinks)} onSaveToFolder={saveToFolder} />}
+          {prompt?.kind === 'files' && (
+            <OfferPrompt prompt={prompt} onAccept={() => answer(memorySinks)} onSaveToFolder={saveToFolder} />
+          )}
+          {prompt?.kind === 'text' && <TextOfferPrompt offer={prompt.offer} onAccept={() => answer(true)} />}
         </AlertDialogContent>
       </AlertDialog>
+
+      <ComposeDialog
+        peer={composeFor}
+        onClose={() => setComposeFor(null)}
+        onSend={text => {
+          if (composeFor) sendText(composeFor, text);
+          setComposeFor(null);
+        }}
+      />
     </div>
   );
 }
 
 function OfferPrompt({ prompt: { offer, plan }, onAccept, onSaveToFolder }: {
-  prompt: Prompt;
+  prompt: Extract<Prompt, { kind: 'files' }>;
   onAccept: () => void;
   onSaveToFolder: () => void;
 }) {
@@ -428,6 +501,174 @@ function TransferCard({ transfer: t, onCancel }: { transfer: Transfer; onCancel:
               </li>
             ))}
           </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Tap to send files; right-click (mouse) or long-press (touch) to send text. */
+function DeviceButton({ peer, filesBusy, onSendFiles, onSendText }: {
+  peer: Peer;
+  filesBusy: boolean;
+  onSendFiles: () => void;
+  onSendText: () => void;
+}) {
+  // Lifting the finger after a long-press also fires a click, which would open the file picker
+  const swallowClick = useRef(false);
+  const longPress = useLongPress(() => {
+    swallowClick.current = true;
+    onSendText();
+  }, { events: ['touch'], threshold: 500, cancelOnMove: true, onStart: () => { swallowClick.current = false; } });
+
+  return (
+    <button
+      type="button"
+      {...longPress}
+      onClick={() => {
+        if (swallowClick.current) {
+          swallowClick.current = false;
+          return;
+        }
+        if (!filesBusy) onSendFiles();
+      }}
+      onContextMenu={e => {
+        e.preventDefault();
+        onSendText();
+      }}
+      aria-disabled={filesBusy || undefined}
+      className="w-full flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-secondary hover:ring-1 hover:ring-brand-500/40 transition-colors select-none [-webkit-touch-callout:none] aria-disabled:opacity-50"
+    >
+      <DevicesIcon className="size-8 text-brand-500" />
+      <span className="text-sm font-medium text-foreground text-center">{peer.name}</span>
+    </button>
+  );
+}
+
+function ComposeDialog({ peer, onClose, onSend }: {
+  peer: Peer | null;
+  onClose: () => void;
+  onSend: (text: string) => void;
+}) {
+  const [draft, setDraft] = useState('');
+  const trimmed = draft.trim();
+
+  return (
+    <Dialog open={peer !== null} onOpenChange={open => { if (!open) onClose(); }}>
+      <DialogContent>
+        <form
+          // min-w-0: the auto-sizing textarea would otherwise widen this grid item to fit a long URL
+          className="min-w-0 space-y-4"
+          onSubmit={e => {
+            e.preventDefault();
+            if (!trimmed) return;
+            onSend(draft);
+            setDraft('');
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle>Send text to {peer?.name}</DialogTitle>
+            <DialogDescription>They'll be asked to accept it first. Links will be clickable.</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            autoFocus
+            aria-label="Message"
+            value={draft}
+            maxLength={MAX_TEXT_LENGTH}
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => {
+              // Ctrl/Cmd+Enter sends; plain Enter is a new line
+              if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) e.currentTarget.form?.requestSubmit();
+            }}
+            rows={5}
+            className="max-h-64 overflow-y-auto"
+            placeholder="Type or paste text or a link…"
+          />
+          <DialogFooter>
+            <Button type="submit" disabled={!trimmed}>
+              <PaperPlaneTiltIcon className="size-4" /> Send
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function TextOfferPrompt({ offer, onAccept }: { offer: IncomingTextOffer; onAccept: () => void }) {
+  return (
+    <>
+      <AlertDialogHeader>
+        <AlertDialogTitle>{offer.peerName} wants to send you text</AlertDialogTitle>
+        <AlertDialogDescription>{plural(offer.length, 'character')}</AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Decline</AlertDialogCancel>
+        <AlertDialogAction onClick={onAccept}>Accept</AlertDialogAction>
+      </AlertDialogFooter>
+    </>
+  );
+}
+
+function LinkedText({ text }: { text: string }) {
+  return (
+    <>
+      {linkify(text).map((part, i) => (part.type === 'link'
+        ? (
+          <a key={i} href={part.href} target="_blank" rel="noopener noreferrer nofollow" className="text-brand-500 underline underline-offset-2 break-all">
+            {part.value}
+          </a>
+        )
+        : <span key={i}>{part.value}</span>))}
+    </>
+  );
+}
+
+function noteStatus(n: Note): string | null {
+  const them = n.peerName;
+  switch (n.status) {
+    case 'waiting': return `Waiting for ${them} to accept…`;
+    case 'active': return 'Receiving…';
+    case 'done': return n.direction === 'out' ? `Sent to ${them}.` : null;
+    case 'declined': return `${them} declined.`;
+    case 'cancelled': return 'You cancelled the message.';
+    case 'cancelled-by-peer': return `${them} cancelled the message.`;
+    case 'error': return n.error ?? 'The message failed to send.';
+  }
+}
+
+function NoteCard({ note: n, onCancel }: { note: Note; onCancel: () => void }) {
+  const clipboard = useClipboard({ timeout: 2000 });
+  const status = noteStatus(n);
+  const label = n.direction === 'out' ? `Text to ${n.peerName}` : `Text from ${n.peerName}`;
+
+  return (
+    <Card>
+      <CardContent className="pt-5 space-y-3" aria-live="polite" aria-label={label}>
+        <div className="flex items-center gap-3">
+          <ChatTextIcon className="size-4 text-brand-500 shrink-0" />
+          <p className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">{label}</p>
+          {n.status === 'waiting' && (
+            <Button variant="ghost" size="sm" onClick={onCancel} className="shrink-0 text-muted-foreground hover:text-red-500">
+              <XIcon className="size-3.5" /> Cancel
+            </Button>
+          )}
+          {n.direction === 'in' && n.text !== null && (
+            <Button variant="secondary" size="sm" onClick={() => clipboard.copy(n.text)} className="shrink-0">
+              {clipboard.copied ? <CheckIcon className="size-3.5 text-green-500" /> : <CopyIcon className="size-3.5" />}
+              {clipboard.copied ? 'Copied' : 'Copy'}
+            </Button>
+          )}
+        </div>
+        {n.text !== null && (
+          <p className={`text-sm whitespace-pre-wrap break-words max-h-80 overflow-y-auto ${n.direction === 'out' ? 'text-muted-foreground line-clamp-3' : 'text-foreground'}`}>
+            <LinkedText text={n.text} />
+          </p>
+        )}
+        {status && (
+          <p className={n.status === 'error' ? 'text-sm text-red-600 dark:text-red-400' : n.status === 'done' ? 'text-sm text-brand-500' : 'text-sm text-muted-foreground'}>
+            {status}
+          </p>
         )}
       </CardContent>
     </Card>
