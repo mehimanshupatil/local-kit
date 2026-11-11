@@ -10,7 +10,7 @@ import {
   FileTextIcon, CalculatorIcon, BankIcon, CodeIcon, BrowserIcon, ChartLineUpIcon,
   FingerprintIcon, GitDiffIcon, TextAaIcon, BinaryIcon, FileSvgIcon, PercentIcon,
   FileCsvIcon, FileXlsIcon, GridNineIcon, BroomIcon, ColumnsIcon, FunnelIcon, ArrowsMergeIcon, ChartBarIcon,
-  ShareNetworkIcon, PaperPlaneTiltIcon,
+  ShareNetworkIcon, PaperPlaneTiltIcon, VideoCameraIcon,
 } from '@phosphor-icons/react';
 
 export interface Tool {
@@ -565,10 +565,10 @@ export const categories: Category[] = [
     icon: ShareNetworkIcon,
     href: '/share',
     color: 'cyan',
-    pageTitle: 'Share Tools — Send Files Between Devices | LocalKit',
-    pageDesc: 'Send files straight to a nearby phone or laptop, peer to peer and end-to-end encrypted. No uploads, no storage, no servers of ours.',
+    pageTitle: 'Share Tools — Send Files and Video Call Between Devices | LocalKit',
+    pageDesc: 'Send files to a nearby phone or laptop and make private video calls, peer to peer and end-to-end encrypted. No uploads, no storage, no servers of ours.',
     heading: 'Share Tools',
-    subheading: 'Send files straight to your other devices — peer to peer, end-to-end encrypted, never through a server of ours.',
+    subheading: 'Send files and make video calls straight between your devices — peer to peer, end-to-end encrypted, never through a server of ours.',
     note: 'Needs an internet connection to find nearby devices',
     tools: [
       {
@@ -576,6 +576,12 @@ export const categories: Category[] = [
         desc: 'Send files to a nearby device on the same network',
         pageTitle: 'Send Files to Nearby Devices — Peer to Peer, No Upload | LocalKit',
         pageDesc: 'Send files from one device to another on the same Wi-Fi. Goes straight from device to device, end-to-end encrypted — no uploads, no accounts.',
+      },
+      {
+        name: 'Call', href: '/share/call', icon: VideoCameraIcon,
+        desc: 'Video call another device, one to one',
+        pageTitle: 'Private Video Call Between Two Devices — No Account | LocalKit',
+        pageDesc: 'Start a one-to-one video call with another device. Audio and video go straight between the two devices, end-to-end encrypted — no accounts, no call servers of ours.',
       },
     ],
   },

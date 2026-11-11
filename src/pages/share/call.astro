@@ -1,0 +1,10 @@
+---
+import ToolLayout from '../../layouts/ToolLayout.astro';
+import CallTool from '../../components/share/CallTool';
+import { getToolMeta } from '../../data/tools';
+
+const meta = getToolMeta('/share/call');
+---
+<ToolLayout {...meta}>
+  <CallTool client:load />
+</ToolLayout>

@@ -19,6 +19,10 @@ export interface DeviceOptions {
   touch?: boolean;
   clipboard?: boolean;
   userAgent?: string;
+  /** Browser permissions to grant, e.g. camera and microphone. */
+  permissions?: string[];
+  /** Runs in the page before anything else, e.g. to stub an API. */
+  initScript?: string;
   /** Extra share config, e.g. to make connections fail. */
   config?: Record<string, unknown>;
 }
@@ -26,10 +30,15 @@ export interface DeviceOptions {
 export async function openDevice(
   browser: Browser,
   publicIp: string,
-  { path = '/share/send', folderPicker = false, touch = false, clipboard = false, userAgent, config = {} }: DeviceOptions = {},
+  {
+    path = '/share/send', folderPicker = false, touch = false, clipboard = false, userAgent, permissions = [], initScript,
+    config = {},
+  }: DeviceOptions = {},
 ): Promise<Device> {
   const context = await browser.newContext({ hasTouch: touch, isMobile: touch, userAgent });
-  if (clipboard) await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  const grants = [...permissions, ...(clipboard ? ['clipboard-read', 'clipboard-write'] : [])];
+  if (grants.length) await context.grantPermissions(grants);
+  if (initScript) await context.addInitScript(initScript);
   contexts.push(context);
   await context.addInitScript(({ ip, folderPicker, config }) => {
     window.__LOCALKIT_SHARE__ = {

@@ -12,7 +12,9 @@ import type { FileSink, IncomingFileMeta, SinkFactory } from './sinks';
 import { MAX_TEXT_LENGTH } from './text';
 import { InOrderBuffer } from './transfer';
 
-const APP_ID = 'localkit-share';
+/** Each Share tool finds only devices on the same tool: Send never lists a device that's on Call. */
+export type ShareApp = 'send' | 'call';
+const APP_IDS: Record<ShareApp, string> = { send: 'localkit-share', call: 'localkit-call' };
 /** How long a sender waits for the receiver to tap Accept or Decline. */
 const OFFER_TIMEOUT_MS = 5 * 60_000;
 const HELLO_TIMEOUT_MS = 10_000;
@@ -35,6 +37,9 @@ type ChunkMeta = { transferId: string; file: number; index: number };
 type Cancel = { transferId: string };
 type TextOffer = { transferId: string; length: number };
 type TextMessage = { transferId: string; text: string };
+type CallOffer = { callId: string };
+export type CallState = { callId: string; muted: boolean; cameraOff: boolean };
+type CallEnd = { callId: string };
 
 export interface IncomingOffer extends Offer {
   peerId: string;
@@ -42,6 +47,12 @@ export interface IncomingOffer extends Offer {
 }
 
 export interface IncomingTextOffer extends TextOffer {
+  peerId: string;
+  peerName: string;
+}
+
+export interface IncomingCall {
+  callId: string;
   peerId: string;
   peerName: string;
 }
@@ -72,27 +83,41 @@ export type PairingEnd =
   /** The device was found but the connection failed (or it was already paired). */
   | 'failed';
 
-export interface ShareSessionHandlers {
+/** Connection-level events every Share tool handles. */
+export interface ShareSessionBaseHandlers {
   onPeersChange: (peers: Peer[]) => void;
   /** A device on this network was found but a direct connection to it couldn't be made (no TURN relay). */
   onConnectionFailed: () => void;
   /** Paired with a device; show both people the safety emojis to compare. */
   onPaired: (peer: Peer, emojis: string[]) => void;
   onPairingEnded: (reason: PairingEnd) => void;
-  /** Ask the user. Resolve with where to write the files, or null to decline. */
-  onOffer: (offer: IncomingOffer) => Promise<SinkFactory | null>;
-  /** Ask the user whether to accept a text message; resolve true to accept. */
-  onTextOffer: (offer: IncomingTextOffer) => Promise<boolean>;
-  /** Text from an offer this side accepted. */
-  onText: (transferId: string, text: string) => void;
-  /** The sender withdrew an offer (files or text) that's still waiting for an answer. */
-  onOfferWithdrawn: (transferId: string) => void;
-  onReceiveProgress: (transferId: string, progress: TransferProgress) => void;
-  /** `file` is null when it was written straight to disk. */
-  onFileReceived: (transferId: string, fileIndex: number, file: File | null) => void;
-  onReceiveComplete: (transferId: string) => void;
-  onReceiveEnded: (transferId: string, end: TransferEnd) => void;
 }
+
+/** Events for what a tool does over the connection; a tool leaves out what it doesn't do, and those offers are declined. */
+export interface ShareToolHandlers {
+  /** Ask the user. Resolve with where to write the files, or null to decline. */
+  onOffer?: (offer: IncomingOffer) => Promise<SinkFactory | null>;
+  /** Ask the user whether to accept a text message; resolve true to accept. */
+  onTextOffer?: (offer: IncomingTextOffer) => Promise<boolean>;
+  /** Text from an offer this side accepted. */
+  onText?: (transferId: string, text: string) => void;
+  /** Ask the user. Resolve with this side's camera and microphone to answer, or null to decline. */
+  onCall?: (call: IncomingCall) => Promise<MediaStream | null>;
+  /** The other side's camera and microphone, once a call connects. */
+  onRemoteStream?: (callId: string, stream: MediaStream) => void;
+  /** The other side muted, unmuted, or turned their camera off or on. */
+  onCallState?: (state: CallState) => void;
+  onCallEnded?: (callId: string, reason: 'hung-up' | 'disconnected') => void;
+  /** The sender withdrew an offer (files, text or a call) that's still waiting for an answer. */
+  onOfferWithdrawn?: (id: string) => void;
+  onReceiveProgress?: (transferId: string, progress: TransferProgress) => void;
+  /** `file` is null when it was written straight to disk. */
+  onFileReceived?: (transferId: string, fileIndex: number, file: File | null) => void;
+  onReceiveComplete?: (transferId: string) => void;
+  onReceiveEnded?: (transferId: string, end: TransferEnd) => void;
+}
+
+export type ShareSessionHandlers = ShareSessionBaseHandlers & ShareToolHandlers;
 
 export type SendResult = 'sent' | 'declined' | 'cancelled' | 'cancelled-by-peer';
 
@@ -100,6 +125,15 @@ export interface OutgoingTransfer {
   transferId: string;
   /** Rejects if the transfer fails (e.g. the receiver disconnects). */
   done: Promise<SendResult>;
+  cancel: () => void;
+}
+
+export type CallResult = 'accepted' | 'declined' | 'cancelled';
+
+export interface OutgoingCall {
+  callId: string;
+  /** Rejects if the call fails (e.g. the other device disconnects). */
+  answered: Promise<CallResult>;
   cancel: () => void;
 }
 
@@ -119,6 +153,11 @@ export interface ShareSession {
   sendFiles: (peerId: string, files: File[], onProgress: (progress: TransferProgress) => void) => OutgoingTransfer;
   sendText: (peerId: string, text: string) => OutgoingTransfer;
   cancelReceive: (transferId: string) => void;
+  /** Ring a device; once it answers, `stream` is sent to it. */
+  call: (peerId: string, stream: MediaStream) => OutgoingCall;
+  /** Tell the other side about muting or turning the camera off. */
+  setCallState: (state: CallState) => void;
+  hangUp: (callId: string) => void;
   leave: () => Promise<void>;
 }
 
@@ -141,6 +180,9 @@ function makeActions(room: Room) {
     cancel: room.makeAction<Cancel>('cancel'),
     textOffer: room.makeAction<TextOffer, boolean>('text-offer', { kind: 'request' }),
     text: room.makeAction<TextMessage>('text'),
+    callOffer: room.makeAction<CallOffer, boolean>('call-offer', { kind: 'request' }),
+    callState: room.makeAction<CallState>('call-state'),
+    callEnd: room.makeAction<CallEnd>('call-end'),
   };
 }
 
@@ -175,6 +217,12 @@ interface Incoming {
   ended: boolean;
 }
 
+interface Call {
+  channel: Channel;
+  peerId: string;
+  stream: MediaStream;
+}
+
 interface Outgoing {
   channel: Channel;
   peerId: string;
@@ -185,8 +233,13 @@ interface Outgoing {
 
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : 'The transfer failed.');
 
-export async function createShareSession(initialProfile: Profile, handlers: ShareSessionHandlers): Promise<ShareSession> {
+export async function createShareSession(
+  initialProfile: Profile,
+  handlers: ShareSessionHandlers,
+  { app = 'send' }: { app?: ShareApp } = {},
+): Promise<ShareSession> {
   let self = initialProfile;
+  const appId = APP_IDS[app];
   const config = getShareConfig();
   const { joinRoom } = await import('trystero');
 
@@ -204,6 +257,8 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
   const pendingOffers = new Map<string, () => void>();
   /** Text offers this side accepted and is waiting to receive. */
   const acceptedTexts = new Set<string>();
+  /** Calls that have been answered, by call ID. */
+  const calls = new Map<string, Call>();
 
   const channelsOf = (peerId: string) => [...channels].filter(c => c.members.has(peerId));
   /** The room to reach a peer through, preferring a paired one. */
@@ -222,7 +277,7 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
   // ── Rooms ────────────────────────────────────────────────────────────────
 
   const roomConfig = (password?: string): JoinRoomConfig => ({
-    appId: APP_ID,
+    appId,
     password,
     relayConfig: { urls: config.relayUrls, warnOnRelayFailure: false },
     rtcConfig: { iceServers: config.iceServers, iceTransportPolicy: config.iceTransportPolicy },
@@ -235,7 +290,7 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
     password: string | undefined,
     callbacks: Parameters<typeof joinRoom>[2],
   ): Promise<Channel> => {
-    await pendingLeaves.get(roomId);
+    await pendingLeaves.get(`${appId}:${roomId}`);
     const room = joinRoom(roomConfig(password), roomId, callbacks);
     const actions = makeActions(room);
     const channel: Channel = { kind, roomId, room, members: new Set(), ...actions };
@@ -247,9 +302,10 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
   const close = (channel: Channel) => {
     if (!channels.delete(channel)) return;
     for (const peerId of [...channel.members]) peerLeft(channel, peerId);
+    const leaveKey = `${appId}:${channel.roomId}`;
     const leaving = channel.room.leave();
-    pendingLeaves.set(channel.roomId, leaving);
-    void leaving.finally(() => { if (pendingLeaves.get(channel.roomId) === leaving) pendingLeaves.delete(channel.roomId); });
+    pendingLeaves.set(leaveKey, leaving);
+    void leaving.finally(() => { if (pendingLeaves.get(leaveKey) === leaving) pendingLeaves.delete(leaveKey); });
   };
 
   // ── Peers ────────────────────────────────────────────────────────────────
@@ -285,6 +341,9 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
       t.stop = new Error(message);
       t.controller.abort();
     }
+    for (const [callId, call] of calls) {
+      if (call.peerId === peerId && call.channel === channel) endCall(callId, 'disconnected');
+    }
     if (!channelOf(peerId)) {
       for (const [k, withdraw] of pendingOffers) if (k.startsWith(`${peerId}:`)) withdraw();
       peers.delete(peerId);
@@ -303,18 +362,18 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
     t.ended = true;
     incoming.delete(k);
     await t.sink?.abort().catch(() => {});
-    handlers.onReceiveEnded(t.offer.transferId, end);
+    handlers.onReceiveEnded?.(t.offer.transferId, end);
   };
 
   const finishCurrent = async (t: Incoming) => {
     const file = await t.sink!.close();
     t.sink = null;
-    handlers.onFileReceived(t.offer.transferId, t.fileIndex, file);
+    handlers.onFileReceived?.(t.offer.transferId, t.fileIndex, file);
     t.fileIndex++;
     if (t.fileIndex === t.offer.files.length) {
       incoming.delete(key(t.offer.peerId, t.offer.transferId));
       t.ended = true;
-      handlers.onReceiveComplete(t.offer.transferId);
+      handlers.onReceiveComplete?.(t.offer.transferId);
     }
   };
 
@@ -339,7 +398,7 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
       if (t.fileBytes > size) throw new Error(`${name} arrived larger than announced.`);
       await t.sink!.write(chunk);
     }
-    handlers.onReceiveProgress(t.offer.transferId, { fileIndex: t.fileIndex, fileBytes: t.fileBytes });
+    handlers.onReceiveProgress?.(t.offer.transferId, { fileIndex: t.fileIndex, fileBytes: t.fileBytes });
     if (t.fileBytes === size) {
       await finishCurrent(t);
       await openCurrent(t);
@@ -353,7 +412,7 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
     const answer = await new Promise<T | null>(resolve => {
       pendingOffers.set(k, () => {
         withdrawn = true;
-        handlers.onOfferWithdrawn(transferId);
+        handlers.onOfferWithdrawn?.(transferId);
         resolve(null);
       });
       question().then(resolve, () => resolve(null));
@@ -390,7 +449,7 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
     channel.offer.onRequest = async (offer, { peerId }) => {
       const k = key(peerId, offer.transferId);
       const full: IncomingOffer = { ...offer, peerId, peerName: peerName(peerId) };
-      const answer = await ask(peerId, offer.transferId, () => handlers.onOffer(full));
+      const answer = await ask(peerId, offer.transferId, async () => (await handlers.onOffer?.(full)) ?? null);
       if (!answer) return false;
 
       const t: Incoming = {
@@ -418,7 +477,7 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
     channel.textOffer.onRequest = async (offer, { peerId }) => {
       if (!(offer.length > 0 && offer.length <= MAX_TEXT_LENGTH)) return false;
       const full: IncomingTextOffer = { ...offer, peerId, peerName: peerName(peerId) };
-      const accepted = await ask(peerId, offer.transferId, async () => (await handlers.onTextOffer(full)) || null);
+      const accepted = await ask(peerId, offer.transferId, async () => (await handlers.onTextOffer?.(full)) || null);
       if (accepted) acceptedTexts.add(key(peerId, offer.transferId));
       return Boolean(accepted);
     };
@@ -426,7 +485,34 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
     channel.text.onMessage = ({ transferId, text }, { peerId }) => {
       // Only text the user agreed to see, and no more than was offered
       if (!acceptedTexts.delete(key(peerId, transferId)) || typeof text !== 'string' || text.length > MAX_TEXT_LENGTH) return;
-      handlers.onText(transferId, text);
+      handlers.onText?.(transferId, text);
+    };
+
+    channel.callOffer.onRequest = async ({ callId }, { peerId }) => {
+      // One call at a time
+      if (calls.size > 0 || typeof callId !== 'string') return false;
+      const stream = await ask(peerId, callId, async () => (await handlers.onCall?.({ callId, peerId, peerName: peerName(peerId) })) ?? null);
+      if (!stream) return false;
+      if (!channel.members.has(peerId)) {
+        stopTracks(stream);
+        return false;
+      }
+      calls.set(callId, { channel, peerId, stream });
+      void Promise.all(room.addStream(stream, { target: peerId, metadata: { callId } }));
+      return true;
+    };
+
+    room.onPeerStream = (stream, peerId, metadata) => {
+      const callId = (metadata as { callId?: unknown } | undefined)?.callId;
+      if (typeof callId === 'string' && calls.get(callId)?.peerId === peerId) handlers.onRemoteStream?.(callId, stream);
+    };
+
+    channel.callState.onMessage = (state, { peerId }) => {
+      if (calls.get(state.callId)?.peerId === peerId) handlers.onCallState?.(state);
+    };
+
+    channel.callEnd.onMessage = ({ callId }, { peerId }) => {
+      if (calls.get(callId)?.peerId === peerId) endCall(callId, 'hung-up');
     };
 
     channel.cancel.onMessage = ({ transferId }, { peerId }) => {
@@ -438,6 +524,50 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
         out.stop = 'cancelled-by-peer';
         out.controller.abort();
       }
+    };
+  };
+
+  // ── Calls ────────────────────────────────────────────────────────────────
+
+  const stopTracks = (stream: MediaStream) => { for (const track of stream.getTracks()) track.stop(); };
+
+  /** Stop sending to the other side and forget the call. The UI owns (and stops) its own camera. */
+  const endCall = (callId: string, reason: 'hung-up' | 'disconnected' | null) => {
+    const call = calls.get(callId);
+    if (!call) return;
+    calls.delete(callId);
+    try {
+      call.channel.room.removeStream(call.stream, { target: call.peerId });
+    } catch {
+      // The connection is already gone
+    }
+    if (reason) handlers.onCallEnded?.(callId, reason);
+  };
+
+  const call: ShareSession['call'] = (peerId, stream) => {
+    const callId = generateId();
+    const channel = route(peerId);
+    const controller = new AbortController();
+    const { signal } = controller;
+    const run = async (): Promise<CallResult> => {
+      const accepted = await channel.callOffer.request({ callId }, { target: peerId, timeoutMs: OFFER_TIMEOUT_MS, signal });
+      if (!accepted) return 'declined';
+      signal.throwIfAborted();
+      calls.set(callId, { channel, peerId, stream });
+      await Promise.all(channel.room.addStream(stream, { target: peerId, metadata: { callId } }));
+      return 'accepted';
+    };
+    return {
+      callId,
+      answered: run().catch((e): CallResult => {
+        if (signal.aborted) return 'cancelled';
+        throw e;
+      }),
+      cancel: () => {
+        if (signal.aborted) return;
+        void channel.cancel.send({ transferId: callId }, { target: peerId });
+        controller.abort();
+      },
     };
   };
 
@@ -611,6 +741,16 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
     },
     sendFiles,
     sendText,
+    call,
+    setCallState(state) {
+      const c = calls.get(state.callId);
+      if (c) void c.channel.callState.send(state, { target: c.peerId });
+    },
+    hangUp(callId) {
+      const c = calls.get(callId);
+      if (c) void c.channel.callEnd.send({ callId }, { target: c.peerId });
+      endCall(callId, null);
+    },
     cancelReceive(transferId) {
       for (const [k, t] of incoming) {
         if (t.offer.transferId !== transferId) continue;
@@ -620,9 +760,14 @@ export async function createShareSession(initialProfile: Profile, handlers: Shar
     },
     async leave() {
       endPairing(null);
+      for (const callId of [...calls.keys()]) {
+        const c = calls.get(callId)!;
+        void c.channel.callEnd.send({ callId }, { target: c.peerId });
+        endCall(callId, null);
+      }
       const leaving = [...channels].map(c => {
         close(c);
-        return pendingLeaves.get(c.roomId);
+        return pendingLeaves.get(`${appId}:${c.roomId}`);
       });
       await Promise.all(leaving);
     },
