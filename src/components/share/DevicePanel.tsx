@@ -83,7 +83,10 @@ export default function DevicePanel({ share, hint, visibilityLocked, renderDevic
             <Button variant="secondary" size="sm" onClick={pairing.start}>
               <QrCodeIcon className="size-4" /> Pair a device
             </Button>
-            <span className="text-xs text-muted-foreground">Not on the same network? Pair with a QR code or a code.</span>
+            <span className="text-xs text-muted-foreground">
+              Not on the same network? Try pairing with a QR code or a code — it works on most home networks, but some
+              mobile and office networks block direct connections.
+            </span>
           </div>
         )}
 

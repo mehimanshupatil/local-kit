@@ -61,8 +61,9 @@ export default function PairDialog({ open, tab, state, onTabChange, onClose, onS
             <DialogHeader>
               <DialogTitle>Pair a device</DialogTitle>
               <DialogDescription>
-                For a device on a different network, like a phone on mobile data. Pairing still works when this one is
-                hidden.
+                For a device on a different network. The two connect directly, so it works on most home networks but
+                not on every mobile or office network, which can block direct connections. Pairing still works when
+                this device is hidden.
               </DialogDescription>
             </DialogHeader>
             <Tabs value={tab} onValueChange={v => onTabChange(v as PairTab)} className="min-w-0">
