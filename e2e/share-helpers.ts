@@ -67,6 +67,12 @@ export async function ownName(page: Page) {
 export const fakeIp = () => `10.${randomInt(256)}.${randomInt(256)}.${randomInt(1, 255)}`;
 export const devices = (page: Page) => page.getByRole('list', { name: 'Devices' });
 
+/** Tap a device and choose "Send files" or "Send text" from its menu. */
+export async function chooseSend(page: Page, deviceName: string, what: 'Send files' | 'Send text') {
+  await devices(page).getByRole('button', { name: deviceName }).click();
+  await page.getByRole('dialog', { name: `Send to ${deviceName}` }).getByRole('button', { name: what }).click();
+}
+
 export async function pairUp(
   browser: Browser,
   options: { receiverFolderPicker?: boolean; senderTouch?: boolean; receiverClipboard?: boolean } = {},

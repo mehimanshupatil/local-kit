@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
-import { closeDevices, devices, fakeIp, openDevice, type Device } from './share-helpers';
+import { chooseSend, closeDevices, devices, fakeIp, openDevice, type Device } from './share-helpers';
 
 // Each test opens two or three cold pages and waits on WebRTC setup
 test.describe.configure({ timeout: 90_000 });
@@ -63,7 +63,7 @@ test('pairs devices on different networks with a typed code, even while hidden, 
 
   const file = { name: 'boarding-pass.pdf', mimeType: 'application/pdf', buffer: randomBytes(70_000) };
   const chooser = phone.page.waitForEvent('filechooser');
-  await devices(phone.page).getByRole('button', { name: laptop.name }).click();
+  await chooseSend(phone.page, laptop.name, 'Send files');
   await (await chooser).setFiles(file);
   const download = laptop.page.waitForEvent('download');
   await laptop.page.getByRole('alertdialog').getByRole('button', { name: 'Accept' }).click();

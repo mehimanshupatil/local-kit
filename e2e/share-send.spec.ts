@@ -1,7 +1,7 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { test, expect, type Page } from '@playwright/test';
-import { closeDevices, devices, fakeIp, openDevice, ownName, pairUp, type Upload } from './share-helpers';
+import { chooseSend, closeDevices, devices, fakeIp, openDevice, ownName, pairUp, type Upload } from './share-helpers';
 
 // Pairing waits on two cold page loads plus WebRTC setup
 test.describe.configure({ timeout: 60_000 });
@@ -10,7 +10,7 @@ test.afterEach(closeDevices);
 
 async function offerFiles(sender: Page, receiverName: string, files: Upload[]) {
   const chooser = sender.waitForEvent('filechooser');
-  await devices(sender).getByRole('button', { name: receiverName }).click();
+  await chooseSend(sender, receiverName, 'Send files');
   await (await chooser).setFiles(files);
 }
 
@@ -173,7 +173,7 @@ test('fits a 400px-wide screen', async ({ browser }) => {
   }
 });
 
-test('right-click sends text; the receiver accepts, sees safe links and can copy it', async ({ browser }) => {
+test('right-click sends text; it stays hidden until revealed, links are safe, and Clear wipes it', async ({ browser }) => {
   const { sender, receiver } = await pairUp(browser, { receiverClipboard: true });
   const text = 'Meeting notes: https://example.com/agenda?id=7.\nNot a link: javascript:alert(1)\nsecond line';
 
@@ -192,9 +192,22 @@ test('right-click sends text; the receiver accepts, sees safe links and can copy
   await prompt.getByRole('button', { name: 'Accept' }).click();
 
   const note = receiver.page.getByLabel(`Text from ${sender.name}`);
+  await expect(sender.page.getByText(`Sent to ${receiver.name}.`)).toBeVisible();
+
+  // Hidden on both screens until someone asks: not just covered up, not in the page at all
+  await expect(note).toContainText(`Hidden · ${text.length} characters`);
+  await expect(note).not.toContainText('Meeting notes');
+  await expect(sender.page.getByLabel(`Text to ${receiver.name}`)).not.toContainText('Meeting notes');
+
+  // Copy works without revealing
+  await note.getByRole('button', { name: 'Copy' }).click();
+  await expect(note.getByRole('button', { name: 'Copied' })).toBeVisible();
+  expect(await receiver.page.evaluate(() => navigator.clipboard.readText())).toBe(text);
+
+  await note.getByRole('button', { name: 'Reveal' }).click();
+  await expect(note.getByRole('button', { name: 'Hide' })).toHaveAttribute('aria-pressed', 'true');
   await expect(note).toContainText('Meeting notes:');
   await expect(note).toContainText('second line');
-  await expect(sender.page.getByText(`Sent to ${receiver.name}.`)).toBeVisible();
 
   // Only the http(s) URL is a link, without the sentence's full stop, and it opens safely
   const links = note.getByRole('link');
@@ -203,12 +216,26 @@ test('right-click sends text; the receiver accepts, sees safe links and can copy
   await expect(links).toHaveAttribute('rel', /noopener/);
   await expect(links).toHaveAttribute('target', '_blank');
 
-  await note.getByRole('button', { name: 'Copy' }).click();
-  await expect(note.getByRole('button', { name: 'Copied' })).toBeVisible();
-  expect(await receiver.page.evaluate(() => navigator.clipboard.readText())).toBe(text);
+  // Clear removes it from the page and, since it was copied here, from the clipboard
+  await note.getByRole('button', { name: 'Clear' }).click();
+  await expect(note).toHaveCount(0);
+  expect(await receiver.page.evaluate(() => navigator.clipboard.readText())).toBe('');
 });
 
-test('long-press on touch opens the text box instead of the file picker; tap still picks files', async ({ browser }) => {
+test('tapping a device offers files or text', async ({ browser }) => {
+  const { sender, receiver } = await pairUp(browser);
+  await chooseSend(sender.page, receiver.name, 'Send text');
+  const compose = sender.page.getByRole('dialog', { name: `Send text to ${receiver.name}` });
+  await compose.getByRole('textbox', { name: 'Message' }).fill('wifi password: correct-horse-battery-staple');
+  await compose.getByRole('button', { name: 'Send' }).click();
+  await receiver.page.getByRole('alertdialog').getByRole('button', { name: 'Accept' }).click();
+
+  const note = receiver.page.getByLabel(`Text from ${sender.name}`);
+  await note.getByRole('button', { name: 'Reveal' }).click();
+  await expect(note).toContainText('wifi password: correct-horse-battery-staple');
+});
+
+test('long-press on touch goes straight to the text box; a tap opens the menu', async ({ browser }) => {
   const { sender, receiver } = await pairUp(browser, { senderTouch: true });
   const device = devices(sender.page).getByRole('button', { name: receiver.name });
   const box = (await device.boundingBox())!;
@@ -232,9 +259,10 @@ test('long-press on touch opens the text box instead of the file picker; tap sti
   await expect(sender.page.getByLabel(`Text to ${receiver.name}`).getByText(`${receiver.name} declined.`)).toBeVisible();
   await expect(receiver.page.getByLabel(`Text from ${sender.name}`)).toHaveCount(0);
 
-  // A short tap is still "send files"
+  // A short tap opens the menu, where files are a tap away
   const chooser = sender.page.waitForEvent('filechooser');
   await device.tap();
+  await sender.page.getByRole('dialog', { name: `Send to ${receiver.name}` }).getByRole('button', { name: 'Send files' }).tap();
   await chooser;
 });
 

@@ -3,12 +3,14 @@ import { useImmer } from 'use-immer';
 import { useClipboard, useInterval, useLongPress } from '@mantine/hooks';
 import { useToolVisit } from '@/stores/toolVisit';
 import {
-  ChatTextIcon, CheckIcon, CopyIcon, DownloadSimpleIcon, FolderOpenIcon, PaperPlaneTiltIcon, XIcon,
+  ChatTextIcon, CheckIcon, CopyIcon, DownloadSimpleIcon, EyeIcon, EyeSlashIcon, FileIcon, FolderOpenIcon,
+  PaperPlaneTiltIcon, TrashIcon, XIcon,
 } from '@phosphor-icons/react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -290,8 +292,8 @@ export default function SendTool() {
         share={share}
         visibilityLocked={anyLive}
         hint={<>
-          Open this page on another device on the same network, then tap it below to send files.
-          Right-click or long-press it to send text instead.
+          Open this page on another device on the same network, then tap it below to send files or text
+          (right-click or long-press goes straight to text).
         </>}
         renderDevice={peer => (
           <DeviceButton
@@ -304,7 +306,12 @@ export default function SendTool() {
       />
 
       {notes.map(n => (
-        <NoteCard key={n.id} note={n} onCancel={() => outgoing.current.get(n.id)?.cancel()} />
+        <NoteCard
+          key={n.id}
+          note={n}
+          onCancel={() => outgoing.current.get(n.id)?.cancel()}
+          onClear={() => updateNotes(d => d.filter(x => x.id !== n.id))}
+        />
       ))}
 
       {transfers.map(t => <TransferCard key={t.id} transfer={t} onCancel={() => cancel(t)} />)}
@@ -452,39 +459,57 @@ function TransferCard({ transfer: t, onCancel }: { transfer: Transfer; onCancel:
 }
 
 /** Tap to send files; right-click (mouse) or long-press (touch) to send text. */
+/** Tap for a choice of files or text; right-click (mouse) or long-press (touch) goes straight to text. */
 function DeviceButton({ peer, filesBusy, onSendFiles, onSendText }: {
   peer: Peer;
   filesBusy: boolean;
   onSendFiles: () => void;
   onSendText: () => void;
 }) {
-  // Lifting the finger after a long-press also fires a click, which would open the file picker
+  const [open, setOpen] = useState(false);
+  // Lifting the finger after a long-press also fires a click, which would open the menu
   const swallowClick = useRef(false);
   const longPress = useLongPress(() => {
     swallowClick.current = true;
     onSendText();
   }, { events: ['touch'], threshold: 500, cancelOnMove: true, onStart: () => { swallowClick.current = false; } });
 
+  const choose = (action: () => void) => {
+    setOpen(false);
+    action();
+  };
+
   return (
-    <button
-      type="button"
-      {...longPress}
-      onClick={() => {
-        if (swallowClick.current) {
+    <Popover
+      open={open}
+      onOpenChange={next => {
+        if (next && swallowClick.current) {
           swallowClick.current = false;
           return;
         }
-        if (!filesBusy) onSendFiles();
+        setOpen(next);
       }}
-      onContextMenu={e => {
-        e.preventDefault();
-        onSendText();
-      }}
-      aria-disabled={filesBusy || undefined}
-      className="w-full flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-secondary hover:ring-1 hover:ring-brand-500/40 transition-colors select-none [-webkit-touch-callout:none] aria-disabled:opacity-50"
     >
-      <DeviceSummary peer={peer} />
-    </button>
+      <PopoverTrigger
+        {...longPress}
+        onContextMenu={e => {
+          e.preventDefault();
+          onSendText();
+        }}
+        className="w-full flex flex-col items-center gap-2 p-4 rounded-xl border border-border bg-card hover:bg-secondary hover:ring-1 hover:ring-brand-500/40 transition-colors select-none [-webkit-touch-callout:none] data-popup-open:ring-1 data-popup-open:ring-brand-500/60"
+      >
+        <DeviceSummary peer={peer} />
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="center" className="w-44 p-1" aria-label={`Send to ${peer.name}`}>
+        {/* Called straight from the click, so the file picker is allowed to open */}
+        <Button variant="ghost" className="w-full justify-start" disabled={filesBusy} onClick={() => choose(onSendFiles)}>
+          <FileIcon className="size-4" /> Send files
+        </Button>
+        <Button variant="ghost" className="w-full justify-start" onClick={() => choose(onSendText)}>
+          <ChatTextIcon className="size-4" /> Send text
+        </Button>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -580,33 +605,71 @@ function noteStatus(n: Note): string | null {
   }
 }
 
-function NoteCard({ note: n, onCancel }: { note: Note; onCancel: () => void }) {
+function NoteCard({ note: n, onCancel, onClear }: { note: Note; onCancel: () => void; onClear: () => void }) {
   const clipboard = useClipboard({ timeout: 2000 });
+  // Text is often a password or code, so it stays off screen until asked for
+  const [revealed, setRevealed] = useState(false);
+  const [copiedFromHere, setCopiedFromHere] = useState(false);
   const status = noteStatus(n);
   const label = n.direction === 'out' ? `Text to ${n.peerName}` : `Text from ${n.peerName}`;
+
+  const clear = () => {
+    // Don't leave a copied secret behind on the clipboard
+    if (copiedFromHere) void navigator.clipboard?.writeText('').catch(() => {});
+    onClear();
+  };
 
   return (
     <Card>
       <CardContent className="pt-5 space-y-3" aria-live="polite" aria-label={label}>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <ChatTextIcon className="size-4 text-brand-500 shrink-0" />
-          <p className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">{label}</p>
-          {n.status === 'waiting' && (
-            <Button variant="ghost" size="sm" onClick={onCancel} className="shrink-0 text-muted-foreground hover:text-red-500">
-              <XIcon className="size-3.5" /> Cancel
-            </Button>
-          )}
-          {n.direction === 'in' && n.text !== null && (
-            <Button variant="secondary" size="sm" onClick={() => clipboard.copy(n.text)} className="shrink-0">
-              {clipboard.copied ? <CheckIcon className="size-3.5 text-green-500" /> : <CopyIcon className="size-3.5" />}
-              {clipboard.copied ? 'Copied' : 'Copy'}
-            </Button>
-          )}
+          {/* Wide enough to read; the buttons wrap below it on a phone */}
+          <p className="flex-1 min-w-40 text-sm font-medium text-foreground truncate">{label}</p>
+          <div className="flex items-center gap-1.5">
+            {n.status === 'waiting' && (
+              <Button variant="ghost" size="sm" onClick={onCancel} className="text-muted-foreground hover:text-red-500">
+                <XIcon className="size-3.5" /> Cancel
+              </Button>
+            )}
+            {n.text !== null && (
+              <Button variant="ghost" size="sm" aria-pressed={revealed} onClick={() => setRevealed(r => !r)}>
+                {revealed ? <EyeSlashIcon className="size-3.5" /> : <EyeIcon className="size-3.5" />}
+                {revealed ? 'Hide' : 'Reveal'}
+              </Button>
+            )}
+            {n.direction === 'in' && n.text !== null && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  clipboard.copy(n.text);
+                  setCopiedFromHere(true);
+                }}
+              >
+                {clipboard.copied ? <CheckIcon className="size-3.5 text-green-500" /> : <CopyIcon className="size-3.5" />}
+                {clipboard.copied ? 'Copied' : 'Copy'}
+              </Button>
+            )}
+            {!isLive(n) && (
+              <Button variant="ghost" size="sm" onClick={clear} className="text-muted-foreground hover:text-red-500">
+                <TrashIcon className="size-3.5" /> Clear
+              </Button>
+            )}
+          </div>
         </div>
-        {n.text !== null && (
-          <p className={`text-sm whitespace-pre-wrap break-words max-h-80 overflow-y-auto ${n.direction === 'out' ? 'text-muted-foreground line-clamp-3' : 'text-foreground'}`}>
+        {n.text !== null && (revealed ? (
+          <p className="text-sm text-foreground whitespace-pre-wrap break-words max-h-80 overflow-y-auto">
             <LinkedText text={n.text} />
           </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            <span aria-hidden className="tracking-widest">••••••••</span>
+            <span className="ml-2">Hidden · {plural(n.text.length, 'character')}</span>
+          </p>
+        ))}
+        {copiedFromHere && (
+          <p className="text-xs text-muted-foreground">Copied. Clear removes it from this page and from your clipboard.</p>
         )}
         {status && (
           <p className={n.status === 'error' ? 'text-sm text-red-600 dark:text-red-400' : n.status === 'done' ? 'text-sm text-brand-500' : 'text-sm text-muted-foreground'}>
