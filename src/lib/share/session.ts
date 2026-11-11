@@ -38,7 +38,7 @@ type Cancel = { transferId: string };
 type TextOffer = { transferId: string; length: number };
 type TextMessage = { transferId: string; text: string };
 type CallOffer = { callId: string };
-export type CallState = { callId: string; muted: boolean; cameraOff: boolean };
+export type CallState = { callId: string; muted: boolean; cameraOff: boolean; sharing: boolean };
 type CallEnd = { callId: string };
 
 export interface IncomingOffer extends Offer {
@@ -155,8 +155,12 @@ export interface ShareSession {
   cancelReceive: (transferId: string) => void;
   /** Ring a device; once it answers, `stream` is sent to it. */
   call: (peerId: string, stream: MediaStream) => OutgoingCall;
-  /** Tell the other side about muting or turning the camera off. */
+  /** Tell the other side about muting, turning the camera off, or sharing the screen. */
   setCallState: (state: CallState) => void;
+  /** Send `next` in place of `previous` (switching camera, sharing the screen) without reconnecting. */
+  replaceVideoTrack: (callId: string, previous: MediaStreamTrack, next: MediaStreamTrack) => Promise<void>;
+  /** The call's connection statistics, for the quality indicator. */
+  getCallStats: (callId: string) => Promise<RTCStatsReport | null>;
   hangUp: (callId: string) => void;
   leave: () => Promise<void>;
 }
@@ -745,6 +749,19 @@ export async function createShareSession(
     setCallState(state) {
       const c = calls.get(state.callId);
       if (c) void c.channel.callState.send(state, { target: c.peerId });
+    },
+    async replaceVideoTrack(callId, previous, next) {
+      const c = calls.get(callId);
+      if (!c) return;
+      await Promise.all(c.channel.room.replaceTrack(previous, next, { target: c.peerId }));
+      // Keep the call's stream in step, so the next swap and hanging up find the right track
+      c.stream.removeTrack(previous);
+      c.stream.addTrack(next);
+    },
+    async getCallStats(callId) {
+      const c = calls.get(callId);
+      const pc = c ? c.channel.room.getPeers()[c.peerId] : undefined;
+      return pc ? pc.getStats() : null;
     },
     hangUp(callId) {
       const c = calls.get(callId);
