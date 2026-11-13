@@ -578,7 +578,7 @@ export const categories: Category[] = [
         pageDesc: 'Send files from one device to another on the same Wi-Fi. Goes straight from device to device, end-to-end encrypted — no uploads, no accounts.',
       },
       {
-        name: 'Call', href: '/share/call', icon: VideoCameraIcon,
+        name: 'Video Call', href: '/share/call', icon: VideoCameraIcon,
         desc: 'Video call another device, one to one',
         pageTitle: 'Private Video Call Between Two Devices — No Account | LocalKit',
         pageDesc: 'Start a one-to-one video call with another device. Audio and video go straight between the two devices, end-to-end encrypted — no accounts, no call servers of ours.',
