@@ -28,8 +28,6 @@ export interface ShareConfig {
   iceServers: RTCIceServer[];
   /** Skip STUN discovery and use this address for the discovery room. */
   publicIp?: string;
-  /** Let peers on one machine connect when mDNS host candidates can't resolve (headless test browsers). */
-  loopbackFallback?: boolean;
   /** 'relay' with no TURN server makes every direct connection fail (tests the failure message). */
   iceTransportPolicy?: RTCIceTransportPolicy;
   /** Shorter code lifetime and join wait, so tests needn't wait minutes. */

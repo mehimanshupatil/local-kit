@@ -45,7 +45,6 @@ export async function openDevice(
       relayUrls: ['ws://localhost:7447'],
       iceServers: [],
       publicIp: ip,
-      loopbackFallback: true,
       ...config,
     };
     // The real picker needs a user to choose a folder; the origin-private file

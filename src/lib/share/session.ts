@@ -1,4 +1,4 @@
-import type { JoinRoomConfig, Room } from 'trystero';
+import type { JoinRoomConfig, Room, RoomError } from 'trystero';
 import { generateId } from '@/lib/utils/fileUtils';
 import { readChunks } from './chunking';
 import { readProfile, type DeviceInfo, type Profile } from './device';
@@ -20,6 +20,8 @@ const OFFER_TIMEOUT_MS = 5 * 60_000;
 const HELLO_TIMEOUT_MS = 10_000;
 /** How long someone entering a code waits for the device showing it. */
 const PAIRING_JOIN_TIMEOUT_MS = 30_000;
+/** Room errors that mean a pairing attempt can't connect. */
+const PAIRING_FAILURES = new Set<RoomError['code']>(['room-full', 'peer-connect-failed', 'handshake-failed', 'decrypt-failed']);
 
 /** How this device reached a peer: discovered on the same network, or paired with a code or link. */
 export type PeerVia = 'nearby' | 'paired';
@@ -171,8 +173,8 @@ export class ShareError extends Error {
   }
 }
 
-// Trystero hands back the same room instance for the same room ID, so a join
-// that overlaps an earlier leave of that room (a remount) would be torn down by it.
+// Trystero won't join a room that's still being left, so a join that overlaps
+// an earlier leave of that room (a remount) waits for the leave to finish.
 const pendingLeaves = new Map<string, Promise<void>>();
 
 function makeActions(room: Room) {
@@ -237,6 +239,9 @@ interface Outgoing {
 
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : 'The transfer failed.');
 
+/** For best-effort messages: a send to a peer that has just gone rejects, and there's nothing to do about it. */
+const quietly = (p: Promise<unknown>) => void p.catch(() => {});
+
 export async function createShareSession(
   initialProfile: Profile,
   handlers: ShareSessionHandlers,
@@ -280,22 +285,27 @@ export async function createShareSession(
 
   // ── Rooms ────────────────────────────────────────────────────────────────
 
-  const roomConfig = (password?: string): JoinRoomConfig => ({
+  const roomConfig = (kind: Channel['kind'], password?: string): JoinRoomConfig => ({
     appId,
     password,
+    // A fresh key each visit: the default keeps one in IndexedDB, which every
+    // device on the network could use to recognise this one across visits
+    identity: 'none',
+    // A pairing room admits this device and exactly one other
+    maxUsers: kind === 'pairing' ? 2 : undefined,
     relayConfig: { urls: config.relayUrls, warnOnRelayFailure: false },
     rtcConfig: { iceServers: config.iceServers, iceTransportPolicy: config.iceTransportPolicy },
-    _test_only_mdnsHostFallbackToLoopback: config.loopbackFallback,
   });
 
   const open = async (
     kind: Channel['kind'],
     roomId: string,
     password: string | undefined,
-    callbacks: Parameters<typeof joinRoom>[2],
+    onError: (error: RoomError) => void,
   ): Promise<Channel> => {
     await pendingLeaves.get(`${appId}:${roomId}`);
-    const room = joinRoom(roomConfig(password), roomId, callbacks);
+    const room = joinRoom(roomConfig(kind, password), roomId);
+    room.onError(onError);
     const actions = makeActions(room);
     const channel: Channel = { kind, roomId, room, members: new Set(), ...actions };
     channels.add(channel);
@@ -326,7 +336,7 @@ export async function createShareSession(
 
   /** Work out the safety emojis from both ends' DTLS certificates. */
   const announcePair = async (channel: Channel, peerId: string) => {
-    const pc = channel.room.getPeers()[peerId];
+    const pc = channel.room.getPeers()[peerId]?.connection;
     const local = fingerprintFromSdp(pc?.localDescription?.sdp);
     const remote = fingerprintFromSdp(pc?.remoteDescription?.sdp);
     const emojis = local && remote ? await safetyEmojis(local, remote) : [];
@@ -433,24 +443,24 @@ export async function createShareSession(
     // has finished admitting this peer is dropped, so a one-way announcement can
     // be lost; the later of the two requests always gets through, and its reply
     // carries the other side's name.
-    hello.onRequest = (profile, { peerId }) => {
+    hello.onRequest((profile, { peerId }) => {
       channel.members.add(peerId);
       addPeer(channel, peerId, profile);
       return self;
-    };
+    });
 
     // Renames after connecting
-    channel.profile.onMessage = (profile, { peerId }) => addPeer(channel, peerId, profile);
+    channel.profile.onMessage((profile, { peerId }) => addPeer(channel, peerId, profile));
 
-    room.onPeerJoin = peerId => {
+    room.onPeerJoin(({ peerId }) => {
       channel.members.add(peerId);
       hello.request(self, { target: peerId, timeoutMs: HELLO_TIMEOUT_MS })
         .then(profile => addPeer(channel, peerId, profile))
         .catch(() => { /* the other side's hello covers it */ });
-    };
-    room.onPeerLeave = peerId => peerLeft(channel, peerId);
+    });
+    room.onPeerLeave(({ peerId }) => peerLeft(channel, peerId));
 
-    channel.offer.onRequest = async (offer, { peerId }) => {
+    channel.offer.onRequest(async (offer, { peerId }) => {
       const k = key(peerId, offer.transferId);
       const full: IncomingOffer = { ...offer, peerId, peerName: peerName(peerId) };
       const answer = await ask(peerId, offer.transferId, async () => (await handlers.onOffer?.(full)) ?? null);
@@ -463,9 +473,9 @@ export async function createShareSession(
       incoming.set(k, t);
       t.queue = openCurrent(t).catch(e => endIncoming(k, { reason: 'error', message: errorMessage(e) }));
       return true;
-    };
+    });
 
-    channel.chunk.onMessage = (data, { peerId, metadata }) => {
+    channel.chunk.onMessage((data, { peerId, metadata }) => {
       const meta = metadata as ChunkMeta;
       const k = key(peerId, meta.transferId);
       const t = incoming.get(k);
@@ -473,26 +483,26 @@ export async function createShareSession(
       t.queue = t.queue
         .then(() => handleChunk(t, meta, data))
         .catch(e => {
-          void channel.cancel.send({ transferId: meta.transferId }, { target: peerId });
+          quietly(channel.cancel.send({ transferId: meta.transferId }, { target: peerId }));
           return endIncoming(k, { reason: 'error', message: errorMessage(e) });
         });
-    };
+    });
 
-    channel.textOffer.onRequest = async (offer, { peerId }) => {
+    channel.textOffer.onRequest(async (offer, { peerId }) => {
       if (!(offer.length > 0 && offer.length <= MAX_TEXT_LENGTH)) return false;
       const full: IncomingTextOffer = { ...offer, peerId, peerName: peerName(peerId) };
       const accepted = await ask(peerId, offer.transferId, async () => (await handlers.onTextOffer?.(full)) || null);
       if (accepted) acceptedTexts.add(key(peerId, offer.transferId));
       return Boolean(accepted);
-    };
+    });
 
-    channel.text.onMessage = ({ transferId, text }, { peerId }) => {
+    channel.text.onMessage(({ transferId, text }, { peerId }) => {
       // Only text the user agreed to see, and no more than was offered
       if (!acceptedTexts.delete(key(peerId, transferId)) || typeof text !== 'string' || text.length > MAX_TEXT_LENGTH) return;
       handlers.onText?.(transferId, text);
-    };
+    });
 
-    channel.callOffer.onRequest = async ({ callId }, { peerId }) => {
+    channel.callOffer.onRequest(async ({ callId }, { peerId }) => {
       // One call at a time
       if (calls.size > 0 || typeof callId !== 'string') return false;
       const stream = await ask(peerId, callId, async () => (await handlers.onCall?.({ callId, peerId, peerName: peerName(peerId) })) ?? null);
@@ -502,24 +512,24 @@ export async function createShareSession(
         return false;
       }
       calls.set(callId, { channel, peerId, stream });
-      void Promise.all(room.addStream(stream, { target: peerId, metadata: { callId } }));
+      quietly(room.addStream(stream, { target: peerId, metadata: { callId } }));
       return true;
-    };
+    });
 
-    room.onPeerStream = (stream, peerId, metadata) => {
+    room.onPeerStream((stream, { peerId, metadata }) => {
       const callId = (metadata as { callId?: unknown } | undefined)?.callId;
       if (typeof callId === 'string' && calls.get(callId)?.peerId === peerId) handlers.onRemoteStream?.(callId, stream);
-    };
+    });
 
-    channel.callState.onMessage = (state, { peerId }) => {
+    channel.callState.onMessage((state, { peerId }) => {
       if (calls.get(state.callId)?.peerId === peerId) handlers.onCallState?.(state);
-    };
+    });
 
-    channel.callEnd.onMessage = ({ callId }, { peerId }) => {
+    channel.callEnd.onMessage(({ callId }, { peerId }) => {
       if (calls.get(callId)?.peerId === peerId) endCall(callId, 'hung-up');
-    };
+    });
 
-    channel.cancel.onMessage = ({ transferId }, { peerId }) => {
+    channel.cancel.onMessage(({ transferId }, { peerId }) => {
       const k = key(peerId, transferId);
       pendingOffers.get(k)?.();
       void endIncoming(k, { reason: 'cancelled-by-peer' });
@@ -528,7 +538,7 @@ export async function createShareSession(
         out.stop = 'cancelled-by-peer';
         out.controller.abort();
       }
-    };
+    });
   };
 
   // ── Calls ────────────────────────────────────────────────────────────────
@@ -558,7 +568,7 @@ export async function createShareSession(
       if (!accepted) return 'declined';
       signal.throwIfAborted();
       calls.set(callId, { channel, peerId, stream });
-      await Promise.all(channel.room.addStream(stream, { target: peerId, metadata: { callId } }));
+      await channel.room.addStream(stream, { target: peerId, metadata: { callId } });
       return 'accepted';
     };
     return {
@@ -569,7 +579,7 @@ export async function createShareSession(
       }),
       cancel: () => {
         if (signal.aborted) return;
-        void channel.cancel.send({ transferId: callId }, { target: peerId });
+        quietly(channel.cancel.send({ transferId: callId }, { target: peerId }));
         controller.abort();
       },
     };
@@ -588,7 +598,9 @@ export async function createShareSession(
     if (!ip) {
       throw new ShareError('no-public-ip', "Couldn't reach the internet to look for nearby devices. Check your connection and reload.");
     }
-    nearby = await open('nearby', await roomIdForIp(ip), undefined, { onJoinError: () => handlers.onConnectionFailed() });
+    nearby = await open('nearby', await roomIdForIp(ip), undefined, error => {
+      if (error.code === 'peer-connect-failed') handlers.onConnectionFailed();
+    });
   };
 
   // ── Pairing ──────────────────────────────────────────────────────────────
@@ -605,24 +617,20 @@ export async function createShareSession(
   /** Join a private pairing room that admits exactly one other device. */
   const openPairingRoom = async (p: Pairing, pairingKey: PairingKey) => {
     const { roomId, password } = await pairingRoom(pairingKey);
-    const channel = await open('pairing', roomId, password, {
-      onPeerHandshake: async peerId => {
-        if (pairing !== p || (p.peerId && p.peerId !== peerId)) throw new Error('Already paired');
-        p.peerId = peerId;
-      },
-      // Someone else turned away once paired, or a guest's connection failing
-      onJoinError: () => { if (pairing === p && !p.peerId) endPairing('failed'); },
+    const channel = await open('pairing', roomId, password, error => {
+      // Turned away because the room already has its two devices, or a guest's connection failing
+      if (PAIRING_FAILURES.has(error.code) && pairing === p && !p.peerId) endPairing('failed');
     });
     p.channels.push(channel);
-    const join = channel.room.onPeerJoin!;
-    channel.room.onPeerJoin = peerId => {
-      join(peerId);
+    // Runs after wire()'s join listener, which has already admitted the peer
+    channel.room.onPeerJoin(({ peerId }) => {
       if (pairing !== p) return;
+      p.peerId = peerId;
       // Paired: the other code or link is no longer needed
       for (const other of p.channels) if (other !== channel) close(other);
       p.channels = [channel];
       endPairing(null);
-    };
+    });
     return channel;
   };
 
@@ -697,7 +705,7 @@ export async function createShareSession(
       done,
       cancel: () => {
         if (signal.aborted) return;
-        void channel.cancel.send({ transferId }, { target: peerId });
+        quietly(channel.cancel.send({ transferId }, { target: peerId }));
         t.controller.abort();
       },
     };
@@ -725,7 +733,7 @@ export async function createShareSession(
       }),
       cancel: () => {
         if (signal.aborted) return;
-        void channel.cancel.send({ transferId }, { target: peerId });
+        quietly(channel.cancel.send({ transferId }, { target: peerId }));
         controller.abort();
       },
     };
@@ -741,37 +749,37 @@ export async function createShareSession(
     },
     updateProfile(profile) {
       self = profile;
-      for (const c of channels) void c.profile.send(profile);
+      for (const c of channels) quietly(c.profile.send(profile));
     },
     sendFiles,
     sendText,
     call,
     setCallState(state) {
       const c = calls.get(state.callId);
-      if (c) void c.channel.callState.send(state, { target: c.peerId });
+      if (c) quietly(c.channel.callState.send(state, { target: c.peerId }));
     },
     async replaceVideoTrack(callId, previous, next) {
       const c = calls.get(callId);
       if (!c) return;
-      await Promise.all(c.channel.room.replaceTrack(previous, next, { target: c.peerId }));
+      await c.channel.room.replaceTrack(previous, next, { target: c.peerId });
       // Keep the call's stream in step, so the next swap and hanging up find the right track
       c.stream.removeTrack(previous);
       c.stream.addTrack(next);
     },
     async getCallStats(callId) {
       const c = calls.get(callId);
-      const pc = c ? c.channel.room.getPeers()[c.peerId] : undefined;
+      const pc = c ? c.channel.room.getPeers()[c.peerId]?.connection : undefined;
       return pc ? pc.getStats() : null;
     },
     hangUp(callId) {
       const c = calls.get(callId);
-      if (c) void c.channel.callEnd.send({ callId }, { target: c.peerId });
+      if (c) quietly(c.channel.callEnd.send({ callId }, { target: c.peerId }));
       endCall(callId, null);
     },
     cancelReceive(transferId) {
       for (const [k, t] of incoming) {
         if (t.offer.transferId !== transferId) continue;
-        void t.channel.cancel.send({ transferId }, { target: t.offer.peerId });
+        quietly(t.channel.cancel.send({ transferId }, { target: t.offer.peerId }));
         void endIncoming(k, { reason: 'cancelled' });
       }
     },
@@ -779,7 +787,7 @@ export async function createShareSession(
       endPairing(null);
       for (const callId of [...calls.keys()]) {
         const c = calls.get(callId)!;
-        void c.channel.callEnd.send({ callId }, { target: c.peerId });
+        quietly(c.channel.callEnd.send({ callId }, { target: c.peerId }));
         endCall(callId, null);
       }
       const leaving = [...channels].map(c => {

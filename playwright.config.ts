@@ -30,6 +30,14 @@ export default defineConfig({
     },
   ],
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Headless Chromium hides local IPs behind mDNS names it can't resolve,
+        // so Share peers on one machine would never connect
+        launchOptions: { args: ['--disable-features=WebRtcHideLocalIpsWithMdns'] },
+      },
+    },
   ],
 });
